@@ -28,7 +28,7 @@
 //*                                                                              *
 //*   Includes: 1. NES EMULATOR, 2. MP3 player, 3. Oscilloscope 1MHz             *
 //*                                                                              *
-//*   Requirements: ESP32 WEMOS D1 MINI, SD7789 LCD, MICROSD CARD slot,          *
+//*   Requirements: NodeMCU ESP32S, ILI9341 LCD, MICROSD CARD slot,              *
 //*   PCM5102 I2S AUDIO MODULE, OTHER PARTS...                                   *
 //*                                                                              *
 //*   Only for personal & educational use!                                       *
@@ -39,17 +39,16 @@
 //*   features:                                                                  *
 //*   - ESP32-WROVER PSRAM module support                                        *
 //*   - MicroSD card support                                                     *
-//*   - 240*240 1.3" LCD ST7789 display                                          *
+//*   - 320*240 2.8" LCD ILI9341 display                                         *
 //*   - Composite TV OUT Video PAL                                               *
 //*   - I2S AUDIO support PCM5102 module                                         *
 //*   - PS2 (USB) KEYBOARD support (wireless not work)                           *
 //*   - huge NES ROMs up to 512kB (read from FLASH)                              *
-//*   - PS4 DualShock BlueTooth Gamepad (experimental)                           *
 //*                                                                              *
 //********************************************************************************
 
 // Enable modified included libraries in "/src/" folder but if you have libraries conflict try:
-// ... in other case you need copy modified from "/LIBRARIES/" to "/Arduino/libraries/" folder 
+// ... in other case you need copy modified from "/LIBRARIES/" to "/Arduino/libraries/" folder
 // and disable this option in this case (but you must delete modified included libraries from "/src/" folder):
 
 #define INCLUDED_LIBRARIES true //better enable this feature!                           
@@ -58,7 +57,6 @@
 #define COMPOSITE_VIDEO_ENABLED true  //Do not disable! it also disable ADC.
 #define KEYBOARD_ENABLED true
 #define SOUND_ENABLED true
-#define BLUETOOTH_ENABLED false //experimental.
 
 #define DEBUG true       //Serial debugging enable.
 #define DEBUGEXTRA false //Extra Serial debugging enable.
@@ -88,24 +86,26 @@
 #define I2S_DO_IO  (GPIO_NUM_25) //DIN
 #define I2S_DI_IO  (-1)
 
-//LCD_ST7789:
-#define TFT_CS   -1  // define chip select pin
-#define TFT_DC    5  // define data/command pin
-#define TFT_RST  19
-#define TFT_MOSI 23  // Data out (SDA) //better not change
-#define TFT_SCLK 18  // Clock out (SCL) //better not change
+//display part, VSPI pins on NodeMCU ESP32S
+#define TFT_CLK    18
+#define TFT_MOSI   23
+#define TFT_MISO   19
+#define TFT_CS     5
+#define TFT_DC     21
+#define TFT_RST    17
 
-//micro_SD_Card: //GPIO16 and GPIO17 can not use on WROVER
-#define SOFTSD_MOSI_PIN (GPIO_NUM_33)
-#define SOFTSD_MISO_PIN (GPIO_NUM_22)
-#define SOFTSD_SCK_PIN (GPIO_NUM_21)
-#define SD_CS_PIN -1  //
+//SD card part
+//todo: change after display testing
+#define SOFTSD_MOSI_PIN TFT_MOSI
+#define SOFTSD_MISO_PIN TFT_MISO
+#define SOFTSD_SCK_PIN TFT_CLK
+#define SD_CS_PIN 16
 
 //Oscilloscope INPUT:
 #define ADC_CHANNEL   ADC1_CHANNEL_6 // GPIO34
 
 // player Digital I/O used
-#define SD_CS          -1
+//#define SD_CS          -1
 #define SPI_MOSI      SOFTSD_MOSI_PIN
 #define SPI_MISO      SOFTSD_MISO_PIN
 #define SPI_SCK       SOFTSD_SCK_PIN
@@ -138,6 +138,9 @@
 #include "driver/i2s.h"
 #endif
 
+#include "utils.h"
+#include "nes_palettes.h"
+
 //LIBRARIES:
 #include "Arduino.h"
 //AUDIO_i2S:
@@ -145,15 +148,12 @@
 //********************************************************************************
 #if INCLUDED_LIBRARIES
 
-//MODIFIED INCLUDED_LIBRARIES in "/src/" folder
-
-//LCD_ST7789:
 #include <SPI.h>
-#include "src/Adafruit-GFX-Library/Adafruit_GFX.h"    // Core graphics library
-#include "src/Adafruit-ST7735-Library/Adafruit_ST7789.h"    // Core graphics library
+#include <Adafruit_GFX.h>
+#include <Adafruit_ILI9341.h>
 
 //micro_SD_Card:
-#include "src/sdfat-beta/src/SdFat.h" // Use SDFAT-beta...
+#include <SdFat.h> // Use SDFAT-beta...
 
 //AUDIO_i2S:
 #if SOUND_ENABLED
@@ -171,16 +171,6 @@
 #else
 //********************************************************************************
 
-//!!! or use MODIFIED LIBRARIES in "Arduino/libraries/" folder (need copy from /LIBRARIES/)
-
-//LCD_ST7789:
-#include <SPI.h>
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
-
-//micro_SD_Card:
-#include <SdFat.h> // Use SDFAT-beta...
-
 //player LIBs
 #include "Audio.h" //ESP32-audioI2S
 
@@ -188,29 +178,25 @@
 //********************************************************************************
 #endif
 
-
-
 // https://github.com/kosme/arduinoFFT, in IDE, Sketch, Include Library, Manage Library, then search for FFT
 arduinoFFT FFT = arduinoFFT();
 
 //********************************************************************************
 //SETUP:
-
-//USE SDFAT BETA!
-///SdFatSoftSpi<SOFTSD_MISO_PIN, SOFTSD_MOSI_PIN, SOFTSD_SCK_PIN> SD;
-SoftSpiDriver<SOFTSD_MISO_PIN, SOFTSD_MOSI_PIN, SOFTSD_SCK_PIN> softSpi;
-#define SD_CONFIG SdSpiConfig(-1, DEDICATED_SPI, SD_SCK_MHZ(0), &softSpi)
+#define SPI_CLOCK SD_SCK_MHZ(30)
+#define SD_CONFIG SdSpiConfig(SD_CS_PIN, DEDICATED_SPI, SPI_CLOCK)
 SdFat SD;
 File fp;
 
-//LCD_ST7789
-#define ST7789_DRIVER     // Configure all registers
-#define TFT_WIDTH  240
+//#define ST7789_DRIVER     // Configure all registers
+#define TFT_WIDTH  320
 #define TFT_HEIGHT 240
 #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
 #define LOAD_FONT2  // Font 2. Small 16 pixel high font, needs ~3534 bytes in FLASH, 96 characters
 #define LOAD_FONT4  // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters
-Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
+
+//Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_CLK, TFT_RST, TFT_MISO);
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
 //********************************************************************************
 //VARIABLES:
@@ -248,32 +234,6 @@ unsigned char *rom = 0; //Actual ROM pointer
 
 //********************************************************************************
 
-
-//--------------------------------------------------------------------------------
-//NES PALETTES 32bit & 16bit:
-
-const uint32_t nes_32bit[64] = { //4colors Green-Yellow-Red-Blue
-  0x2D253469, 0x000000D9, 0x000000A1, 0x0F111CA1, 0x001F3F70, 0x0024491C, 0x06264900, 0x061F3B00,
-  0x12162300, 0x2D0B0000, 0x27090000, 0x21080000, 0x1806004D, 0x14141414, 0x14141414, 0x14141414,
-  0x453950A1, 0x2D0B00D9, 0x210800D9, 0x181C2DD9, 0x002F5EAF, 0x0031624D, 0x153B6C00, 0x2139620E,
-  0x2D304900, 0x45110000, 0x3F0F0000, 0x3F0F0038, 0x330C0077, 0x14141414, 0x14141414, 0x14141414,
-  0x5D4D6CD9, 0x451D18D9, 0x33232DD9, 0x2D2C42D9, 0x2D416CD9, 0x213E6C85, 0x2D416C4D, 0x3C456C38,
-  0x45476C00, 0x5D3F5015, 0x51272646, 0x5D2A2685, 0x571500BD, 0x2D253469, 0x14141414, 0x14141414,
-  0x5D4D6CD9, 0x543846D9, 0x453950D9, 0x45405ED9, 0x45476CD9, 0x3C456CA8, 0x4E48699A, 0x544B6C93,
-  0x514A6C69, 0x5D465E69, 0x5D3F50A1, 0x5D3F50BD, 0x5D1700D9, 0x514A6CD9, 0x14141414, 0x14141414,
-};
-
-const uint16_t nes_16bit[64] = {
-  0x7BEF, 0x001F, 0x0017, 0x4157, 0x9010, 0xA804, 0xA880, 0x88A0,
-  0x5180, 0x03C0, 0x0340, 0x02C0, 0x020B, 0x0000, 0x0000, 0x0000,
-  0xBDF7, 0x03DF, 0x02DF, 0x6A3F, 0xD819, 0xE00B, 0xF9C0, 0xE2E2,
-  0xABE0, 0x05C0, 0x0540, 0x0548, 0x0451, 0x0000, 0x0000, 0x0000,
-  0xFFDF, 0x3DFF, 0x6C5F, 0x9BDF, 0xFBDF, 0xFAD3, 0xFBCB, 0xFD08,
-  0xFDC0, 0xBFC3, 0x5ECA, 0x5FD3, 0x075B, 0x7BCF, 0x0000, 0x0000,
-  0xFFFF, 0xA73F, 0xBDDF, 0xDDDF, 0xFDDF, 0xFD38, 0xF696, 0xFF15,
-  0xFECF, 0xDFCF, 0xBFD7, 0xBFDB, 0x07FF, 0xFEDF, 0x0000, 0x0000,
-};
-//--------------------------------------------------------------------------------
 //for player...
 bool PLAYING = false;
 bool PAUSED = false;
@@ -608,18 +568,14 @@ int audiovideo_init() {
   TaskHandle_t idle_0 = xTaskGetIdleTaskHandleForCPU(0);
   esp_task_wdt_delete(idle_0);
 
-  ///stop driver for mp3 player
-  ///   i2s_stop((i2s_port_t) 1);
-
-
-  ///   init_sound(); //START AUDIO ??? here?
-
   vidQueue = xQueueCreate( 1, sizeof( unsigned int*  ));
 
-  if (LCD_ENABLED) {
-    xTaskCreatePinnedToCore(&videoTask, "videoTask", 2048, NULL, 0, NULL, 0 );
-    if (DEBUG) Serial.println("videoTask Pinned To Core 0...");
-  }
+#ifdef LCD_ENABLED
+  xTaskCreatePinnedToCore(&videoTask, "videoTask", 2048, NULL, 0, NULL, 0 );
+#ifdef DEBUG
+  Serial.println("videoTask Pinned To Core 0...");
+#endif //DEBUG
+#endif //LCD_ENABLED
   return 0;
 }
 //--------------------------------------------------------------------------------
@@ -640,10 +596,7 @@ uint8_t MENU() {
       ///if (MenuItem == 0) SCREENMEMORY[Ypos][Xpos] = NESEMUICON[Ypos * 240 + Xpos];
     }
   if (MenuItem == 0) {
-    //set_font_XY(64, 240  - 24);
-    
-    set_font_XY(64, 240/2  - 24);
-    
+    set_font_XY(64, 240 / 2  - 24);
     draw_string(" NES Emulator ", 48);
   }
   //--------------------------------------------------------------------------------
@@ -672,7 +625,7 @@ uint8_t MENU() {
         for (int16_t Ypos = 0; Ypos < 240; Ypos++)
           for (int16_t Xpos = 0; Xpos < 240; Xpos++) {
             if (Xpos - animate > 0) { //scroll right->left
-              
+
               //ICONS are disabled for FLASH WRITE to unused sectors (for no PSRAM mode)
 
               ///if (MenuItem == 0) SCREENMEMORY[Ypos][Xpos - animate] = NESEMUICON[Ypos * 240 + Xpos];
@@ -683,19 +636,19 @@ uint8_t MENU() {
           }
         if (MenuItem == 0) {
           //set_font_XY(64 - animate, 240  - 24);
-          set_font_XY(64 - animate, 240/2  - 24);
+          set_font_XY(64 - animate, 240 / 2  - 24);
 
           draw_string(" NES Emulator ", 48);
         }
         if (MenuItem == 1) {
           //set_font_XY(64 - animate, 240  - 24);
-          set_font_XY(64 - animate, 240/2  - 24);
+          set_font_XY(64 - animate, 240 / 2  - 24);
 
           draw_string(" Audio Player ", 48);
         }
         if (MenuItem == 2) {
           //set_font_XY(64 - animate, 240  - 24);
-          set_font_XY(64 - animate, 240/2  - 24);
+          set_font_XY(64 - animate, 240 / 2  - 24);
 
           draw_string(" Oscilloscope ", 48);
         }
@@ -714,20 +667,20 @@ uint8_t MENU() {
           }
         if (MenuItem == 1) {
           //set_font_XY(64 + animate, 240  - 24);
-          set_font_XY(64 + animate, 240/2  - 24);
-          
+          set_font_XY(64 + animate, 240 / 2  - 24);
+
           draw_string(" Oscilloscope ", 48);
         }
         if (MenuItem == 2) {
           //set_font_XY(64 + animate, 240  - 24);
-          set_font_XY(64 + animate, 240/2  - 24);
-          
+          set_font_XY(64 + animate, 240 / 2  - 24);
+
           draw_string(" NES Emulator ", 48);
         }
         if (MenuItem == 0) {
           //set_font_XY(64 + animate, 240  - 24);
-          set_font_XY(64 + animate, 240/2  - 24);
-          
+          set_font_XY(64 + animate, 240 / 2  - 24);
+
           draw_string(" Audio Player ", 48);
         }
         if (LCD_ENABLED) xQueueSend(vidQueue, &SCREENMEMORY, 0); //refresh LCD
@@ -751,20 +704,20 @@ uint8_t MENU() {
           }
         if (MenuItem == 0) {
           //set_font_XY(64 + animate, 240  - 24);
-          set_font_XY(64 + animate, 240/2  - 24);
-          
+          set_font_XY(64 + animate, 240 / 2  - 24);
+
           draw_string(" NES Emulator ", 48);
         }
         if (MenuItem == 1) {
           //set_font_XY(64 + animate, 240  - 24);
-          set_font_XY(64 + animate, 240/2  - 24);
-          
+          set_font_XY(64 + animate, 240 / 2  - 24);
+
           draw_string(" Audio Player ", 48);
         }
         if (MenuItem == 2) {
           //set_font_XY(64 + animate, 240  - 24);
-          set_font_XY(64 + animate, 240/2  - 24);
-          
+          set_font_XY(64 + animate, 240 / 2  - 24);
+
           draw_string(" Oscilloscope ", 48);
         }
         if (LCD_ENABLED) xQueueSend(vidQueue, &SCREENMEMORY, 0); //refresh LCD
@@ -782,20 +735,20 @@ uint8_t MENU() {
           }
         if (MenuItem == 1) {
           //set_font_XY(64 + animate, 240  - 24);
-          set_font_XY(64 + animate, 240/2  - 24);
-          
+          set_font_XY(64 + animate, 240 / 2  - 24);
+
           draw_string(" NES Emulator ", 48);
         }
         if (MenuItem == 2) {
           //set_font_XY(64 + animate, 240  - 24);
-          set_font_XY(64 + animate, 240/2  - 24);
+          set_font_XY(64 + animate, 240 / 2  - 24);
 
           draw_string(" Audio Player ", 48);
         }
         if (MenuItem == 0) {
           //set_font_XY(64 + animate, 240  - 24);
-          set_font_XY(64 + animate, 240/2  - 24);
-          
+          set_font_XY(64 + animate, 240 / 2  - 24);
+
           draw_string(" Oscilloscope ", 48);
         }
         if (LCD_ENABLED) xQueueSend(vidQueue, &SCREENMEMORY, 0); //refresh LCD
@@ -922,9 +875,8 @@ Audio audio;
 static void videoTask(void *arg) {
   int x = (320 - DEFAULT_WIDTH) / 2;
   int y = ((240 - DEFAULT_HEIGHT) / 2);
-  while (1) {
-    
 
+  while (1) {
     if (LCD_ENABLED) {
       xQueueReceive(vidQueue, &SCREENMEMORY, portMAX_DELAY);
       lcd_write_frame(x, y, DEFAULT_WIDTH, DEFAULT_HEIGHT);
@@ -933,20 +885,20 @@ static void videoTask(void *arg) {
   }
 }
 //--------------------------------------------------------------------------------
-bool oscilloscope_installed=false;
+bool oscilloscope_installed = false;
 TaskHandle_t task_adc;
 void install_oscilloscope() {
 #if COMPOSITE_VIDEO_ENABLED
-   xTaskCreatePinnedToCore(
-      core1_task,
-      "adc_handle",
-      20000,  // Stack size in words
-      NULL,  // Task input parameter
-      3,  // Priority of the task
-      &task_adc,  // Task handle.
-      1 // Core where the task should run
-   );
-   oscilloscope_installed=true;
+  xTaskCreatePinnedToCore(
+    core1_task,
+    "adc_handle",
+    20000,  // Stack size in words
+    NULL,  // Task input parameter
+    3,  // Priority of the task
+    &task_adc,  // Task handle.
+    1 // Core where the task should run
+  );
+  oscilloscope_installed = true;
 #endif
 }
 //********************************************************************************
@@ -974,69 +926,69 @@ char* PATH;
 char loadmessage[64];
 unsigned char *getromdata(char* ROMFILENAME_)
 {
-   fp = SD.open(ROMFILENAME_);
-   if (DEBUG) Serial.print("FILE SIZE: ");
-   if (DEBUG) Serial.println(fp.size());
-   FILE_ROM_SIZE = fp.size();
+  fp = SD.open(ROMFILENAME_);
+  if (DEBUG) Serial.print("FILE SIZE: ");
+  if (DEBUG) Serial.println(fp.size());
+  FILE_ROM_SIZE = fp.size();
 
-   uint16_t BLOCKCOUNT = (FILE_ROM_SIZE + SPI_FLASH_SECTOR_SIZE) / SPI_FLASH_SECTOR_SIZE;
-   uint16_t BLOCKSIZEPX = DEFAULT_WIDTH / BLOCKCOUNT;
-   Serial.print("BLOCKCOUNT: ");
-   Serial.print(BLOCKCOUNT);
-   Serial.print(" BLOCKSIZEPX: ");
-   Serial.print(BLOCKSIZEPX);
-   Serial.println();
-   BLOCKSIZEPX++; 
+  uint16_t BLOCKCOUNT = (FILE_ROM_SIZE + SPI_FLASH_SECTOR_SIZE) / SPI_FLASH_SECTOR_SIZE;
+  uint16_t BLOCKSIZEPX = DEFAULT_WIDTH / BLOCKCOUNT;
+  Serial.print("BLOCKCOUNT: ");
+  Serial.print(BLOCKCOUNT);
+  Serial.print(" BLOCKSIZEPX: ");
+  Serial.print(BLOCKSIZEPX);
+  Serial.println();
+  BLOCKSIZEPX++;
 
-   if (PSRAMSIZE > 0) {
-      uint32_t i = 0;
-      for (i = 0; i < fp.size(); i++) {
-         PSRAM[i] = fp.read();
+  if (PSRAMSIZE > 0) {
+    uint32_t i = 0;
+    for (i = 0; i < fp.size(); i++) {
+      PSRAM[i] = fp.read();
+    }
+    fp.close();
+    return (unsigned char *)PSRAM;
+  } else {
+    //********************************************************************************
+    // Read NES rom to SPI FLASH!
+    uint32_t i = 0;
+    for (i = 0; i < fp.size() + SPI_FLASH_SECTOR_SIZE; i++) {
+      if (DEBUGEXTRA && i % SPI_FLASH_SECTOR_SIZE == 0) {
+        Serial.print("ROM loaded 4kB:");
+        Serial.println(i / 0x1000);
       }
-      fp.close();
-      return (unsigned char *)PSRAM;
-   } else {
-//********************************************************************************
-      // Read NES rom to SPI FLASH!
-      uint32_t i = 0;
-      for (i = 0; i < fp.size() + SPI_FLASH_SECTOR_SIZE; i++) {
-         if (DEBUGEXTRA && i % SPI_FLASH_SECTOR_SIZE == 0) {
-            Serial.print("ROM loaded 4kB:");
-            Serial.println(i / 0x1000);
-         }
-         if (i > 0 && i % SPI_FLASH_SECTOR_SIZE == 0) {
-            ///spi_flash_erase_sector(SPI_FLASH_ADDRESS/SPI_FLASH_SECTOR_SIZE + (i/SPI_FLASH_SECTOR_SIZE)-SPI_FLASH_SECTOR_SIZE);
-            delayMicroseconds(300);
-            spi_flash_erase_range(SPI_FLASH_ADDRESS + i - SPI_FLASH_SECTOR_SIZE, sizeof(flashdata));
-            delayMicroseconds(300);
-            spi_flash_write(SPI_FLASH_ADDRESS + i - SPI_FLASH_SECTOR_SIZE, flashdata, sizeof(flashdata));
-            delayMicroseconds(300);
+      if (i > 0 && i % SPI_FLASH_SECTOR_SIZE == 0) {
+        ///spi_flash_erase_sector(SPI_FLASH_ADDRESS/SPI_FLASH_SECTOR_SIZE + (i/SPI_FLASH_SECTOR_SIZE)-SPI_FLASH_SECTOR_SIZE);
+        delayMicroseconds(300);
+        spi_flash_erase_range(SPI_FLASH_ADDRESS + i - SPI_FLASH_SECTOR_SIZE, sizeof(flashdata));
+        delayMicroseconds(300);
+        spi_flash_write(SPI_FLASH_ADDRESS + i - SPI_FLASH_SECTOR_SIZE, flashdata, sizeof(flashdata));
+        delayMicroseconds(300);
 
-            sprintf(loadmessage, " %d / %d", i, FILE_ROM_SIZE);
-            set_font_XY(8, 8);
-            draw_string("Loaded:");
-            draw_string(loadmessage);
-            screenmemory_drawfillrectangle(((i / SPI_FLASH_SECTOR_SIZE) - 1)* BLOCKSIZEPX, 24, BLOCKSIZEPX, 16, 57);
-         }
-         delayMicroseconds(50);
-         if (fp.available()) flashdata[i % SPI_FLASH_SECTOR_SIZE] = fp.read();
-         delayMicroseconds(50);
+        sprintf(loadmessage, " %d / %d", i, FILE_ROM_SIZE);
+        set_font_XY(8, 8);
+        draw_string("Loaded:");
+        draw_string(loadmessage);
+        screenmemory_drawfillrectangle(((i / SPI_FLASH_SECTOR_SIZE) - 1)* BLOCKSIZEPX, 24, BLOCKSIZEPX, 16, 57);
       }
-      fp.close();
+      delayMicroseconds(50);
+      if (fp.available()) flashdata[i % SPI_FLASH_SECTOR_SIZE] = fp.read();
+      delayMicroseconds(50);
+    }
+    fp.close();
 
-      FLASH_ROM_SIZE = i; //Size of File and Offset Align
+    FLASH_ROM_SIZE = i; //Size of File and Offset Align
 
-      if (DEBUG) Serial.print("FLASH SIZE: ");
-      if (DEBUG) Serial.println(FLASH_ROM_SIZE);
+    if (DEBUG) Serial.print("FLASH SIZE: ");
+    if (DEBUG) Serial.println(FLASH_ROM_SIZE);
 
-      ROM = 0;
-      ///if (handle1) spi_flash_munmap(handle1);
-      printf("Mapping %x (+%x)\n", SPI_FLASH_ADDRESS, FLASH_ROM_SIZE);
-      ESP_ERROR_CHECK( spi_flash_mmap(SPI_FLASH_ADDRESS, FLASH_ROM_SIZE, SPI_FLASH_MMAP_DATA, &ROM, &handle1) );
-      printf("mmap_res: handle=%d ptr=%p\n", handle1, ROM);
-      Serial.println("[NES ROM MAPPED ON FLASH!]");
-      return (unsigned char *)ROM; 
-   }
+    ROM = 0;
+    ///if (handle1) spi_flash_munmap(handle1);
+    printf("Mapping %x (+%x)\n", SPI_FLASH_ADDRESS, FLASH_ROM_SIZE);
+    ESP_ERROR_CHECK( spi_flash_mmap(SPI_FLASH_ADDRESS, FLASH_ROM_SIZE, SPI_FLASH_MMAP_DATA, &ROM, &handle1) );
+    printf("mmap_res: handle=%d ptr=%p\n", handle1, ROM);
+    Serial.println("[NES ROM MAPPED ON FLASH!]");
+    return (unsigned char *)ROM;
+  }
 }
 //================================================================================
 
@@ -1048,91 +1000,90 @@ unsigned char *getromdata(char* ROMFILENAME_)
 //*  SETUP:                                                                      *
 //********************************************************************************
 void setup() {
-   Serial.begin(115200);
-   MEMORY_STATUS();
+  Serial.begin(115200);
+  MEMORY_STATUS();
 
-   if (ESP.getPsramSize() > 0) {
-      PSRAMSIZE = ESP.getPsramSize();
-      PSRAM = (uint8_t*)ps_malloc(2097152); //PSRAM malloc 2MB
-   } else {
-   }
+  if (ESP.getPsramSize() > 0) {
+    PSRAMSIZE = ESP.getPsramSize();
+    PSRAM = (uint8_t*)ps_malloc(2097152); //PSRAM malloc 2MB
+  }
 
-      printf("NO PSRAM DETECTED.");
-      PSRAMSIZE = 0;
+  printf("NO PSRAM DETECTED.");
+  PSRAMSIZE = 0;
 
-
-   Serial.print("Total PSRAM: ");
-   Serial.println(ESP.getPsramSize());
-   Serial.print("Free PSRAM: ");
-   Serial.println(ESP.getFreePsram());
+  Serial.print("Total PSRAM: ");
+  Serial.println(ESP.getPsramSize());
+  Serial.print("Free PSRAM: ");
+  Serial.println(ESP.getFreePsram());
 
 
-//--------------------------------------------------------------------------------
-   // VIDEO MEMORY ALLOCATION (force)
-   for (uint32_t tmp = 0; tmp < 240; tmp++) {
-      SCREENMEMORY[tmp] = (uint8_t*)malloc(256 + 1 );
-      memset(SCREENMEMORY[tmp], 0, 256);
-   }
-//--------------------------------------------------------------------------------
-   //Buttons Pins Input Init
-   pinMode(PIN_A, INPUT);    //A
-   pinMode(PIN_B, INPUT);   //B
-   pinMode(PIN_SELECT, INPUT);   //SELECT
-   pinMode(PIN_START, INPUT);   //START
-   pinMode(PIN_UP, INPUT);    //UP
-   pinMode(PIN_DOWN, INPUT);   //DOWN  //TCK
-   pinMode(PIN_LEFT, INPUT);       //LEFT
-   pinMode(PIN_RIGHT, INPUT_PULLDOWN);  //RIGHT
-//--------------------------------------------------------------------------------
+  //--------------------------------------------------------------------------------
+  // VIDEO MEMORY ALLOCATION (force)
+  for (uint32_t tmp = 0; tmp < 240; tmp++) {
+    SCREENMEMORY[tmp] = (uint8_t*)malloc(256 + 1 );
+    memset(SCREENMEMORY[tmp], 0, 256);
+  }
+  //--------------------------------------------------------------------------------
+  //Buttons Pins Input Init
+  pinMode(PIN_A, INPUT);    //A
+  pinMode(PIN_B, INPUT);   //B
+  pinMode(PIN_SELECT, INPUT);   //SELECT
+  pinMode(PIN_START, INPUT);   //START
+  pinMode(PIN_UP, INPUT);    //UP
+  pinMode(PIN_DOWN, INPUT);   //DOWN  //TCK
+  pinMode(PIN_LEFT, INPUT);       //LEFT
+  pinMode(PIN_RIGHT, INPUT_PULLDOWN);  //RIGHT
+  //--------------------------------------------------------------------------------
 #if LCD_ENABLED
-   // if the display has CS pin try with SPI_MODE0
-   tft.init(240, 240, SPI_MODE2);    // Init ST7789 display 240x240 pixel
-   // if the screen is flipped, remove this command
-   tft.setRotation(3);
-   tft.setSPISpeed(40000000); //max 40MHz for 1.3inch LCD!!! (80MHz only for 1.54inch LCD)
-   tft.fillScreen(ST77XX_BLACK); 
-
-   tft.println("NCAT SYSTEM: MEOW!..."); //??? :D
+  tft.begin();
+  tft.setRotation(1);
+  tft.setSPISpeed(30000000);
+  tft.fillScreen(ILI9341_BLACK);
 #endif
-//--------------------------------------------------------------------------------
+  //--------------------------------------------------------------------------------
 
-//--------------------------------------------------------------------------------
-   //DAC COMPOSITE VIDEO & ADC has setup here:
+  //--------------------------------------------------------------------------------
+  //DAC COMPOSITE VIDEO & ADC has setup here:
 #if COMPOSITE_VIDEO_ENABLED
-   video_init(4, 2, nes_32bit, 1); // start the A/V pump on app core
+  video_init(4, 2, nes_32bit, 1); // start the A/V pump on app core
 #endif
-//--------------------------------------------------------------------------------
-   //SCREENMEMORY LCD DRAW INIT
-   audiovideo_init();
-//--------------------------------------------------------------------------------
-   //PS2/USB KEYBOARD SUPPORT
+  //--------------------------------------------------------------------------------
+  //SCREENMEMORY LCD DRAW INIT
+  audiovideo_init();
+  //--------------------------------------------------------------------------------
+  //PS2/USB KEYBOARD SUPPORT
 #if KEYBOARD_ENABLED
-   kb_begin();
+  kb_begin();
 #endif
-//--------------------------------------------------------------------------------
-   //INTRO TEXT
-   screenmemory_fillscreen(63); //black color
-   set_font(Retro8x16); //Very important
-   set_font_XY(32, 240 / 2 - 8);
-   draw_string("NCat SYSTEM by Nathalis", 48);
-   delay(500);
-//--------------------------------------------------------------------------------
-   I2S0.conf.rx_start = 0; /// stop DMA ADC
-   I2S0.in_link.start = 0;
-//--------------------------------------------------------------------------------
-   //malloc MAINPATH for player browser
-   MAINPATH = (char*)malloc(256);
-//--------------------------------------------------------------------------------
-   ///microSD CARD INIT
-   if (!SD.begin(SD_CONFIG)) {
-      Serial.println("SD error!");
-   } else Serial.println("SD OK.");
-//--------------------------------------------------------------------------------
-   install_timer(60); //60Hz
-//--------------------------------------------------------------------------------
+  //--------------------------------------------------------------------------------
+  //INTRO TEXT
+  screenmemory_fillscreen(63); //black color
+  set_font(Retro8x16); //Very important
+  set_font_XY(32, 240 / 2 - 8);
+  draw_string("NCat SYSTEM by Nathalis", 48);
+  delay(500);
+  //--------------------------------------------------------------------------------
+  I2S0.conf.rx_start = 0; /// stop DMA ADC
+  I2S0.in_link.start = 0;
+  //--------------------------------------------------------------------------------
+  //malloc MAINPATH for player browser
+  MAINPATH = (char*)malloc(256);
+  //--------------------------------------------------------------------------------
+  //microSD CARD INIT
+  //if (!SD.begin(SD_CONFIG)) {
+  if (!SD.begin(SD_CS_PIN)) {
+    debug("SD error!");
+  } else {
+    debug("SD OK.");
+  }
+  //--------------------------------------------------------------------------------
+  install_timer(60); //60Hz
+  //--------------------------------------------------------------------------------
   ///... SETUP DONE
 
   MEMORY_STATUS();
+  
+  debug("setup finished");
 }
 
 
@@ -1140,30 +1091,39 @@ void setup() {
 //*  LOOP:                                                                       *
 //********************************************************************************
 
-int32_t tickcnt=0;
+int32_t tickcnt = 0;
 
 void loop() {
-  
+
   screenmemory_fillscreen(63); //black color
 
-  EXIT = 0;
-  switch (MENU()) {
+  EXIT = false;
+  uint8_t menuItem = MENU();
+  
+  const char *str = "menu: %d";
+  int len = strlen(str);
+  debug("loop::menu: %d", len, menuItem);
+  
+  switch (menuItem) {
     case 1:
 
       MEMORY_STATUS();
       //--------------------------------------------------------------------------------
-      Serial.println("Starting NES EMULATOR appliication.");
+      debug("Starting NES EMULATOR appliication.");
       screenmemory_fillscreen(63); //black color
 
       init_sound(); //START AUDIO
 
-      Serial.println("NES_POWER: ##################");
+      debug("NES_POWER: ##################");
 
       if (NULL == NESmachine) NESmachine = nes_create();
       if (NULL == NESmachine) {
-        if (DEBUG) Serial.println("Failed to create NES instance.");
-        if (DEBUG) tft.println("Failed to create NES instance.");
-        while (1) {} //FREEZE
+        debug("Failed to create NES instance.");
+        //FREEZE
+        while (1) {
+          debug("in freeze state!");
+          delay(500);
+        } 
       }
 
       sprintf(MAINPATH, "/NES/"); ///must be malloc(256);
@@ -1189,7 +1149,7 @@ void loop() {
       if (DEBUG) Serial.println("Inserting cartridge.");
       if (DEBUG) tft.println("Inserting cartridge.");
 
-//--------------------------------------------------------------------------------
+      //--------------------------------------------------------------------------------
 
       if (NULL == rominfo) rominfo = (rominfo_t*)malloc(sizeof(rominfo_t));
       if (NULL == rominfo) goto rom_load_fail;
@@ -1211,7 +1171,7 @@ void loop() {
       }
 
       // iNES format doesn't tell us if we need SRAM, so we have to always allocate it -- bleh!* UNIF, TAKE ME AWAY!  AAAAAAAAAA!!!
-      if (rom_allocsram(rominfo)) goto rom_load_fail; ///NEED FOR example: SMB2-LostLevels 
+      if (rom_allocsram(rominfo)) goto rom_load_fail; ///NEED FOR example: SMB2-LostLevels
       rom_loadtrainer(&romdata, rominfo);
       if (rom_loadrom(&romdata, rominfo)) goto rom_load_fail;
 
@@ -1228,7 +1188,7 @@ rom_load_fail:
 
 rom_load_success:
 
-//................................................................................
+      //................................................................................
 
       if (DEBUG) {
         Serial.println("ROMLOAD SUCCESS.");
@@ -1242,7 +1202,7 @@ rom_load_success:
         NESmachine->cpu->mem_page[6] = NESmachine->rominfo->sram;
         NESmachine->cpu->mem_page[7] = NESmachine->rominfo->sram + 0x1000;
       }
-      
+
       // mapper
       NESmachine->mmc = mmc_create(NESmachine->rominfo);
       if (NULL == NESmachine->mmc) goto inscart_fail;
@@ -1272,27 +1232,22 @@ inscart_success:
 
       MEMORY_STATUS();
 
-      
+
       //START!
       while (NES_POWER == 1) { //NES EMULATION LOOP
         tickcnt = millis();
 
         nes_renderframe(true);
-        /*#ifdef BLUETOOTH_ENABLED
-              hid_update();
-              PS4_JOY();
-          #endif      */
-
-        tickcnt = millis() - tickcnt; 
-        if (tickcnt>0 && tickcnt < 16) vTaskDelay(16-tickcnt); //delay before next frame          
+        tickcnt = millis() - tickcnt;
+        if (tickcnt > 0 && tickcnt < 16) vTaskDelay(16 - tickcnt); //delay before next frame
       }
       delay(1000);
       osd_stopsound(); ///must be delayed because crash...
-      if (rominfo->sram!=NULL) free(rominfo->sram); ///free SRAM
+      if (rominfo->sram != NULL) free(rominfo->sram); ///free SRAM
 
       MEMORY_STATUS();
       NES_POWER = 1;
-//--------------------------------------------------------------------------------
+      //--------------------------------------------------------------------------------
       break;
     case 2:
       MEMORY_STATUS();
@@ -1308,7 +1263,7 @@ inscart_success:
         filename[tmp] = (char*)malloc(MAXFILENAME_LENGTH);
       }
       audio.m_outBuff = (int16_t*)malloc(2048 * 2  * 2); //malloc 16bit * 2*2048
-      
+
       audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
       audio.setVolume(VOLUME); // 0...21
 
@@ -1365,7 +1320,7 @@ inscart_success:
 
           //PAUSE
           if ((JOY_OPTIONS == 0 && JOY_SHARE == 1) || digitalRead(PIN_A) == 1) {
-            audio.pauseResume();            
+            audio.pauseResume();
             if (PAUSED == false) PAUSED = true;
             else PAUSED = false;
             delay(200);
@@ -1402,11 +1357,11 @@ inscart_success:
             if (PLAYINGFILE < TOTALFILES - 1) PLAYINGFILE++;
             PREVNEXT(MAINPATH, PLAYINGFILE);
             if (DEBUG) {
-               Serial.print(PLAYINGFILE + 1);
-               Serial.print('/');
-               Serial.println(TOTALFILES);
-               Serial.println(MAINPATH);
-            }   
+              Serial.print(PLAYINGFILE + 1);
+              Serial.print('/');
+              Serial.println(TOTALFILES);
+              Serial.println(MAINPATH);
+            }
 
             audio.stopSong();
             audio.connecttoFS(SD, MAINPATH);
@@ -1429,12 +1384,12 @@ inscart_success:
             if (PLAYINGFILE < TOTALFILES - 1) PLAYINGFILE++;
             PREVNEXT(MAINPATH, PLAYINGFILE);
             if (DEBUG) {
-               Serial.print(PLAYINGFILE + 1);
-               Serial.print('/');
-               Serial.println(TOTALFILES);
-               Serial.println(MAINPATH);
+              Serial.print(PLAYINGFILE + 1);
+              Serial.print('/');
+              Serial.println(TOTALFILES);
+              Serial.println(MAINPATH);
             }
-            
+
             audio.stopSong();
             audio.connecttoFS(SD, MAINPATH);
             screenmemory_fillscreen(63); //black color
@@ -1459,10 +1414,10 @@ inscart_success:
             if (PLAYINGFILE > 0) PLAYINGFILE--;
             PREVNEXT(MAINPATH, PLAYINGFILE);
             if (DEBUG) {
-               Serial.print(PLAYINGFILE + 1);
-               Serial.print('/');
-               Serial.println(TOTALFILES);
-               Serial.println(MAINPATH);
+              Serial.print(PLAYINGFILE + 1);
+              Serial.print('/');
+              Serial.println(TOTALFILES);
+              Serial.println(MAINPATH);
             }
 
             audio.stopSong();
@@ -1495,11 +1450,11 @@ inscart_success:
           }
 
         }
-//................................................................................
+        //................................................................................
       }
       Serial.println("Exiting Player application.");
-      PLAYING=false;
-      
+      PLAYING = false;
+
       audio.Uninstall();
 
       delay(200);
@@ -1510,35 +1465,35 @@ inscart_success:
       }
 
       MEMORY_STATUS();
-//--------------------------------------------------------------------------------
+      //--------------------------------------------------------------------------------
       break;
     case 3:
       MEMORY_STATUS();
-//--------------------------------------------------------------------------------
+      //--------------------------------------------------------------------------------
       Serial.println("Starting Oscilloscope application.");
 #if COMPOSITE_VIDEO_ENABLED
-      for (uint32_t tmp = 0; tmp < 50; tmp++) dma_buff[tmp] = (uint16_t*)heap_caps_malloc((NUM_SAMPLES) * sizeof(uint16_t), MALLOC_CAP_INTERNAL|MALLOC_CAP_DMA);
+      for (uint32_t tmp = 0; tmp < 50; tmp++) dma_buff[tmp] = (uint16_t*)heap_caps_malloc((NUM_SAMPLES) * sizeof(uint16_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA);
 
-      rtc_clk_apll_enable(1, 222, 115, 7,0);   //28,636363636 MHz (doubled)   ///tunned maybe ok
-      I2S0.sample_rate_conf.tx_bck_div_num = 2;        
+      rtc_clk_apll_enable(1, 222, 115, 7, 0);  //28,636363636 MHz (doubled)   ///tunned maybe ok
+      I2S0.sample_rate_conf.tx_bck_div_num = 2;
       I2S0.sample_rate_conf.rx_bck_div_num = 2; //2x scale time base
 
       REINIT_ADC();
       adc_i2s_mode_init(ADC_UNIT_1, ADC_CHANNEL_6);
       adc_power_on();
-       
+
       delay(250);
 
       I2S0.conf.rx_start = 1; /// start DMA ADC
 
       ///vTaskDelete( task_adc );
-      if (oscilloscope_installed==false) install_oscilloscope();
+      if (oscilloscope_installed == false) install_oscilloscope();
       else vTaskResume( task_adc );
 
-      timebase_switched=true;
+      timebase_switched = true;
 
       while (!EXIT) {
-         delay(100);
+        delay(100);
       }
       Serial.println("Exiting Oscilloscope application.");
 
@@ -1546,25 +1501,25 @@ inscart_success:
       I2S0.in_link.start   = 0;
 
       delay(300);
-      
+
       ///vTaskDelete( task_adc );
       vTaskSuspend( task_adc );
 
       delay(300);
 
       for (uint32_t buff_idx = 0; buff_idx < 50; buff_idx++) {
-         dma_descriptor[buff_idx].length = 0; //number of byte written to the buffer
-         ///    dma_descriptor[buff_idx].size = sizeof(dma_buff[buff_idx]); //max size of the buffer in bytes
-         dma_descriptor[buff_idx].size = 0;  //max size of the buffer in bytes
-         dma_descriptor[buff_idx].owner = 0;
-         dma_descriptor[buff_idx].sosf = 0;
-         dma_descriptor[buff_idx].buf = NULL;
-         dma_descriptor[buff_idx].offset = 0;
-         dma_descriptor[buff_idx].empty = 0;
-         dma_descriptor[buff_idx].eof = 0;
-         //pointer to the next descriptor
-         if (buff_idx == 49) dma_descriptor[buff_idx].qe.stqe_next = &dma_descriptor[0];
-         else dma_descriptor[buff_idx].qe.stqe_next = &dma_descriptor[buff_idx + 1];
+        dma_descriptor[buff_idx].length = 0; //number of byte written to the buffer
+        ///    dma_descriptor[buff_idx].size = sizeof(dma_buff[buff_idx]); //max size of the buffer in bytes
+        dma_descriptor[buff_idx].size = 0;  //max size of the buffer in bytes
+        dma_descriptor[buff_idx].owner = 0;
+        dma_descriptor[buff_idx].sosf = 0;
+        dma_descriptor[buff_idx].buf = NULL;
+        dma_descriptor[buff_idx].offset = 0;
+        dma_descriptor[buff_idx].empty = 0;
+        dma_descriptor[buff_idx].eof = 0;
+        //pointer to the next descriptor
+        if (buff_idx == 49) dma_descriptor[buff_idx].qe.stqe_next = &dma_descriptor[0];
+        else dma_descriptor[buff_idx].qe.stqe_next = &dma_descriptor[buff_idx + 1];
       }
 
       delay(300); ///required maybe??
@@ -1575,7 +1530,7 @@ inscart_success:
       screenmemory_fillscreen(63); //black color
 
       rtc_clk_apll_enable(1, 70, 151, 4, 1);  //14.3181818182Mhz
-      I2S0.sample_rate_conf.tx_bck_div_num = 1;        
+      I2S0.sample_rate_conf.tx_bck_div_num = 1;
       I2S0.sample_rate_conf.rx_bck_div_num = 2; //2x scale time base
 
       MEMORY_STATUS();
@@ -1591,6 +1546,3 @@ inscart_success:
   JOY_OPTIONS = 0;
   EXIT = false;
 }
-//********************************************************************************
-//*  ...END.                                                                     *
-//********************************************************************************

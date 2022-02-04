@@ -12,7 +12,7 @@
 #include "Arduino.h"
 #include "SPI.h"
 
-#include "../../../src/sdfat-beta/src/SdFat.h"
+#include <SdFat.h>
 
 ///#include "SD.h"
 ///#include "FS.h"
