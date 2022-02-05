@@ -7,4 +7,11 @@ Planned changes:
  - add PCF8574N for keyboard (keys)
  - add charger module
  - change to Max98357A I2S module
+ 
+Required libraries:
+ - Adafruit_GFX (https://github.com/adafruit/Adafruit-GFX-Library)
+ - Adafruit_ILI9341 (https://github.com/adafruit/Adafruit_ILI9341)
+ - SdFat (https://github.com/greiman/SdFat)
+ - arduinoFFT (https://github.com/kosme/arduinoFFT)
+ - ESP32-audioI2S (https://github.com/schreibfaul1/ESP32-audioI2S)
 

@@ -1,3 +1,6 @@
+
+#include "utils.h"
+
 //***************************************************************************************
 #define SAMPLES 128
 uint16_t value;
@@ -154,12 +157,6 @@ char* EXPLORE(char* PATH) {
           && (fileext[2] == 'V' || fileext[2] == 'v')) {
         num++;
       }
-      //OGG not supported
-      /*if ((fileext[num][0] == 'O' || fileext[num][0] == 'o')
-         && (fileext[num][1] == 'G' || fileext[num][1] == 'g')
-         && (fileext[num][2] == 'G' || fileext[num][2] == 'g')) {
-            num++;
-        }*/
     }
     loadedFileNames = num;
     file.close();
@@ -181,11 +178,6 @@ char* EXPLORE(char* PATH) {
   bool NamesDisplayed = false;
 
   while (1) {
-#if BLUETOOTH_ENABLED
-    ///      hid_update();
-    ///      PS4_JOY();
-#endif
-
     PAGE = CURSOR / FILESPERPAGE;
     if (!NamesDisplayed) {
       screenmemory_fillscreen(63); //black color
