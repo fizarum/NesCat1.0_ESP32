@@ -1,3 +1,5 @@
+#include "utils.h"
+
 //--------------------------------------------------------------------------------
 ///TYPEDEFS:
 
@@ -337,13 +339,6 @@ char* NESEXPLORE(char* PATH) {
   bool NamesDisplayed = false;
 
   while (1) {
-
-
-
-#if BLUETOOTH_ENABLED
-    ///      hid_update();
-    ///      PS4_JOY();
-#endif
     PAGE = CURSOR / FILESPERPAGE;
     if (!NamesDisplayed) {
       screenmemory_fillscreen(63); //black color

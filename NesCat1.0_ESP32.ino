@@ -47,12 +47,6 @@
 //*                                                                              *
 //********************************************************************************
 
-// Enable modified included libraries in "/src/" folder but if you have libraries conflict try:
-// ... in other case you need copy modified from "/LIBRARIES/" to "/Arduino/libraries/" folder
-// and disable this option in this case (but you must delete modified included libraries from "/src/" folder):
-
-#define INCLUDED_LIBRARIES true //better enable this feature!                           
-
 #define LCD_ENABLED true
 #define COMPOSITE_VIDEO_ENABLED true  //Do not disable! it also disable ADC.
 #define KEYBOARD_ENABLED true
@@ -143,59 +137,39 @@
 
 //LIBRARIES:
 #include "Arduino.h"
-//AUDIO_i2S:
 
-//********************************************************************************
-#if INCLUDED_LIBRARIES
-
+//display
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 
-//micro_SD_Card:
-#include <SdFat.h> // Use SDFAT-beta...
+//micro_SD_Card
+#include <SdFat.h>
 
-//AUDIO_i2S:
+
+//AUDIO_i2S
 #if SOUND_ENABLED
 #include "driver/i2s.h"
-#endif
+#endif //SOUND_ENABLED
 
-//player LIBs
+#include <arduinoFFT.h>
+
+//#include "Audio.h" //ESP32-audioI2S
 #include "src/ESP32-audioI2S/src/Audio.h" // Use SDFAT-beta...
 
-//--------------------------------------------------------------------------------
-///#include "arduinoFFT.h" // Standard Arduino FFT library
-#include "src/arduinoFFT/src/arduinoFFT.h" // Standard Arduino FFT library
-
-//********************************************************************************
-#else
-//********************************************************************************
-
-//player LIBs
-#include "Audio.h" //ESP32-audioI2S
-
-#include "arduinoFFT.h" // Standard Arduino FFT library
-//********************************************************************************
-#endif
-
-// https://github.com/kosme/arduinoFFT, in IDE, Sketch, Include Library, Manage Library, then search for FFT
 arduinoFFT FFT = arduinoFFT();
-
-//********************************************************************************
 //SETUP:
 #define SPI_CLOCK SD_SCK_MHZ(30)
 #define SD_CONFIG SdSpiConfig(SD_CS_PIN, DEDICATED_SPI, SPI_CLOCK)
 SdFat SD;
 File fp;
 
-//#define ST7789_DRIVER     // Configure all registers
 #define TFT_WIDTH  320
 #define TFT_HEIGHT 240
 #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes in FLASH
 #define LOAD_FONT2  // Font 2. Small 16 pixel high font, needs ~3534 bytes in FLASH, 96 characters
 #define LOAD_FONT4  // Font 4. Medium 26 pixel high font, needs ~5848 bytes in FLASH, 96 characters
 
-//Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_CLK, TFT_RST, TFT_MISO);
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
 //********************************************************************************
@@ -375,14 +349,11 @@ void kb_begin() {
 
 //COMPOSITE_VIDEO_OUT
 #if COMPOSITE_VIDEO_ENABLED
-#include "src/compositevideo/video.h"
+#include "src/compositevideo.h"
 #endif
 
 //MAIN FONT
 #include "Retro8x16.c" //used font...
-
-//MENU ICON
-#include "icons.c" //used font...
 
 //===============================================================================
 //===============================================================================
@@ -500,8 +471,6 @@ uint8_t draw_char_xy(uint16_t Main_x, uint16_t Main_y, char Main_char, const cha
 uint16_t draw_string_xy(uint16_t x, uint16_t y, char *c, const char* font, uint8_t color = 48)
 {
   uint8_t width;
-  uint8_t XcharSize = font[0]; //x char size
-  uint8_t YcharSize = font[1]; //y char size
   uint16_t textwidth = 0;
   while (*c) {
     width = draw_char_xy(x, y, *c, font, color);
@@ -537,21 +506,13 @@ void draw_string(char *c, uint8_t color = 48) {
 }
 //--------------------------------------------------------------------------------
 static void lcd_write_frame(const uint16_t x, const uint16_t y, const uint16_t width, const uint16_t height) {
-  uint8_t n, l;
-  uint16_t i, len;
-  uint16_t w = TFT_WIDTH;
-  uint16_t h = TFT_HEIGHT;
   uint16_t X_ = 0;
+  uint16_t i;
 
   for (i = 0; i < height; i++) {
-    uint16_t horizontal_offset = 8;
-    ///      for (X_ = 0; X_ < 240; X_++) { //not 256 the 240
-    ///         SCREENBUFFER[X_] = nes_16bit[(0x3F & ((uint8_t *)SCREENMEMORY[i])[X_])];
-    ///      }
     for (X_ = 8; X_ < 248; X_++) { //not 256 the 240
       SCREENBUFFER[X_] = nes_16bit[(0x3F & ((uint8_t *)SCREENMEMORY[i])[X_])];
     }
-
 
     ///PAL optimalisation in this case:
     tft.drawRGBBitmap(0, i, (uint16_t *)(SCREENBUFFER), 48, 1);
@@ -572,9 +533,7 @@ int audiovideo_init() {
 
 #ifdef LCD_ENABLED
   xTaskCreatePinnedToCore(&videoTask, "videoTask", 2048, NULL, 0, NULL, 0 );
-#ifdef DEBUG
-  Serial.println("videoTask Pinned To Core 0...");
-#endif //DEBUG
+  debug("videoTask Pinned To Core 0...");
 #endif //LCD_ENABLED
   return 0;
 }
@@ -591,10 +550,6 @@ int audiovideo_init() {
 uint8_t MenuItem = 0;
 uint8_t MENU() {
   //init first icon
-  for (int16_t Ypos = 0; Ypos < 240; Ypos++)
-    for (int16_t Xpos = 0; Xpos < 240; Xpos++) {
-      ///if (MenuItem == 0) SCREENMEMORY[Ypos][Xpos] = NESEMUICON[Ypos * 240 + Xpos];
-    }
   if (MenuItem == 0) {
     set_font_XY(64, 240 / 2  - 24);
     draw_string(" NES Emulator ", 48);
@@ -619,18 +574,11 @@ uint8_t MENU() {
     }
     //--------------------------------------------------------------------------------
     if (JOY_RIGHT == 1)  {
-      //for (int16_t animate = 0; animate < 240; animate += 4) {
       for (int16_t animate = 0; animate < 240; animate += 1) {
         delay(3);
         for (int16_t Ypos = 0; Ypos < 240; Ypos++)
           for (int16_t Xpos = 0; Xpos < 240; Xpos++) {
             if (Xpos - animate > 0) { //scroll right->left
-
-              //ICONS are disabled for FLASH WRITE to unused sectors (for no PSRAM mode)
-
-              ///if (MenuItem == 0) SCREENMEMORY[Ypos][Xpos - animate] = NESEMUICON[Ypos * 240 + Xpos];
-              ///if (MenuItem == 1) SCREENMEMORY[Ypos][Xpos - animate] = PLAYERICON[Ypos * 240 + Xpos];
-              ///if (MenuItem == 2) SCREENMEMORY[Ypos][Xpos - animate] = OSCICON[Ypos * 240 + Xpos];
 
             }
           }
@@ -660,9 +608,6 @@ uint8_t MENU() {
         for (int16_t Ypos = 0; Ypos < 240; Ypos++)
           for (int16_t Xpos = 0; Xpos < 240; Xpos++) {
             if (Xpos - animate > 0) { //scroll right->left
-              ///if (MenuItem == 2) SCREENMEMORY[Ypos][Xpos] = NESEMUICON[Ypos * 240 + Xpos - animate];
-              ///if (MenuItem == 1) SCREENMEMORY[Ypos][Xpos] = OSCICON[Ypos * 240 + Xpos - animate];
-              ///if (MenuItem == 0) SCREENMEMORY[Ypos][Xpos] = PLAYERICON[Ypos * 240 + Xpos - animate];
             }
           }
         if (MenuItem == 1) {
@@ -697,9 +642,6 @@ uint8_t MENU() {
         for (int16_t Ypos = 0; Ypos < 240; Ypos++)
           for (int16_t Xpos = animate; Xpos < 240; Xpos++) {
             if (Xpos - animate > 0) { //scroll left->right
-              ///if (MenuItem == 0) SCREENMEMORY[Ypos][Xpos] = NESEMUICON[Ypos * 240 + Xpos - animate];
-              ///if (MenuItem == 1) SCREENMEMORY[Ypos][Xpos] = PLAYERICON[Ypos * 240 + Xpos - animate];
-              ///if (MenuItem == 2) SCREENMEMORY[Ypos][Xpos] = OSCICON[Ypos * 240 + Xpos - animate];
             }
           }
         if (MenuItem == 0) {
@@ -728,9 +670,6 @@ uint8_t MENU() {
         for (int16_t Ypos = 0; Ypos < 240; Ypos++)
           for (int16_t Xpos = 0; Xpos < 240; Xpos++) {
             if (Xpos + animate > 0) { //scrollinoto left->right
-              ///if (MenuItem == 0) SCREENMEMORY[Ypos][Xpos + animate] = OSCICON[Ypos * 240 + Xpos];
-              ///if (MenuItem == 1) SCREENMEMORY[Ypos][Xpos + animate] = NESEMUICON[Ypos * 240 + Xpos];
-              ///if (MenuItem == 2) SCREENMEMORY[Ypos][Xpos + animate] = PLAYERICON[Ypos * 240 + Xpos];
             }
           }
         if (MenuItem == 1) {
@@ -772,7 +711,6 @@ uint8_t MENU() {
 bool EXIT = false;
 
 #define MAXFILES 512
-#define MAXFILENAME_LENGTH 64
 char* filename[MAXFILES];
 char fileext[4];
 #define FILESPERPAGE 8
@@ -783,25 +721,6 @@ SdFile file;
 char* MAINPATH;
 char textbuf[64] = {0};
 
-//--------------------------------------------------------------------------------
-void sortStrings(char* arr[], int n)
-{
-  char temp[MAXFILENAME_LENGTH];
-
-  // Sorting strings using bubble sort
-  for (int j = 0; j < n - 1; j++)
-  {
-    for (int i = j + 1; i < n; i++)
-    {
-      if (strcmp(arr[j], arr[i]) > 0)
-      {
-        strcpy(temp, arr[j]);
-        strcpy(arr[j], arr[i]);
-        strcpy(arr[i], temp);
-      }
-    }
-  }
-}
 //--------------------------------------------------------------------------------
 void secondsToHMS( const uint32_t seconds, uint16_t &h, uint8_t &m, uint8_t &s ) {
   uint32_t t = seconds;
@@ -1008,7 +927,7 @@ void setup() {
     PSRAM = (uint8_t*)ps_malloc(2097152); //PSRAM malloc 2MB
   }
 
-  printf("NO PSRAM DETECTED.");
+  debug("NO PSRAM DETECTED.");
   PSRAMSIZE = 0;
 
   Serial.print("Total PSRAM: ");
@@ -1037,7 +956,7 @@ void setup() {
 #if LCD_ENABLED
   tft.begin();
   tft.setRotation(1);
-  tft.setSPISpeed(30000000);
+  tft.setSPISpeed(40000000);
   tft.fillScreen(ILI9341_BLACK);
 #endif
   //--------------------------------------------------------------------------------
@@ -1070,8 +989,7 @@ void setup() {
   MAINPATH = (char*)malloc(256);
   //--------------------------------------------------------------------------------
   //microSD CARD INIT
-  //if (!SD.begin(SD_CONFIG)) {
-  if (!SD.begin(SD_CS_PIN)) {
+  if (!SD.begin(SD_CONFIG)) {
     debug("SD error!");
   } else {
     debug("SD OK.");
