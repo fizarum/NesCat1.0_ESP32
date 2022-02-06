@@ -1,54 +1,54 @@
 #include "utils.h"
 
 //--------------------------------------------------------------------------------
-///TYPEDEFS:
+/// TYPEDEFS:
 
 // Define this if running on little-endian (x86) systems
-#define  HOST_LITTLE_ENDIAN //!!! important for Arduino
-#define  ZERO_LENGTH 0
+#define HOST_LITTLE_ENDIAN  //!!! important for Arduino
+#define ZERO_LENGTH 0
 
 // quell stupid compiler warnings
-#define  UNUSED(x)   ((x) = (x))
+#define UNUSED(x) ((x) = (x))
 
 //================================================================================
-//AUDIO_SETUP
+// AUDIO_SETUP
 #define DEFAULT_SAMPLERATE 24000
-#define DEFAULT_FRAGSIZE 60 //max.256, default 240
+#define DEFAULT_FRAGSIZE 60  // max.256, default 240
 
-//VIDEO_SETUP
-// Visible (NTSC) screen height
+// VIDEO_SETUP
+//  Visible (NTSC) screen height
 #ifndef NES_VISIBLE_HEIGHT
-#define  NES_VISIBLE_HEIGHT   240
-#endif // !NES_VISIBLE_HEIGHT 
-#define  NES_SCREEN_WIDTH     256
-#define  NES_SCREEN_HEIGHT    240
+#define NES_VISIBLE_HEIGHT 240
+#endif  // !NES_VISIBLE_HEIGHT
+#define NES_SCREEN_WIDTH 256
+#define NES_SCREEN_HEIGHT 240
 
 #define PAL
 
 // NTSC = 60Hz, PAL = 50Hz
 #ifdef PAL
-#define  NES_REFRESH_RATE     50
+#define NES_REFRESH_RATE 50
 #else
-#define  NES_REFRESH_RATE     60
+#define NES_REFRESH_RATE 60
 #endif
 
-#define  MAX_MEM_HANDLERS     32
+#define MAX_MEM_HANDLERS 32
 
 #define DEFAULT_WIDTH NES_SCREEN_WIDTH
 #define DEFAULT_HEIGHT NES_VISIBLE_HEIGHT
 
-#define  NES_CLOCK_DIVIDER    12  //default: 12
+#define NES_CLOCK_DIVIDER 12  // default: 12
 //#define  NES_MASTER_CLOCK     21477272.727272727272
-#define  NES_MASTER_CLOCK     (236250000 / 11)
-#define  NES_SCANLINE_CYCLES  (1364.0 / NES_CLOCK_DIVIDER)
-#define  NES_FIQ_PERIOD       (NES_MASTER_CLOCK / NES_CLOCK_DIVIDER / 60)
+#define NES_MASTER_CLOCK (236250000 / 11)
+#define NES_SCANLINE_CYCLES (1364.0 / NES_CLOCK_DIVIDER)
+#define NES_FIQ_PERIOD (NES_MASTER_CLOCK / NES_CLOCK_DIVIDER / 60)
 
-#define  NES_RAMSIZE          0x800
+#define NES_RAMSIZE 0x800
 
-#define  NES6502_NUMBANKS  16
-#define  NES6502_BANKSHIFT 12
-#define  NES6502_BANKSIZE  (0x10000 / NES6502_NUMBANKS)
-#define  NES6502_BANKMASK  (NES6502_BANKSIZE - 1)
+#define NES6502_NUMBANKS 16
+#define NES6502_BANKSHIFT 12
+#define NES6502_BANKSIZE (0x10000 / NES6502_NUMBANKS)
+#define NES6502_BANKMASK (NES6502_BANKSIZE - 1)
 
 uint8_t NES_POWER = 1;
 
@@ -72,108 +72,109 @@ uint8_t get_pad0(void) {
 
   //  12, 33, 9, 10 pin not usable
 
-  if (digitalRead(PIN_A) == 1) value |= 1; //A
-  if (digitalRead(PIN_B) == 1) value |= 2; //B
-  if (digitalRead(PIN_SELECT) == 1) value |= 4; //SELECT
-  if (digitalRead(PIN_START) == 1) value |= 8; //START
-  if (digitalRead(PIN_UP) == 1) value |= 16; //UP
-  if (digitalRead(PIN_DOWN) == 1) value |= 32; //DOWN
-  if (digitalRead(PIN_LEFT) == 1) value |= 64; //LEFT
-  if (digitalRead(PIN_RIGHT) == 1) value |= 128; //RIGHT
+  if (digitalRead(PIN_A) == 1) value |= 1;        // A
+  if (digitalRead(PIN_B) == 1) value |= 2;        // B
+  if (digitalRead(PIN_SELECT) == 1) value |= 4;   // SELECT
+  if (digitalRead(PIN_START) == 1) value |= 8;    // START
+  if (digitalRead(PIN_UP) == 1) value |= 16;      // UP
+  if (digitalRead(PIN_DOWN) == 1) value |= 32;    // DOWN
+  if (digitalRead(PIN_LEFT) == 1) value |= 64;    // LEFT
+  if (digitalRead(PIN_RIGHT) == 1) value |= 128;  // RIGHT
 
   if (digitalRead(PIN_SELECT) == 1 && digitalRead(PIN_START) == 1) {
-    ///osd_stopsound();
-    ///audio_callback = NULL;
+    /// osd_stopsound();
+    /// audio_callback = NULL;
 
-
-    NES_POWER = 0; //EXIT
+    NES_POWER = 0;  // EXIT
   }
 
-  //EJECT EMULATOR
+  // EJECT EMULATOR
   if (JOY_SHARE == 1 && JOY_OPTIONS == 1) {
-    ///osd_stopsound();
-
+    /// osd_stopsound();
 
     JOY_SHARE = 0;
     JOY_OPTIONS = 0;
     NES_POWER = 0;
   }
 
-  if (JOY_SHARE == 1) value |= 8; //START
-  if (JOY_OPTIONS == 1) value |= 4; //SELECT
+  if (JOY_SHARE == 1) value |= 8;    // START
+  if (JOY_OPTIONS == 1) value |= 4;  // SELECT
 
-  if (JOY_UP == 1) value |= 16; //UP
-  if (JOY_DOWN == 1) value |= 32; //DOWN
-  if (JOY_LEFT == 1) value |= 64; //LEFT
-  if (JOY_RIGHT == 1) value |= 128; //RIGHT
-  if (JOY_CROSS == 1) value |= 1; //A
-  if (JOY_SQUARE == 1) value |= 2; //B
+  if (JOY_UP == 1) value |= 16;      // UP
+  if (JOY_DOWN == 1) value |= 32;    // DOWN
+  if (JOY_LEFT == 1) value |= 64;    // LEFT
+  if (JOY_RIGHT == 1) value |= 128;  // RIGHT
+  if (JOY_CROSS == 1) value |= 1;    // A
+  if (JOY_SQUARE == 1) value |= 2;   // B
   ///  if (JOY_CIRCLE==1) Serial.println("JOY_CIRCLE");
   ///  if (JOY_TRIANGLE==1) Serial.println("JOY_TRIANGLE");
 
   // mask out left/right simultaneous keypresses
-  ///  if ((value & JOY_UP) && (value & JOY_DOWN)) value &= ~(JOY_UP | JOY_DOWN);
-  ///  if ((value & JOY_LEFT) && (value & JOY_RIGHT)) value &= ~(JOY_LEFT | JOY_RIGHT);
+  ///  if ((value & JOY_UP) && (value & JOY_DOWN)) value &= ~(JOY_UP |
+  ///  JOY_DOWN); if ((value & JOY_LEFT) && (value & JOY_RIGHT)) value &=
+  ///  ~(JOY_LEFT | JOY_RIGHT);
   // return (0x40 | value) due to bus conflicts
-  ///return (0x40 | ((value >> pad0_readcount++) & 1));
+  /// return (0x40 | ((value >> pad0_readcount++) & 1));
   return (((value >> pad0_readcount++) & 1));
 }
 //********************************************************************************
 //================================================================================
-
 
 //********************************************************************************
 //********************************************************************************
 //********************************************************************************
 TimerHandle_t timer_1;
 
-//Seemingly, this will be called only once. Should call func with a freq of frequency,
-IRAM_ATTR int osd_installtimer_1(int frequency, void *func, int funcsize, void *counter, int countersize)
-{
+// Seemingly, this will be called only once. Should call func with a freq of
+// frequency,
+IRAM_ATTR int osd_installtimer_1(int frequency, void *func, int funcsize,
+                                 void *counter, int countersize) {
   if (DEBUG) Serial.print("Timer install, freq=");
   if (DEBUG) Serial.println(frequency);
   delay(1000);
-  timer_1 = xTimerCreate("nes_hid", configTICK_RATE_HZ / frequency, pdTRUE, NULL, (TimerCallbackFunction_t)func);
+  timer_1 = xTimerCreate("nes_hid", configTICK_RATE_HZ / frequency, pdTRUE,
+                         NULL, (TimerCallbackFunction_t)func);
   xTimerStart(timer_1, 0);
   return 0;
 }
 //********************************************************************************
 //................................................................................
-//AUDIO SETUP
-typedef struct sndinfo_s
-{
+// AUDIO SETUP
+typedef struct sndinfo_s {
   int sample_rate;
   int bps;
 } sndinfo_t;
-
 
 #if SOUND_ENABLED
 
 intr_handle_t i2s_interrupt;
 
 i2s_pin_config_t pin_config = {
-  .bck_io_num = I2S_BCK_IO,
-  .ws_io_num = I2S_WS_IO,
-  .data_out_num = I2S_DO_IO,
-  .data_in_num = I2S_DI_IO                                               //Not used
+    .bck_io_num = I2S_BCK_IO,
+    .ws_io_num = I2S_WS_IO,
+    .data_out_num = I2S_DO_IO,
+    .data_in_num = I2S_DI_IO  // Not used
 };
 i2s_config_t audio_cfg = {
-  .mode = static_cast<i2s_mode_t>(I2S_MODE_MASTER | I2S_MODE_TX /*| I2S_MODE_DAC_BUILT_IN*/),
-  .sample_rate = DEFAULT_SAMPLERATE,
-  .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
-  ///.channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT,
-  .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
-  ///  .communication_format = static_cast<i2s_comm_format_t>(I2S_COMM_FORMAT_PCM | I2S_COMM_FORMAT_I2S_MSB),
-  .communication_format = static_cast<i2s_comm_format_t>(I2S_COMM_FORMAT_PCM | I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
-  .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1  /*| ESP_INTR_FLAG_IRAM  | ESP_INTR_FLAG_SHARED*/,
-  .dma_buf_count = 6,
-  // .dma_buf_len = 2 * DEFAULT_FRAGSIZE,
-  .dma_buf_len = 4 * DEFAULT_FRAGSIZE,
-  .use_apll = false
-};
+    .mode = static_cast<i2s_mode_t>(I2S_MODE_MASTER |
+                                    I2S_MODE_TX /*| I2S_MODE_DAC_BUILT_IN*/),
+    .sample_rate = DEFAULT_SAMPLERATE,
+    .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
+    ///.channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT,
+    .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
+    ///  .communication_format =
+    ///  static_cast<i2s_comm_format_t>(I2S_COMM_FORMAT_PCM |
+    ///  I2S_COMM_FORMAT_I2S_MSB),
+    .communication_format = static_cast<i2s_comm_format_t>(
+        I2S_COMM_FORMAT_PCM | I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
+    .intr_alloc_flags =
+        ESP_INTR_FLAG_LEVEL1 /*| ESP_INTR_FLAG_IRAM  | ESP_INTR_FLAG_SHARED*/,
+    .dma_buf_count = 6,
+    // .dma_buf_len = 2 * DEFAULT_FRAGSIZE,
+    .dma_buf_len = 4 * DEFAULT_FRAGSIZE,
+    .use_apll = false};
 #endif
-int init_sound(void)
-{
+int init_sound(void) {
 #if SOUND_ENABLED
   i2s_driver_install(I2S_NUM_1, &audio_cfg, 0, NULL);
   i2s_set_pin(I2S_NUM_1, &pin_config);
@@ -183,9 +184,8 @@ int init_sound(void)
   return 0;
 }
 
-void osd_setsound(void (*playfunc)(void *buffer, int length))
-{
-  //Indicates we should call playfunc() to get more data.
+void osd_setsound(void (*playfunc)(void *buffer, int length)) {
+  // Indicates we should call playfunc() to get more data.
   audio_callback = playfunc;
 }
 
@@ -196,8 +196,7 @@ void osd_stopsound(void)
 }
 
 void osd_getsoundinfo(sndinfo_t *info);
-void osd_getsoundinfo(sndinfo_t *info)
-{
+void osd_getsoundinfo(sndinfo_t *info) {
   info->sample_rate = DEFAULT_SAMPLERATE;
   info->bps = 16;
 }
@@ -210,35 +209,31 @@ QueueHandle_t queue;
 uint16_t audio_frame[2 * DEFAULT_FRAGSIZE];
 #endif
 
-void do_audio_frame()
-{
-  ///printf("do_audio_frame\n");
+void do_audio_frame() {
+  /// printf("do_audio_frame\n");
 
 #if SOUND_ENABLED
   int left = DEFAULT_SAMPLERATE / NES_REFRESH_RATE;
-  while (left)
-  {
+  while (left) {
     int n = DEFAULT_FRAGSIZE;
-    if (n > left)
-      n = left;
-    audio_callback(audio_frame, n); //get more data
+    if (n > left) n = left;
+    audio_callback(audio_frame, n);  // get more data
 
-
-    //16 bit mono -> 32-bit (16 bit r+l)
-    for (int i = n - 1; i >= 0; i--)
-    {
+    // 16 bit mono -> 32-bit (16 bit r+l)
+    for (int i = n - 1; i >= 0; i--) {
       //      audio_frame[i] = audio_frame[i] + 0x8000;
       ///      uint16_t a = (audio_frame[i] >> 3); //VEEERY BAD!
       uint16_t a = (audio_frame[i] >> 0);
       audio_frame[i * 2 + 1] = 0x8000 + a;
       audio_frame[i * 2] = 0x8000 - a;
 
-      ///Serial.print(audio_frame[i]);
+      /// Serial.print(audio_frame[i]);
     }
     size_t i2s_bytes_write;
-    // i2s_write(I2S_NUM_0, (const char *)audio_frame, 2 * n, &i2s_bytes_write, portMAX_DELAY);
-    // left -= i2s_bytes_write / 2;
-    i2s_write(I2S_NUM_1, (const char *)audio_frame, 4 * n, &i2s_bytes_write, portMAX_DELAY);
+    // i2s_write(I2S_NUM_0, (const char *)audio_frame, 2 * n, &i2s_bytes_write,
+    // portMAX_DELAY); left -= i2s_bytes_write / 2;
+    i2s_write(I2S_NUM_1, (const char *)audio_frame, 4 * n, &i2s_bytes_write,
+              portMAX_DELAY);
     left -= i2s_bytes_write / 4;
   }
 
@@ -249,27 +244,27 @@ void do_audio_frame()
 //--------------------------------------------------------------------------------
 // HID timer ISR
 volatile int time_ticks = 0;
-IRAM_ATTR static void timer_isr(void)
-{
+IRAM_ATTR static void timer_isr(void) {
   if (SOUND_ENABLED)
     if (audio_callback && NES_POWER == 1) do_audio_frame();
   time_ticks++;
 }
 IRAM_ATTR static void timer_isr_end(void) {}
 IRAM_ATTR int install_timer(int hertz) {
-  return osd_installtimer_1(hertz, (void *) timer_isr, (int) timer_isr_end - (int) timer_isr, (void *) &time_ticks, sizeof(time_ticks));
+  return osd_installtimer_1(hertz, (void *)timer_isr,
+                            (int)timer_isr_end - (int)timer_isr,
+                            (void *)&time_ticks, sizeof(time_ticks));
 }
 //--------------------------------------------------------------------------------
 
-
 //--------------------------------------------------------------------------------
-char* NESEXPLORE(char* PATH) {
+char *NESEXPLORE(char *PATH) {
   uint8_t num = 0;
   uint8_t loadedFileNames = 0;
 
-
-  //clear memory variables
-  for (uint16_t tmp = 0; tmp < MAXFILES; tmp++) memset (filename[tmp], 0, sizeof(filename[tmp]));
+  // clear memory variables
+  for (uint16_t tmp = 0; tmp < MAXFILES; tmp++)
+    memset(filename[tmp], 0, sizeof(filename[tmp]));
   fileext[0] = 0;
   fileext[1] = 0;
   fileext[2] = 0;
@@ -278,15 +273,15 @@ char* NESEXPLORE(char* PATH) {
   num = 0;
   loadedFileNames = 0;
 
-  //LOAD FILENAMES INTO MEMORY...
+  // LOAD FILENAMES INTO MEMORY...
 
-  //Load List files in root directory.
-  ///if (!dirFile.open("/", O_READ)) {
+  // Load List files in root directory.
+  /// if (!dirFile.open("/", O_READ)) {
   if (!dirFile.open(PATH, O_READ)) {
-    while (1) {};
+    while (1) {
+    };
   }
   while (num < MAXFILES && file.openNext(&dirFile, O_READ)) {
-
     // Skip hidden files.
     if (!file.isHidden()) {
       for (uint8_t i = strlen(filename[num]); i > 3; i--) filename[num][i] = 0;
@@ -307,17 +302,16 @@ char* NESEXPLORE(char* PATH) {
       }
 
       if (DEBUG) {
-        ///Serial.println(fileext[num]);
-        ///Serial.println(strlen(filename[num]));
+        /// Serial.println(fileext[num]);
+        /// Serial.println(strlen(filename[num]));
       }
 
-      //check NES File extension, then increase index
-      if ((fileext[0] == 'N' || fileext[0] == 'n')
-          && (fileext[1] == 'E' || fileext[1] == 'e')
-          && (fileext[2] == 'S' || fileext[2] == 's')) {
+      // check NES File extension, then increase index
+      if ((fileext[0] == 'N' || fileext[0] == 'n') &&
+          (fileext[1] == 'E' || fileext[1] == 'e') &&
+          (fileext[2] == 'S' || fileext[2] == 's')) {
         num++;
       }
-
     }
     loadedFileNames = num;
     file.close();
@@ -333,7 +327,7 @@ char* NESEXPLORE(char* PATH) {
 
   sortStrings(filename, loadedFileNames);
 
-  //DRAW FILENAMES INTO BUFFER
+  // DRAW FILENAMES INTO BUFFER
   uint8_t CURSOR = 0;
   uint8_t PAGE = 0;
   bool NamesDisplayed = false;
@@ -341,44 +335,48 @@ char* NESEXPLORE(char* PATH) {
   while (1) {
     PAGE = CURSOR / FILESPERPAGE;
     if (!NamesDisplayed) {
-      screenmemory_fillscreen(63); //black color
-      set_font_XY(16, 24 );
+      screenmemory_fillscreen(63);  // black color
+      set_font_XY(16, 24);
       draw_string(PATH);
 
-
-      for (num = PAGE * FILESPERPAGE; num < ((PAGE + 1)*FILESPERPAGE) && num < loadedFileNames; num++) {
+      for (num = PAGE * FILESPERPAGE;
+           num < ((PAGE + 1) * FILESPERPAGE) && num < loadedFileNames; num++) {
         set_font_XY(40, 48 + 20 * (num % FILESPERPAGE));
-        ///draw_string(filename[num],48);
+        /// draw_string(filename[num],48);
 
-        if (filename[num][strlen(filename[num]) - 1] == '/') draw_string(filename[num], 23);
-        else draw_string(filename[num], 48);
+        if (filename[num][strlen(filename[num]) - 1] == '/')
+          draw_string(filename[num], 23);
+        else
+          draw_string(filename[num], 48);
 
         delay(1);
       }
       NamesDisplayed = true;
     }
 
-    //Draw Cursor
+    // Draw Cursor
     set_font_XY(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
     draw_string("->", 48);
     delay(200);
 
-    //PROCESS CURSOR SELECTION
-    while (JOY_CROSS == 0 && JOY_SQUARE == 0 && JOY_OPTIONS == 0 && JOY_SHARE == 0 && JOY_UP == 0 && JOY_DOWN == 0 && JOY_LEFT == 0 && JOY_RIGHT == 0) {
+    // PROCESS CURSOR SELECTION
+    while (JOY_CROSS == 0 && JOY_SQUARE == 0 && JOY_OPTIONS == 0 &&
+           JOY_SHARE == 0 && JOY_UP == 0 && JOY_DOWN == 0 && JOY_LEFT == 0 &&
+           JOY_RIGHT == 0) {
       if (digitalRead(PIN_A) == 1) {
-        JOY_CROSS = 1;  //A
+        JOY_CROSS = 1;  // A
         delay(25);
       }
       if (digitalRead(PIN_B) == 1) {
-        JOY_SQUARE = 1;   //B
+        JOY_SQUARE = 1;  // B
         delay(25);
       }
       if (digitalRead(PIN_SELECT) == 1) {
-        JOY_OPTIONS = 1;   //SELECT
+        JOY_OPTIONS = 1;  // SELECT
         delay(25);
       }
       if (digitalRead(PIN_START) == 1) {
-        JOY_SHARE = 1;   //START
+        JOY_SHARE = 1;  // START
         delay(25);
       }
       if (digitalRead(PIN_UP) == 1) {
@@ -386,20 +384,20 @@ char* NESEXPLORE(char* PATH) {
         delay(25);
       }
       if (digitalRead(PIN_DOWN) == 1) {
-        JOY_DOWN = 1;   //DOWN
+        JOY_DOWN = 1;  // DOWN
         delay(25);
       }
       if (digitalRead(PIN_LEFT) == 1) {
-        JOY_LEFT = 1;   //LEFT
+        JOY_LEFT = 1;  // LEFT
         delay(25);
       }
       if (digitalRead(PIN_RIGHT) == 1) {
-        JOY_RIGHT = 1;   //RIGHT
+        JOY_RIGHT = 1;  // RIGHT
         delay(25);
       }
     }
 
-    //Empty Cursor
+    // Empty Cursor
     set_font_XY(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
     draw_string("  ", 48);
 
@@ -413,16 +411,22 @@ char* NESEXPLORE(char* PATH) {
       return MAINPATH;
     }
 
-    if (JOY_UP == 1 ) {
-      if (CURSOR % FILESPERPAGE == 0) NamesDisplayed = false; //changed page
-      if (CURSOR == 0 && loadedFileNames > 0) CURSOR = loadedFileNames - 1;
-      else if (CURSOR > 0 && loadedFileNames > 0) CURSOR--;
+    if (JOY_UP == 1) {
+      if (CURSOR % FILESPERPAGE == 0) NamesDisplayed = false;  // changed page
+      if (CURSOR == 0 && loadedFileNames > 0)
+        CURSOR = loadedFileNames - 1;
+      else if (CURSOR > 0 && loadedFileNames > 0)
+        CURSOR--;
       JOY_UP = 0;
     }
-    if (JOY_DOWN == 1 ) {
-      if (CURSOR % FILESPERPAGE == FILESPERPAGE - 1 || CURSOR == loadedFileNames - 1) NamesDisplayed = false; //changed page
-      if (CURSOR == loadedFileNames - 1 && loadedFileNames > 0) CURSOR = 0;
-      else if (CURSOR < loadedFileNames - 1 && loadedFileNames > 0) CURSOR++;
+    if (JOY_DOWN == 1) {
+      if (CURSOR % FILESPERPAGE == FILESPERPAGE - 1 ||
+          CURSOR == loadedFileNames - 1)
+        NamesDisplayed = false;  // changed page
+      if (CURSOR == loadedFileNames - 1 && loadedFileNames > 0)
+        CURSOR = 0;
+      else if (CURSOR < loadedFileNames - 1 && loadedFileNames > 0)
+        CURSOR++;
       JOY_DOWN = 0;
     }
     if (JOY_LEFT == 1) {
@@ -431,13 +435,14 @@ char* NESEXPLORE(char* PATH) {
       JOY_LEFT = 0;
     }
     if (JOY_RIGHT == 1) {
-      if (CURSOR / FILESPERPAGE < loadedFileNames / FILESPERPAGE) CURSOR += FILESPERPAGE;
+      if (CURSOR / FILESPERPAGE < loadedFileNames / FILESPERPAGE)
+        CURSOR += FILESPERPAGE;
       if (CURSOR > loadedFileNames - 1) CURSOR = loadedFileNames - 1;
       NamesDisplayed = false;
       JOY_RIGHT = 0;
     }
     if (JOY_OPTIONS == 1) {
-      //do nothing  = unused
+      // do nothing  = unused
       JOY_OPTIONS = 0;
     }
     if ((JOY_CROSS == 1 || JOY_SHARE == 1) && JOY_OPTIONS == 0) {
@@ -455,10 +460,9 @@ char* NESEXPLORE(char* PATH) {
 
       ///         sprintf(TRACKNAME, "%s", filename[CURSOR]);
 
-      return MAINPATH ; //START //A
+      return MAINPATH;  // START //A
     }
-    if ((JOY_SQUARE == 1 ) && JOY_OPTIONS == 0) {
-
+    if ((JOY_SQUARE == 1) && JOY_OPTIONS == 0) {
       dirFile.close();
       JOY_SQUARE = 0;
       JOY_SHARE = 0;
@@ -480,13 +484,13 @@ char* NESEXPLORE(char* PATH) {
 
       if (DEBUG) Serial.println(MAINPATH);
       if (DEBUG) Serial.println(strlen(MAINPATH));
-      return MAINPATH ;
+      return MAINPATH;
     }
   };
 }
 //################################################################################
 //********************************************************************************
-char* NESBrowse(char* PATH) {
+char *NESBrowse(char *PATH) {
   if (PATH[strlen(PATH) - 1] != '/')
     if (strlen(PATH) > 1) {
       PATH[strlen(PATH) - 1] = '\0';
@@ -503,8 +507,8 @@ char* NESBrowse(char* PATH) {
 
   EXIT = false;
   //................................................................................
-  while (EXIT == false && PATH[strlen(PATH) - 1] == '/')  {
-    PATH =  NESEXPLORE(PATH);
+  while (EXIT == false && PATH[strlen(PATH) - 1] == '/') {
+    PATH = NESEXPLORE(PATH);
     Serial.println(PATH);
   }
   //................................................................................
@@ -518,34 +522,34 @@ char* NESBrowse(char* PATH) {
 //________________________________________________________________________________
 
 //--------------------------------------------------------------------------------
-//CPU.H:
+// CPU.H:
 // Define this to enable decimal mode in ADC / SBC (not needed in NES)
 //#define  NES6502_DECIMAL
 
 // P (flag) register bitmasks
-#define  N_FLAG         0x80
-#define  V_FLAG         0x40
-#define  R_FLAG         0x20  // Reserved, always 1 
-#define  B_FLAG         0x10
-#define  D_FLAG         0x08
-#define  I_FLAG         0x04
-#define  Z_FLAG         0x02
-#define  C_FLAG         0x01
+#define N_FLAG 0x80
+#define V_FLAG 0x40
+#define R_FLAG 0x20  // Reserved, always 1
+#define B_FLAG 0x10
+#define D_FLAG 0x08
+#define I_FLAG 0x04
+#define Z_FLAG 0x02
+#define C_FLAG 0x01
 
 // Vector addresses
-#define  NMI_VECTOR     0xFFFA
-#define  RESET_VECTOR   0xFFFC
-#define  IRQ_VECTOR     0xFFFE
+#define NMI_VECTOR 0xFFFA
+#define RESET_VECTOR 0xFFFC
+#define IRQ_VECTOR 0xFFFE
 
 // cycle counts for interrupts
-#define  INT_CYCLES     7
-#define  RESET_CYCLES   6
+#define INT_CYCLES 7
+#define RESET_CYCLES 6
 
-#define  NMI_MASK       0x01
-#define  IRQ_MASK       0x02
+#define NMI_MASK 0x01
+#define IRQ_MASK 0x02
 
 // Stack is located on 6502 page 1
-#define  STACK_OFFSET   0x0100
+#define STACK_OFFSET 0x0100
 
 typedef struct {
   uint32_t min_range, max_range;
@@ -571,47 +575,47 @@ typedef struct {
 } nes6502_context;
 
 //--------------------------------------------------------------------------------
-//PPU.H:
+// PPU.H:
 // PPU register defines
-#define  PPU_CTRL0            0x2000
-#define  PPU_CTRL1            0x2001
-#define  PPU_STAT             0x2002
-#define  PPU_OAMADDR          0x2003
-#define  PPU_OAMDATA          0x2004
-#define  PPU_SCROLL           0x2005
-#define  PPU_VADDR            0x2006
-#define  PPU_VDATA            0x2007
+#define PPU_CTRL0 0x2000
+#define PPU_CTRL1 0x2001
+#define PPU_STAT 0x2002
+#define PPU_OAMADDR 0x2003
+#define PPU_OAMDATA 0x2004
+#define PPU_SCROLL 0x2005
+#define PPU_VADDR 0x2006
+#define PPU_VDATA 0x2007
 
-#define  PPU_OAMDMA           0x4014
-#define  PPU_JOY0             0x4016
-#define  PPU_JOY1             0x4017
+#define PPU_OAMDMA 0x4014
+#define PPU_JOY0 0x4016
+#define PPU_JOY1 0x4017
 
 // $2000
-#define  PPU_CTRL0F_NMI       0x80
-#define  PPU_CTRL0F_OBJ16     0x20
-#define  PPU_CTRL0F_BGADDR    0x10
-#define  PPU_CTRL0F_OBJADDR   0x08
-#define  PPU_CTRL0F_ADDRINC   0x04
-#define  PPU_CTRL0F_NAMETAB   0x03
+#define PPU_CTRL0F_NMI 0x80
+#define PPU_CTRL0F_OBJ16 0x20
+#define PPU_CTRL0F_BGADDR 0x10
+#define PPU_CTRL0F_OBJADDR 0x08
+#define PPU_CTRL0F_ADDRINC 0x04
+#define PPU_CTRL0F_NAMETAB 0x03
 
 // $2001
-#define  PPU_CTRL1F_OBJON     0x10
-#define  PPU_CTRL1F_BGON      0x08
-#define  PPU_CTRL1F_OBJMASK   0x04
-#define  PPU_CTRL1F_BGMASK    0x02
+#define PPU_CTRL1F_OBJON 0x10
+#define PPU_CTRL1F_BGON 0x08
+#define PPU_CTRL1F_OBJMASK 0x04
+#define PPU_CTRL1F_BGMASK 0x02
 
 // $2002
-#define  PPU_STATF_VBLANK     0x80
-#define  PPU_STATF_STRIKE     0x40
-#define  PPU_STATF_MAXSPRITE  0x20
+#define PPU_STATF_VBLANK 0x80
+#define PPU_STATF_STRIKE 0x40
+#define PPU_STATF_MAXSPRITE 0x20
 
 // Sprite attribute byte bitmasks
-#define  OAMF_VFLIP           0x80
-#define  OAMF_HFLIP           0x40
-#define  OAMF_BEHIND          0x20
+#define OAMF_VFLIP 0x80
+#define OAMF_HFLIP 0x40
+#define OAMF_BEHIND 0x20
 
 // Maximum number of sprites per horizontal scanline
-#define  PPU_MAXSPRITE        8
+#define PPU_MAXSPRITE 8
 
 // some mappers do *dumb* things
 typedef void (*ppulatchfunc_t)(uint32_t address, uint8_t value);
@@ -653,38 +657,39 @@ typedef struct ppu_s {
   bool drawsprites;
 } ppu_t;
 //--------------------------------------------------------------------------------
-//APU.H:
+// APU.H:
 // define this for realtime generated noise
-#define  REALTIME_NOISE
+#define REALTIME_NOISE
 
-#define  APU_WRA0       0x4000
-#define  APU_WRA1       0x4001
-#define  APU_WRA2       0x4002
-#define  APU_WRA3       0x4003
-#define  APU_WRB0       0x4004
-#define  APU_WRB1       0x4005
-#define  APU_WRB2       0x4006
-#define  APU_WRB3       0x4007
-#define  APU_WRC0       0x4008
-#define  APU_WRC2       0x400A
-#define  APU_WRC3       0x400B
-#define  APU_WRD0       0x400C
-#define  APU_WRD2       0x400E
-#define  APU_WRD3       0x400F
-#define  APU_WRE0       0x4010
-#define  APU_WRE1       0x4011
-#define  APU_WRE2       0x4012
-#define  APU_WRE3       0x4013
+#define APU_WRA0 0x4000
+#define APU_WRA1 0x4001
+#define APU_WRA2 0x4002
+#define APU_WRA3 0x4003
+#define APU_WRB0 0x4004
+#define APU_WRB1 0x4005
+#define APU_WRB2 0x4006
+#define APU_WRB3 0x4007
+#define APU_WRC0 0x4008
+#define APU_WRC2 0x400A
+#define APU_WRC3 0x400B
+#define APU_WRD0 0x400C
+#define APU_WRD2 0x400E
+#define APU_WRD3 0x400F
+#define APU_WRE0 0x4010
+#define APU_WRE1 0x4011
+#define APU_WRE2 0x4012
+#define APU_WRE3 0x4013
 
-#define  APU_SMASK      0x4015
+#define APU_SMASK 0x4015
 
 // length of generated noise
-#define  APU_NOISE_32K  0x7FFF
-#define  APU_NOISE_93   93
+#define APU_NOISE_32K 0x7FFF
+#define APU_NOISE_93 93
 
-#define  APU_BASEFREQ   1789772.7272727272727272
+#define APU_BASEFREQ 1789772.7272727272727272
 
-// channel structures:  As much data as possible is precalculated, to keep the sample processing as lean as possible
+// channel structures:  As much data as possible is precalculated, to keep the
+// sample processing as lean as possible
 
 typedef struct rectangle_s {
   uint8_t regs[4];
@@ -760,11 +765,10 @@ typedef struct noise_s {
 #else
   bool short_sample;
   int cur_pos;
-#endif // REALTIME_NOISE 
+#endif  // REALTIME_NOISE
 } noise_t;
 
-typedef struct dmc_s
-{
+typedef struct dmc_s {
   uint8_t regs[4];
 
   // bodge for timestamp queue
@@ -786,46 +790,36 @@ typedef struct dmc_s
 
 } dmc_t;
 
-enum
-{
-  APU_FILTER_NONE,
-  APU_FILTER_LOWPASS,
-  APU_FILTER_WEIGHTED
-};
+enum { APU_FILTER_NONE, APU_FILTER_LOWPASS, APU_FILTER_WEIGHTED };
 
-typedef struct
-{
+typedef struct {
   uint32_t min_range, max_range;
   uint8_t (*read_func)(uint32_t address);
 } apu_memread;
 
-typedef struct
-{
+typedef struct {
   uint32_t min_range, max_range;
   void (*write_func)(uint32_t address, uint8_t value);
 } apu_memwrite;
 
 // external sound chip stuff
-typedef struct apuext_s
-{
-  int   (*init)(void);
-  void  (*shutdown)(void);
-  void  (*reset)(void);
+typedef struct apuext_s {
+  int (*init)(void);
+  void (*shutdown)(void);
+  void (*reset)(void);
   int32_t (*process)(void);
   apu_memread *mem_read;
   apu_memwrite *mem_write;
 } apuext_t;
 
-
-typedef struct apu_s
-{
+typedef struct apu_s {
   rectangle_t rectangle[2];
   triangle_t triangle;
   noise_t noise;
   dmc_t dmc;
   uint8_t enable_reg;
 
-  void *buffer; // pointer to output buffer
+  void *buffer;  // pointer to output buffer
   int num_samples;
 
   uint8_t mix_enable;
@@ -846,19 +840,15 @@ typedef struct apu_s
   apuext_t *ext;
 } apu_t;
 //--------------------------------------------------------------------------------
-//ROM.H:
-typedef enum {
-  MIRROR_HORIZ   = 0,
-  MIRROR_VERT    = 1
-} mirror_t;
+// ROM.H:
+typedef enum { MIRROR_HORIZ = 0, MIRROR_VERT = 1 } mirror_t;
 
-#define  ROM_FLAG_BATTERY     0x01
-#define  ROM_FLAG_TRAINER     0x02
-#define  ROM_FLAG_FOURSCREEN  0x04
-#define  ROM_FLAG_VERSUS      0x08
+#define ROM_FLAG_BATTERY 0x01
+#define ROM_FLAG_TRAINER 0x02
+#define ROM_FLAG_FOURSCREEN 0x04
+#define ROM_FLAG_VERSUS 0x08
 
-typedef struct rominfo_s
-{
+typedef struct rominfo_s {
   // pointers to ROM and VROM
   uint8_t *rom, *vrom;
 
@@ -875,8 +865,7 @@ typedef struct rominfo_s
   uint8_t flags;
 } rominfo_t;
 
-typedef struct inesheader_s
-{
+typedef struct inesheader_s {
   uint8_t ines_magic[4];
   uint8_t rom_banks;
   uint8_t vrom_banks;
@@ -885,7 +874,7 @@ typedef struct inesheader_s
   uint8_t reserved[8];
 } inesheader_t;
 //--------------------------------------------------------------------------------
-//LIBSNS.H:
+// LIBSNS.H:
 #define TAG_LENGTH 4
 
 struct mapper1Data {
@@ -902,7 +891,8 @@ struct mapper4Data {
 };
 
 struct mapper5Data {
-  unsigned char dummy; // needed for some compilers; remove if any members are added
+  unsigned char
+      dummy;  // needed for some compilers; remove if any members are added
 };
 
 struct mapper6Data {
@@ -1014,13 +1004,11 @@ typedef struct _SnssBlockHeader {
 } SnssBlockHeader;
 
 #define MAPPER_BLOCK_LENGTH 0x98
-typedef struct _SnssMapperBlock
-{
+typedef struct _SnssMapperBlock {
   unsigned short prgPages[4];
   unsigned short chrPages[8];
 
-  union _extraData
-  {
+  union _extraData {
     unsigned char mapperData[128];
     struct mapper1Data mapper1;
     struct mapper4Data mapper4;
@@ -1045,8 +1033,8 @@ typedef struct _SnssMapperBlock
   } extraData;
 } SnssMapperBlock;
 //--------------------------------------------------------------------------------
-//MMC.H:
-#define  MMC_LASTBANK      -1
+// MMC.H:
+#define MMC_LASTBANK -1
 
 typedef struct {
   uint32_t min_range, max_range;
@@ -1076,7 +1064,7 @@ typedef struct mmc_s {
   rominfo_t *cart;  // link it back to the cart
 } mmc_t;
 //--------------------------------------------------------------------------------
-//NES.H
+// NES.H
 
 typedef struct nes_s {
   // hardware things
@@ -1111,7 +1099,7 @@ nes_t *NESmachine;
 //   EMULATOR CORE CODES:
 //
 //--------------------------------------------------------------------------------
-//ROM.C
+// ROM.C
 // Max length for displayed filename
 #define ROM_DISP_MAXLEN 20
 
@@ -1129,15 +1117,16 @@ nes_t *NESmachine;
 #define SRAM_BANK_LENGTH 0x0400
 #define VRAM_BANK_LENGTH 0x2000
 
-bool SRAM_allocated=false;
+bool SRAM_allocated = false;
 
 // Allocate space for SRAM
 int rom_allocsram(rominfo_t *rominfo);
 int rom_allocsram(rominfo_t *rominfo) {
   // Load up SRAM
-  if (NULL == rominfo->sram) rominfo->sram = (uint8_t*)malloc(SRAM_BANK_LENGTH * rominfo->sram_banks);
+  if (NULL == rominfo->sram)
+    rominfo->sram = (uint8_t *)malloc(SRAM_BANK_LENGTH * rominfo->sram_banks);
   if (NULL == rominfo->sram) {
-    ///gui_sendmsg(GUI_RED, "Could not allocate space for battery RAM");
+    /// gui_sendmsg(GUI_RED, "Could not allocate space for battery RAM");
     return -1;
   }
 
@@ -1149,12 +1138,11 @@ int rom_allocsram(rominfo_t *rominfo) {
 // If there's a trainer, load it in at $7000
 void rom_loadtrainer(unsigned char **rom, rominfo_t *rominfo);
 void rom_loadtrainer(unsigned char **rom, rominfo_t *rominfo) {
-  if (rominfo->flags & ROM_FLAG_TRAINER)
-  {
+  if (rominfo->flags & ROM_FLAG_TRAINER) {
     //      fread(rominfo->sram + TRAINER_OFFSET, TRAINER_LENGTH, 1, fp);
     memcpy(rominfo->sram + TRAINER_OFFSET, *rom, TRAINER_LENGTH);
     rom += TRAINER_LENGTH;
-    ///nes_log_printf("Read in trainer at $7000\n");
+    /// nes_log_printf("Read in trainer at $7000\n");
   }
 }
 
@@ -1164,15 +1152,13 @@ int rom_loadrom(unsigned char **rom, rominfo_t *rominfo) {
   *rom += ROM_BANK_LENGTH * rominfo->rom_banks;
 
   // If there's VROM, allocate and stuff it in
-  if (rominfo->vrom_banks)
-  {
+  if (rominfo->vrom_banks) {
     rominfo->vrom = *rom;
     *rom += VROM_BANK_LENGTH * rominfo->vrom_banks;
-  } else  {
-    if (NULL == rominfo->vram) rominfo->vram = (uint8_t*)malloc(VRAM_LENGTH);
-    if (NULL == rominfo->vram)
-    {
-      ///gui_sendmsg(GUI_RED, "Could not allocate space for VRAM");
+  } else {
+    if (NULL == rominfo->vram) rominfo->vram = (uint8_t *)malloc(VRAM_LENGTH);
+    if (NULL == rominfo->vram) {
+      /// gui_sendmsg(GUI_RED, "Could not allocate space for VRAM");
       return -1;
     }
     memset(rominfo->vram, 0, VRAM_LENGTH);
@@ -1213,9 +1199,10 @@ int rom_getheader(unsigned char **rom, rominfo_t *rominfo) {
   rominfo->rom_banks = head.rom_banks;
   rominfo->vrom_banks = head.vrom_banks;
   // iNES assumptions
-  rominfo->sram_banks = 8; //1kB banks, so 8KB
-  rominfo->vram_banks = 1; // 8kB banks, so 8KB
-  rominfo->mirror = (head.rom_type & ROM_MIRRORTYPE) ? MIRROR_VERT : MIRROR_HORIZ;
+  rominfo->sram_banks = 8;  // 1kB banks, so 8KB
+  rominfo->vram_banks = 1;  // 8kB banks, so 8KB
+  rominfo->mirror =
+      (head.rom_type & ROM_MIRRORTYPE) ? MIRROR_VERT : MIRROR_HORIZ;
   rominfo->flags = 0;
   if (head.rom_type & ROM_BATTERY) rominfo->flags |= ROM_FLAG_BATTERY;
   if (head.rom_type & ROM_TRAINER) rominfo->flags |= ROM_FLAG_TRAINER;
@@ -1233,13 +1220,15 @@ int rom_getheader(unsigned char **rom, rominfo_t *rominfo) {
     header_dirty = true;
 
     // @!?#@! DiskDude.
-    if (('D' == head.mapper_hinybble) && (0 == memcmp(head.reserved, "iskDude!", 8))) {
-      ///nes_log_printf("`DiskDude!' found in ROM header, ignoring high mapper nybble\n");
+    if (('D' == head.mapper_hinybble) &&
+        (0 == memcmp(head.reserved, "iskDude!", 8))) {
+      /// nes_log_printf("`DiskDude!' found in ROM header, ignoring high mapper
+      /// nybble\n");
     } else {
-      ///nes_log_printf("ROM header dirty, possible problem\n");
+      /// nes_log_printf("ROM header dirty, possible problem\n");
       rominfo->mapper_number |= (head.mapper_hinybble & 0xF0);
     }
-    ///rom_adddirty(rominfo->filename);
+    /// rom_adddirty(rominfo->filename);
   }
   // Check for VS unisystem mapper
   if (99 == rominfo->mapper_number) rominfo->flags |= ROM_FLAG_VERSUS;
@@ -1248,10 +1237,8 @@ int rom_getheader(unsigned char **rom, rominfo_t *rominfo) {
 
 /* Free a ROM */
 void rom_free(rominfo_t **rominfo);
-void rom_free(rominfo_t **rominfo)
-{
-  if (NULL == *rominfo)
-  {
+void rom_free(rominfo_t **rominfo) {
+  if (NULL == *rominfo) {
     if (DEBUG) Serial.println("ROM not loaded");
     return;
   }
@@ -1270,16 +1257,15 @@ void rom_free(rominfo_t **rominfo)
     Serial.println("vram"); */
 
   free(*rominfo);
-
 }
 //================================================================================
 
 //--------------------------------------------------------------------------------
-///CPU.C:
+/// CPU.C:
 
 // internal CPU context
 static nes6502_context cpu;
-static int remaining_cycles = 0; // so we can release timeslice
+static int remaining_cycles = 0;  // so we can release timeslice
 // memory region pointers
 static uint8_t *ram = NULL, *stack = NULL;
 static uint8_t null_page[NES6502_BANKSIZE];
@@ -1287,222 +1273,871 @@ static uint8_t null_page[NES6502_BANKSIZE];
 //#define  NES6502_DISASM
 //#define  NES6502_JUMPTABLE
 
-#define  ADD_CYCLES(x) { remaining_cycles -= (x); cpu.total_cycles += (x); }
-#define PAGE_CROSS_CHECK(addr, reg) { if ((reg) > (uint8_t) (addr)) ADD_CYCLES(1); }
-#define EMPTY_READ(value)  // empty 
-#define IMMEDIATE_BYTE(value) { value = bank_readbyte(PC++); }
-#define ABSOLUTE_ADDR(address) { address = bank_readword(PC); PC += 2; }
-#define ABSOLUTE(address, value) { ABSOLUTE_ADDR(address); value = mem_readbyte(address); }
-#define ABSOLUTE_BYTE(value) { ABSOLUTE(temp, value); }
-#define ABS_IND_X_ADDR(address) { ABSOLUTE_ADDR(address); address = (address + X) & 0xFFFF; }
-#define ABS_IND_X(address, value) { ABS_IND_X_ADDR(address); value = mem_readbyte(address); }
-#define ABS_IND_X_BYTE(value) { ABS_IND_X(temp, value); }
-#define ABS_IND_X_BYTE_READ(value) { ABS_IND_X_ADDR(temp); PAGE_CROSS_CHECK(temp, X); value = mem_readbyte(temp); }
-#define ABS_IND_Y_ADDR(address) { ABSOLUTE_ADDR(address); address = (address + Y) & 0xFFFF; }
-#define ABS_IND_Y(address, value) { ABS_IND_Y_ADDR(address); value = mem_readbyte(address); }
-#define ABS_IND_Y_BYTE(value) { ABS_IND_Y(temp, value); }
-#define ABS_IND_Y_BYTE_READ(value) { ABS_IND_Y_ADDR(temp); PAGE_CROSS_CHECK(temp, Y); value = mem_readbyte(temp); }
-#define ZERO_PAGE_ADDR(address) { IMMEDIATE_BYTE(address); }
-#define ZERO_PAGE(address, value) { ZERO_PAGE_ADDR(address); value = ZP_READBYTE(address); }
-#define ZERO_PAGE_BYTE(value) { ZERO_PAGE(btemp, value); }
-#define ZP_IND_X_ADDR(address) { ZERO_PAGE_ADDR(address); address += X; }
-#define ZP_IND_X(address, value) { ZP_IND_X_ADDR(address); value = ZP_READBYTE(address); }
-#define ZP_IND_X_BYTE(value) { ZP_IND_X(btemp, value); }
-#define ZP_IND_Y_ADDR(address) { ZERO_PAGE_ADDR(address); address += Y; }
-#define ZP_IND_Y_BYTE(value) { ZP_IND_Y_ADDR(btemp); value = ZP_READBYTE(btemp); }
-#define INDIR_X_ADDR(address) { ZERO_PAGE_ADDR(btemp); btemp += X; address = zp_readword(btemp); }
-#define INDIR_X(address, value) { INDIR_X_ADDR(address); value = mem_readbyte(address); }
-#define INDIR_X_BYTE(value) { INDIR_X(temp, value); }
-#define INDIR_Y_ADDR(address) { ZERO_PAGE_ADDR(btemp); address = (zp_readword(btemp) + Y) & 0xFFFF; }
-#define INDIR_Y(address, value) { INDIR_Y_ADDR(address); value = mem_readbyte(address); }
-#define INDIR_Y_BYTE(value) { INDIR_Y(temp, value); }
-#define INDIR_Y_BYTE_READ(value) { INDIR_Y_ADDR(temp); PAGE_CROSS_CHECK(temp, Y); value = mem_readbyte(temp); }
-#define  PUSH(value)             stack[S--] = (uint8_t) (value)
-#define  PULL()                  stack[++S]
-#define  SCATTER_FLAGS(value) { n_flag = (value) & N_FLAG; v_flag = (value) & V_FLAG; b_flag = (value) & B_FLAG; \
-    d_flag = (value) & D_FLAG; i_flag = (value) & I_FLAG; z_flag = (0 == ((value) & Z_FLAG)); c_flag = (value) & C_FLAG; }
-#define  COMBINE_FLAGS() ( (n_flag & N_FLAG) | (v_flag ? V_FLAG : 0) | R_FLAG | (b_flag ? B_FLAG : 0) | (d_flag ? D_FLAG : 0) \
-                           | (i_flag ? I_FLAG : 0) | (z_flag ? 0 : Z_FLAG) | c_flag )
-#define  SET_NZ_FLAGS(value)     n_flag = z_flag = (value);
-#define RELATIVE_BRANCH(condition) { if (condition) { IMMEDIATE_BYTE(btemp); if (((int8_t) btemp + (PC & 0x00FF)) & 0x100) \
-        ADD_CYCLES(1); ADD_CYCLES(3); PC += (int8_t) btemp; } else { PC++; ADD_CYCLES(2); } }
-#define JUMP(address) { PC = bank_readword((address)); }
-#define NMI_PROC() { PUSH(PC >> 8); PUSH(PC & 0xFF); b_flag = 0; PUSH(COMBINE_FLAGS()); i_flag = 1; JUMP(NMI_VECTOR); }
-#define IRQ_PROC() { PUSH(PC >> 8); PUSH(PC & 0xFF); b_flag = 0; PUSH(COMBINE_FLAGS()); i_flag = 1; JUMP(IRQ_VECTOR); }
+#define ADD_CYCLES(x)        \
+  {                          \
+    remaining_cycles -= (x); \
+    cpu.total_cycles += (x); \
+  }
+#define PAGE_CROSS_CHECK(addr, reg)             \
+  {                                             \
+    if ((reg) > (uint8_t)(addr)) ADD_CYCLES(1); \
+  }
+#define EMPTY_READ(value)  // empty
+#define IMMEDIATE_BYTE(value) \
+  { value = bank_readbyte(PC++); }
+#define ABSOLUTE_ADDR(address)   \
+  {                              \
+    address = bank_readword(PC); \
+    PC += 2;                     \
+  }
+#define ABSOLUTE(address, value)   \
+  {                                \
+    ABSOLUTE_ADDR(address);        \
+    value = mem_readbyte(address); \
+  }
+#define ABSOLUTE_BYTE(value) \
+  { ABSOLUTE(temp, value); }
+#define ABS_IND_X_ADDR(address)       \
+  {                                   \
+    ABSOLUTE_ADDR(address);           \
+    address = (address + X) & 0xFFFF; \
+  }
+#define ABS_IND_X(address, value)  \
+  {                                \
+    ABS_IND_X_ADDR(address);       \
+    value = mem_readbyte(address); \
+  }
+#define ABS_IND_X_BYTE(value) \
+  { ABS_IND_X(temp, value); }
+#define ABS_IND_X_BYTE_READ(value) \
+  {                                \
+    ABS_IND_X_ADDR(temp);          \
+    PAGE_CROSS_CHECK(temp, X);     \
+    value = mem_readbyte(temp);    \
+  }
+#define ABS_IND_Y_ADDR(address)       \
+  {                                   \
+    ABSOLUTE_ADDR(address);           \
+    address = (address + Y) & 0xFFFF; \
+  }
+#define ABS_IND_Y(address, value)  \
+  {                                \
+    ABS_IND_Y_ADDR(address);       \
+    value = mem_readbyte(address); \
+  }
+#define ABS_IND_Y_BYTE(value) \
+  { ABS_IND_Y(temp, value); }
+#define ABS_IND_Y_BYTE_READ(value) \
+  {                                \
+    ABS_IND_Y_ADDR(temp);          \
+    PAGE_CROSS_CHECK(temp, Y);     \
+    value = mem_readbyte(temp);    \
+  }
+#define ZERO_PAGE_ADDR(address) \
+  { IMMEDIATE_BYTE(address); }
+#define ZERO_PAGE(address, value) \
+  {                               \
+    ZERO_PAGE_ADDR(address);      \
+    value = ZP_READBYTE(address); \
+  }
+#define ZERO_PAGE_BYTE(value) \
+  { ZERO_PAGE(btemp, value); }
+#define ZP_IND_X_ADDR(address) \
+  {                            \
+    ZERO_PAGE_ADDR(address);   \
+    address += X;              \
+  }
+#define ZP_IND_X(address, value)  \
+  {                               \
+    ZP_IND_X_ADDR(address);       \
+    value = ZP_READBYTE(address); \
+  }
+#define ZP_IND_X_BYTE(value) \
+  { ZP_IND_X(btemp, value); }
+#define ZP_IND_Y_ADDR(address) \
+  {                            \
+    ZERO_PAGE_ADDR(address);   \
+    address += Y;              \
+  }
+#define ZP_IND_Y_BYTE(value)    \
+  {                             \
+    ZP_IND_Y_ADDR(btemp);       \
+    value = ZP_READBYTE(btemp); \
+  }
+#define INDIR_X_ADDR(address)     \
+  {                               \
+    ZERO_PAGE_ADDR(btemp);        \
+    btemp += X;                   \
+    address = zp_readword(btemp); \
+  }
+#define INDIR_X(address, value)    \
+  {                                \
+    INDIR_X_ADDR(address);         \
+    value = mem_readbyte(address); \
+  }
+#define INDIR_X_BYTE(value) \
+  { INDIR_X(temp, value); }
+#define INDIR_Y_ADDR(address)                    \
+  {                                              \
+    ZERO_PAGE_ADDR(btemp);                       \
+    address = (zp_readword(btemp) + Y) & 0xFFFF; \
+  }
+#define INDIR_Y(address, value)    \
+  {                                \
+    INDIR_Y_ADDR(address);         \
+    value = mem_readbyte(address); \
+  }
+#define INDIR_Y_BYTE(value) \
+  { INDIR_Y(temp, value); }
+#define INDIR_Y_BYTE_READ(value) \
+  {                              \
+    INDIR_Y_ADDR(temp);          \
+    PAGE_CROSS_CHECK(temp, Y);   \
+    value = mem_readbyte(temp);  \
+  }
+#define PUSH(value) stack[S--] = (uint8_t)(value)
+#define PULL() stack[++S]
+#define SCATTER_FLAGS(value)          \
+  {                                   \
+    n_flag = (value)&N_FLAG;          \
+    v_flag = (value)&V_FLAG;          \
+    b_flag = (value)&B_FLAG;          \
+    d_flag = (value)&D_FLAG;          \
+    i_flag = (value)&I_FLAG;          \
+    z_flag = (0 == ((value)&Z_FLAG)); \
+    c_flag = (value)&C_FLAG;          \
+  }
+#define COMBINE_FLAGS()                                                    \
+  ((n_flag & N_FLAG) | (v_flag ? V_FLAG : 0) | R_FLAG |                    \
+   (b_flag ? B_FLAG : 0) | (d_flag ? D_FLAG : 0) | (i_flag ? I_FLAG : 0) | \
+   (z_flag ? 0 : Z_FLAG) | c_flag)
+#define SET_NZ_FLAGS(value) n_flag = z_flag = (value);
+#define RELATIVE_BRANCH(condition)                                \
+  {                                                               \
+    if (condition) {                                              \
+      IMMEDIATE_BYTE(btemp);                                      \
+      if (((int8_t)btemp + (PC & 0x00FF)) & 0x100) ADD_CYCLES(1); \
+      ADD_CYCLES(3);                                              \
+      PC += (int8_t)btemp;                                        \
+    } else {                                                      \
+      PC++;                                                       \
+      ADD_CYCLES(2);                                              \
+    }                                                             \
+  }
+#define JUMP(address) \
+  { PC = bank_readword((address)); }
+#define NMI_PROC()         \
+  {                        \
+    PUSH(PC >> 8);         \
+    PUSH(PC & 0xFF);       \
+    b_flag = 0;            \
+    PUSH(COMBINE_FLAGS()); \
+    i_flag = 1;            \
+    JUMP(NMI_VECTOR);      \
+  }
+#define IRQ_PROC()         \
+  {                        \
+    PUSH(PC >> 8);         \
+    PUSH(PC & 0xFF);       \
+    b_flag = 0;            \
+    PUSH(COMBINE_FLAGS()); \
+    i_flag = 1;            \
+    JUMP(IRQ_VECTOR);      \
+  }
 
 // Warning! NES CPU has no decimal mode, so by default this does no BCD!
 #ifdef NES6502_DECIMAL
-#define ADC(cycles, read_func) { read_func(data); if (d_flag) { temp = (A & 0x0F) + (data & 0x0F) + c_flag; if (temp >= 10) \
-        temp = (temp - 10) | 0x10; temp += (A & 0xF0) + (data & 0xF0); z_flag = (A + data + c_flag) & 0xFF;  n_flag = temp; \
-      v_flag = ((~(A ^ data)) & (A ^ temp) & 0x80); if (temp > 0x90) { temp += 0x60; c_flag = 1; } else { c_flag = 0; } \
-      A = (uint8_t) temp; } else { temp = A + data + c_flag; c_flag = (temp >> 8) & 1; v_flag = ((~(A ^ data)) & (A ^ temp) & 0x80); \
-      A = (uint8_t) temp; SET_NZ_FLAGS(A); } ADD_CYCLES(cycles); }
-#else // NES6502_DECIMAL 
-#define ADC(cycles, read_func) { read_func(data); temp = A + data + c_flag; c_flag = (temp >> 8) & 1; \
-    v_flag = ((~(A ^ data)) & (A ^ temp) & 0x80); A = (uint8_t) temp; SET_NZ_FLAGS(A); ADD_CYCLES(cycles); }
-#endif // NES6502_DECIMAL 
+#define ADC(cycles, read_func)                      \
+  {                                                 \
+    read_func(data);                                \
+    if (d_flag) {                                   \
+      temp = (A & 0x0F) + (data & 0x0F) + c_flag;   \
+      if (temp >= 10) temp = (temp - 10) | 0x10;    \
+      temp += (A & 0xF0) + (data & 0xF0);           \
+      z_flag = (A + data + c_flag) & 0xFF;          \
+      n_flag = temp;                                \
+      v_flag = ((~(A ^ data)) & (A ^ temp) & 0x80); \
+      if (temp > 0x90) {                            \
+        temp += 0x60;                               \
+        c_flag = 1;                                 \
+      } else {                                      \
+        c_flag = 0;                                 \
+      }                                             \
+      A = (uint8_t)temp;                            \
+    } else {                                        \
+      temp = A + data + c_flag;                     \
+      c_flag = (temp >> 8) & 1;                     \
+      v_flag = ((~(A ^ data)) & (A ^ temp) & 0x80); \
+      A = (uint8_t)temp;                            \
+      SET_NZ_FLAGS(A);                              \
+    }                                               \
+    ADD_CYCLES(cycles);                             \
+  }
+#else  // NES6502_DECIMAL
+#define ADC(cycles, read_func)                    \
+  {                                               \
+    read_func(data);                              \
+    temp = A + data + c_flag;                     \
+    c_flag = (temp >> 8) & 1;                     \
+    v_flag = ((~(A ^ data)) & (A ^ temp) & 0x80); \
+    A = (uint8_t)temp;                            \
+    SET_NZ_FLAGS(A);                              \
+    ADD_CYCLES(cycles);                           \
+  }
+#endif  // NES6502_DECIMAL
 
-#define ANC(cycles, read_func) { read_func(data); A &= data; c_flag = (n_flag & N_FLAG) >> 7; SET_NZ_FLAGS(A); ADD_CYCLES(cycles); }
-#define AND(cycles, read_func) { read_func(data); A &= data; SET_NZ_FLAGS(A); ADD_CYCLES(cycles); }
-#define ANE(cycles, read_func) { read_func(data); A = (A | 0xEE) & X & data; SET_NZ_FLAGS(A); ADD_CYCLES(cycles); }
+#define ANC(cycles, read_func)       \
+  {                                  \
+    read_func(data);                 \
+    A &= data;                       \
+    c_flag = (n_flag & N_FLAG) >> 7; \
+    SET_NZ_FLAGS(A);                 \
+    ADD_CYCLES(cycles);              \
+  }
+#define AND(cycles, read_func) \
+  {                            \
+    read_func(data);           \
+    A &= data;                 \
+    SET_NZ_FLAGS(A);           \
+    ADD_CYCLES(cycles);        \
+  }
+#define ANE(cycles, read_func) \
+  {                            \
+    read_func(data);           \
+    A = (A | 0xEE) & X & data; \
+    SET_NZ_FLAGS(A);           \
+    ADD_CYCLES(cycles);        \
+  }
 
 #ifdef NES6502_DECIMAL
-#define ARR(cycles, read_func) { read_func(data); data &= A; if (d_flag) { temp = (data >> 1) | (c_flag << 7);  SET_NZ_FLAGS(temp); \
-      v_flag = (temp ^ data) & 0x40; if (((data & 0x0F) + (data & 0x01)) > 5) temp = (temp & 0xF0) | ((temp + 0x6) & 0x0F); \
-      if (((data & 0xF0) + (data & 0x10)) > 0x50) { temp = (temp & 0x0F) | ((temp + 0x60) & 0xF0); c_flag = 1; } else { \
-        c_flag = 0; } A = (uint8_t) temp; } else { A = (data >> 1) | (c_flag << 7); SET_NZ_FLAGS(A); c_flag = (A & 0x40) >> 6; \
-      v_flag = ((A >> 6) ^ (A >> 5)) & 1; } ADD_CYCLES(cycles); }
-#else // NES6502_DECIMAL 
-#define ARR(cycles, read_func) { read_func(data); data &= A; A = (data >> 1) | (c_flag << 7); \
-    SET_NZ_FLAGS(A); c_flag = (A & 0x40) >> 6; v_flag = ((A >> 6) ^ (A >> 5)) & 1; ADD_CYCLES(cycles); }
-#endif // NES6502_DECIMAL 
+#define ARR(cycles, read_func)                         \
+  {                                                    \
+    read_func(data);                                   \
+    data &= A;                                         \
+    if (d_flag) {                                      \
+      temp = (data >> 1) | (c_flag << 7);              \
+      SET_NZ_FLAGS(temp);                              \
+      v_flag = (temp ^ data) & 0x40;                   \
+      if (((data & 0x0F) + (data & 0x01)) > 5)         \
+        temp = (temp & 0xF0) | ((temp + 0x6) & 0x0F);  \
+      if (((data & 0xF0) + (data & 0x10)) > 0x50) {    \
+        temp = (temp & 0x0F) | ((temp + 0x60) & 0xF0); \
+        c_flag = 1;                                    \
+      } else {                                         \
+        c_flag = 0;                                    \
+      }                                                \
+      A = (uint8_t)temp;                               \
+    } else {                                           \
+      A = (data >> 1) | (c_flag << 7);                 \
+      SET_NZ_FLAGS(A);                                 \
+      c_flag = (A & 0x40) >> 6;                        \
+      v_flag = ((A >> 6) ^ (A >> 5)) & 1;              \
+    }                                                  \
+    ADD_CYCLES(cycles);                                \
+  }
+#else  // NES6502_DECIMAL
+#define ARR(cycles, read_func)          \
+  {                                     \
+    read_func(data);                    \
+    data &= A;                          \
+    A = (data >> 1) | (c_flag << 7);    \
+    SET_NZ_FLAGS(A);                    \
+    c_flag = (A & 0x40) >> 6;           \
+    v_flag = ((A >> 6) ^ (A >> 5)) & 1; \
+    ADD_CYCLES(cycles);                 \
+  }
+#endif  // NES6502_DECIMAL
 
-#define ASL(cycles, read_func, write_func, addr) { read_func(addr, data); c_flag = data >> 7; data <<= 1; write_func(addr, data); \
-    SET_NZ_FLAGS(data); ADD_CYCLES(cycles); }
-#define ASL_A() { c_flag = A >> 7; A <<= 1; SET_NZ_FLAGS(A); ADD_CYCLES(2); }
-#define ASR(cycles, read_func) { read_func(data); data &= A; c_flag = data & 1; A = data >> 1; SET_NZ_FLAGS(A); ADD_CYCLES(cycles); }
-#define BCC() { RELATIVE_BRANCH(0 == c_flag); }
-#define BCS() { RELATIVE_BRANCH(0 != c_flag); }
-#define BEQ() { RELATIVE_BRANCH(0 == z_flag); }
-#define BIT(cycles, read_func) { read_func(data); n_flag = data; v_flag = data & V_FLAG; z_flag = data & A; ADD_CYCLES(cycles); }
-#define BMI() { RELATIVE_BRANCH(n_flag & N_FLAG); }
-#define BNE() { RELATIVE_BRANCH(0 != z_flag); }
-#define BPL() { RELATIVE_BRANCH(0 == (n_flag & N_FLAG)); }
-#define BRK() { PC++; PUSH(PC >> 8); PUSH(PC & 0xFF); b_flag = 1; PUSH(COMBINE_FLAGS()); i_flag = 1; JUMP(IRQ_VECTOR); ADD_CYCLES(7); }
-#define BVC() { RELATIVE_BRANCH(0 == v_flag); }
-#define BVS() { RELATIVE_BRANCH(0 != v_flag); }
-#define CLC() { c_flag = 0; ADD_CYCLES(2); }
-#define CLD() { d_flag = 0; ADD_CYCLES(2); }
-#define CLI() { i_flag = 0; ADD_CYCLES(2); if (cpu.int_pending && remaining_cycles > 0) { cpu.int_pending = 0; \
-      IRQ_PROC(); ADD_CYCLES(INT_CYCLES); } }
-#define CLV() { v_flag = 0; ADD_CYCLES(2); }
-#define _COMPARE(reg, value) { temp = (reg) - (value); c_flag = ((temp & 0x100) >> 8) ^ 1; SET_NZ_FLAGS((uint8_t) temp); }
-#define CMP(cycles, read_func) { read_func(data); _COMPARE(A, data); ADD_CYCLES(cycles); }
-#define CPX(cycles, read_func) { read_func(data); _COMPARE(X, data); ADD_CYCLES(cycles); }
-#define CPY(cycles, read_func) { read_func(data); _COMPARE(Y, data); ADD_CYCLES(cycles);  }
-#define DCP(cycles, read_func, write_func, addr) { read_func(addr, data); data--; write_func(addr, data); CMP(cycles, EMPTY_READ); }
-#define _DEC(cycles, read_func, write_func, addr) { read_func(addr, data); data--; write_func(addr, data); SET_NZ_FLAGS(data); \
-    ADD_CYCLES(cycles); }
-#define DEX() { X--; SET_NZ_FLAGS(X); ADD_CYCLES(2); }
-#define DEY() { Y--; SET_NZ_FLAGS(Y); ADD_CYCLES(2); }
-#define DOP(cycles) { PC++; ADD_CYCLES(cycles); }
-#define EOR(cycles, read_func) { read_func(data); A ^= data; SET_NZ_FLAGS(A); ADD_CYCLES(cycles); }
-#define INC(cycles, read_func, write_func, addr) { read_func(addr, data); data++; write_func(addr, data); \
-    SET_NZ_FLAGS(data); ADD_CYCLES(cycles); }
-#define INX() { X++; SET_NZ_FLAGS(X); ADD_CYCLES(2); }
-#define INY() { Y++; SET_NZ_FLAGS(Y); ADD_CYCLES(2); }
-#define ISB(cycles, read_func, write_func, addr) { read_func(addr, data); data++; write_func(addr, data); SBC(cycles, EMPTY_READ); }
+#define ASL(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr, data);                       \
+    c_flag = data >> 7;                          \
+    data <<= 1;                                  \
+    write_func(addr, data);                      \
+    SET_NZ_FLAGS(data);                          \
+    ADD_CYCLES(cycles);                          \
+  }
+#define ASL_A()      \
+  {                  \
+    c_flag = A >> 7; \
+    A <<= 1;         \
+    SET_NZ_FLAGS(A); \
+    ADD_CYCLES(2);   \
+  }
+#define ASR(cycles, read_func) \
+  {                            \
+    read_func(data);           \
+    data &= A;                 \
+    c_flag = data & 1;         \
+    A = data >> 1;             \
+    SET_NZ_FLAGS(A);           \
+    ADD_CYCLES(cycles);        \
+  }
+#define BCC() \
+  { RELATIVE_BRANCH(0 == c_flag); }
+#define BCS() \
+  { RELATIVE_BRANCH(0 != c_flag); }
+#define BEQ() \
+  { RELATIVE_BRANCH(0 == z_flag); }
+#define BIT(cycles, read_func) \
+  {                            \
+    read_func(data);           \
+    n_flag = data;             \
+    v_flag = data & V_FLAG;    \
+    z_flag = data & A;         \
+    ADD_CYCLES(cycles);        \
+  }
+#define BMI() \
+  { RELATIVE_BRANCH(n_flag &N_FLAG); }
+#define BNE() \
+  { RELATIVE_BRANCH(0 != z_flag); }
+#define BPL() \
+  { RELATIVE_BRANCH(0 == (n_flag & N_FLAG)); }
+#define BRK()              \
+  {                        \
+    PC++;                  \
+    PUSH(PC >> 8);         \
+    PUSH(PC & 0xFF);       \
+    b_flag = 1;            \
+    PUSH(COMBINE_FLAGS()); \
+    i_flag = 1;            \
+    JUMP(IRQ_VECTOR);      \
+    ADD_CYCLES(7);         \
+  }
+#define BVC() \
+  { RELATIVE_BRANCH(0 == v_flag); }
+#define BVS() \
+  { RELATIVE_BRANCH(0 != v_flag); }
+#define CLC()      \
+  {                \
+    c_flag = 0;    \
+    ADD_CYCLES(2); \
+  }
+#define CLD()      \
+  {                \
+    d_flag = 0;    \
+    ADD_CYCLES(2); \
+  }
+#define CLI()                                      \
+  {                                                \
+    i_flag = 0;                                    \
+    ADD_CYCLES(2);                                 \
+    if (cpu.int_pending && remaining_cycles > 0) { \
+      cpu.int_pending = 0;                         \
+      IRQ_PROC();                                  \
+      ADD_CYCLES(INT_CYCLES);                      \
+    }                                              \
+  }
+#define CLV()      \
+  {                \
+    v_flag = 0;    \
+    ADD_CYCLES(2); \
+  }
+#define _COMPARE(reg, value)            \
+  {                                     \
+    temp = (reg) - (value);             \
+    c_flag = ((temp & 0x100) >> 8) ^ 1; \
+    SET_NZ_FLAGS((uint8_t)temp);        \
+  }
+#define CMP(cycles, read_func) \
+  {                            \
+    read_func(data);           \
+    _COMPARE(A, data);         \
+    ADD_CYCLES(cycles);        \
+  }
+#define CPX(cycles, read_func) \
+  {                            \
+    read_func(data);           \
+    _COMPARE(X, data);         \
+    ADD_CYCLES(cycles);        \
+  }
+#define CPY(cycles, read_func) \
+  {                            \
+    read_func(data);           \
+    _COMPARE(Y, data);         \
+    ADD_CYCLES(cycles);        \
+  }
+#define DCP(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr, data);                       \
+    data--;                                      \
+    write_func(addr, data);                      \
+    CMP(cycles, EMPTY_READ);                     \
+  }
+#define _DEC(cycles, read_func, write_func, addr) \
+  {                                               \
+    read_func(addr, data);                        \
+    data--;                                       \
+    write_func(addr, data);                       \
+    SET_NZ_FLAGS(data);                           \
+    ADD_CYCLES(cycles);                           \
+  }
+#define DEX()        \
+  {                  \
+    X--;             \
+    SET_NZ_FLAGS(X); \
+    ADD_CYCLES(2);   \
+  }
+#define DEY()        \
+  {                  \
+    Y--;             \
+    SET_NZ_FLAGS(Y); \
+    ADD_CYCLES(2);   \
+  }
+#define DOP(cycles)     \
+  {                     \
+    PC++;               \
+    ADD_CYCLES(cycles); \
+  }
+#define EOR(cycles, read_func) \
+  {                            \
+    read_func(data);           \
+    A ^= data;                 \
+    SET_NZ_FLAGS(A);           \
+    ADD_CYCLES(cycles);        \
+  }
+#define INC(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr, data);                       \
+    data++;                                      \
+    write_func(addr, data);                      \
+    SET_NZ_FLAGS(data);                          \
+    ADD_CYCLES(cycles);                          \
+  }
+#define INX()        \
+  {                  \
+    X++;             \
+    SET_NZ_FLAGS(X); \
+    ADD_CYCLES(2);   \
+  }
+#define INY()        \
+  {                  \
+    Y++;             \
+    SET_NZ_FLAGS(Y); \
+    ADD_CYCLES(2);   \
+  }
+#define ISB(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr, data);                       \
+    data++;                                      \
+    write_func(addr, data);                      \
+    SBC(cycles, EMPTY_READ);                     \
+  }
 
 #ifdef NES6502_TESTOPS
-#define JAM() { cpu_Jam(); }
-#else // !NES6502_TESTOPS 
-#define JAM() { PC--; cpu.jammed = true; cpu.int_pending = 0; ADD_CYCLES(2); }
-#endif // !NES6502_TESTOPS 
+#define JAM() \
+  { cpu_Jam(); }
+#else  // !NES6502_TESTOPS
+#define JAM()            \
+  {                      \
+    PC--;                \
+    cpu.jammed = true;   \
+    cpu.int_pending = 0; \
+    ADD_CYCLES(2);       \
+  }
+#endif  // !NES6502_TESTOPS
 
-#define JMP_INDIRECT() { temp = bank_readword(PC); if (0xFF == (temp & 0xFF)) \
-      PC = (bank_readbyte(temp & 0xFF00) << 8) | bank_readbyte(temp); else JUMP(temp); ADD_CYCLES(5); }
-#define JMP_ABSOLUTE() { JUMP(PC); ADD_CYCLES(3); }
-#define JSR() { PC++; PUSH(PC >> 8); PUSH(PC & 0xFF); JUMP(PC - 1); ADD_CYCLES(6); }
-#define LAS(cycles, read_func) { read_func(data); A = X = S = (S & data); SET_NZ_FLAGS(A); ADD_CYCLES(cycles); }
-#define LAX(cycles, read_func) { read_func(A); X = A; SET_NZ_FLAGS(A); ADD_CYCLES(cycles); }
-#define LDA(cycles, read_func) { read_func(A); SET_NZ_FLAGS(A); ADD_CYCLES(cycles); }
-#define LDX(cycles, read_func) { read_func(X); SET_NZ_FLAGS(X); ADD_CYCLES(cycles); }
-#define LDY(cycles, read_func) { read_func(Y); SET_NZ_FLAGS(Y); ADD_CYCLES(cycles); }
-#define LSR(cycles, read_func, write_func, addr) { read_func(addr, data); c_flag = data & 1; data >>= 1; \
-    write_func(addr, data); SET_NZ_FLAGS(data); ADD_CYCLES(cycles); }
-#define LSR_A() { c_flag = A & 1; A >>= 1; SET_NZ_FLAGS(A); ADD_CYCLES(2); }
-#define LXA(cycles, read_func) { read_func(data); A = X = ((A | 0xEE) & data); SET_NZ_FLAGS(A); ADD_CYCLES(cycles); }
-#define NOP() { ADD_CYCLES(2); }
-#define ORA(cycles, read_func) { read_func(data); A |= data; SET_NZ_FLAGS(A); ADD_CYCLES(cycles); }
-#define PHA() { PUSH(A); ADD_CYCLES(3); }
-#define PHP() { PUSH(COMBINE_FLAGS() | B_FLAG); ADD_CYCLES(3); }
-#define PLA() { A = PULL(); SET_NZ_FLAGS(A); ADD_CYCLES(4); }
-#define PLP() { btemp = PULL(); SCATTER_FLAGS(btemp); ADD_CYCLES(4); }
-#define RLA(cycles, read_func, write_func, addr) { read_func(addr, data); btemp = c_flag; c_flag = data >> 7; \
-    data = (data << 1) | btemp; write_func(addr, data); A &= data; SET_NZ_FLAGS(A); ADD_CYCLES(cycles); }
-#define ROL(cycles, read_func, write_func, addr) { read_func(addr, data); btemp = c_flag; c_flag = data >> 7; \
-    data = (data << 1) | btemp; write_func(addr, data); SET_NZ_FLAGS(data); ADD_CYCLES(cycles); }
-#define ROL_A() { btemp = c_flag; c_flag = A >> 7; A = (A << 1) | btemp; SET_NZ_FLAGS(A); ADD_CYCLES(2); }
-#define ROR(cycles, read_func, write_func, addr) { read_func(addr, data); btemp = c_flag << 7; c_flag = data & 1; \
-    data = (data >> 1) | btemp; write_func(addr, data); SET_NZ_FLAGS(data); ADD_CYCLES(cycles); }
-#define ROR_A() { btemp = c_flag << 7; c_flag = A & 1; A = (A >> 1) | btemp; SET_NZ_FLAGS(A); ADD_CYCLES(2); }
-#define RRA(cycles, read_func, write_func, addr) { read_func(addr, data); btemp = c_flag << 7; c_flag = data & 1; \
-    data = (data >> 1) | btemp; write_func(addr, data); ADC(cycles, EMPTY_READ); }
-#define RTI() { btemp = PULL(); SCATTER_FLAGS(btemp); PC = PULL(); PC |= PULL() << 8; ADD_CYCLES(6); \
-    if (0 == i_flag && cpu.int_pending && remaining_cycles > 0) { cpu.int_pending = 0; IRQ_PROC(); ADD_CYCLES(INT_CYCLES); } }
-#define RTS() { PC = PULL(); PC = (PC | (PULL() << 8)) + 1; ADD_CYCLES(6); }
-#define SAX(cycles, read_func, write_func, addr) { read_func(addr); data = A & X; write_func(addr, data); ADD_CYCLES(cycles); }
+#define JMP_INDIRECT()                                                \
+  {                                                                   \
+    temp = bank_readword(PC);                                         \
+    if (0xFF == (temp & 0xFF))                                        \
+      PC = (bank_readbyte(temp & 0xFF00) << 8) | bank_readbyte(temp); \
+    else                                                              \
+      JUMP(temp);                                                     \
+    ADD_CYCLES(5);                                                    \
+  }
+#define JMP_ABSOLUTE() \
+  {                    \
+    JUMP(PC);          \
+    ADD_CYCLES(3);     \
+  }
+#define JSR()        \
+  {                  \
+    PC++;            \
+    PUSH(PC >> 8);   \
+    PUSH(PC & 0xFF); \
+    JUMP(PC - 1);    \
+    ADD_CYCLES(6);   \
+  }
+#define LAS(cycles, read_func) \
+  {                            \
+    read_func(data);           \
+    A = X = S = (S & data);    \
+    SET_NZ_FLAGS(A);           \
+    ADD_CYCLES(cycles);        \
+  }
+#define LAX(cycles, read_func) \
+  {                            \
+    read_func(A);              \
+    X = A;                     \
+    SET_NZ_FLAGS(A);           \
+    ADD_CYCLES(cycles);        \
+  }
+#define LDA(cycles, read_func) \
+  {                            \
+    read_func(A);              \
+    SET_NZ_FLAGS(A);           \
+    ADD_CYCLES(cycles);        \
+  }
+#define LDX(cycles, read_func) \
+  {                            \
+    read_func(X);              \
+    SET_NZ_FLAGS(X);           \
+    ADD_CYCLES(cycles);        \
+  }
+#define LDY(cycles, read_func) \
+  {                            \
+    read_func(Y);              \
+    SET_NZ_FLAGS(Y);           \
+    ADD_CYCLES(cycles);        \
+  }
+#define LSR(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr, data);                       \
+    c_flag = data & 1;                           \
+    data >>= 1;                                  \
+    write_func(addr, data);                      \
+    SET_NZ_FLAGS(data);                          \
+    ADD_CYCLES(cycles);                          \
+  }
+#define LSR_A()      \
+  {                  \
+    c_flag = A & 1;  \
+    A >>= 1;         \
+    SET_NZ_FLAGS(A); \
+    ADD_CYCLES(2);   \
+  }
+#define LXA(cycles, read_func)   \
+  {                              \
+    read_func(data);             \
+    A = X = ((A | 0xEE) & data); \
+    SET_NZ_FLAGS(A);             \
+    ADD_CYCLES(cycles);          \
+  }
+#define NOP() \
+  { ADD_CYCLES(2); }
+#define ORA(cycles, read_func) \
+  {                            \
+    read_func(data);           \
+    A |= data;                 \
+    SET_NZ_FLAGS(A);           \
+    ADD_CYCLES(cycles);        \
+  }
+#define PHA()      \
+  {                \
+    PUSH(A);       \
+    ADD_CYCLES(3); \
+  }
+#define PHP()                       \
+  {                                 \
+    PUSH(COMBINE_FLAGS() | B_FLAG); \
+    ADD_CYCLES(3);                  \
+  }
+#define PLA()        \
+  {                  \
+    A = PULL();      \
+    SET_NZ_FLAGS(A); \
+    ADD_CYCLES(4);   \
+  }
+#define PLP()             \
+  {                       \
+    btemp = PULL();       \
+    SCATTER_FLAGS(btemp); \
+    ADD_CYCLES(4);        \
+  }
+#define RLA(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr, data);                       \
+    btemp = c_flag;                              \
+    c_flag = data >> 7;                          \
+    data = (data << 1) | btemp;                  \
+    write_func(addr, data);                      \
+    A &= data;                                   \
+    SET_NZ_FLAGS(A);                             \
+    ADD_CYCLES(cycles);                          \
+  }
+#define ROL(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr, data);                       \
+    btemp = c_flag;                              \
+    c_flag = data >> 7;                          \
+    data = (data << 1) | btemp;                  \
+    write_func(addr, data);                      \
+    SET_NZ_FLAGS(data);                          \
+    ADD_CYCLES(cycles);                          \
+  }
+#define ROL_A()           \
+  {                       \
+    btemp = c_flag;       \
+    c_flag = A >> 7;      \
+    A = (A << 1) | btemp; \
+    SET_NZ_FLAGS(A);      \
+    ADD_CYCLES(2);        \
+  }
+#define ROR(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr, data);                       \
+    btemp = c_flag << 7;                         \
+    c_flag = data & 1;                           \
+    data = (data >> 1) | btemp;                  \
+    write_func(addr, data);                      \
+    SET_NZ_FLAGS(data);                          \
+    ADD_CYCLES(cycles);                          \
+  }
+#define ROR_A()           \
+  {                       \
+    btemp = c_flag << 7;  \
+    c_flag = A & 1;       \
+    A = (A >> 1) | btemp; \
+    SET_NZ_FLAGS(A);      \
+    ADD_CYCLES(2);        \
+  }
+#define RRA(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr, data);                       \
+    btemp = c_flag << 7;                         \
+    c_flag = data & 1;                           \
+    data = (data >> 1) | btemp;                  \
+    write_func(addr, data);                      \
+    ADC(cycles, EMPTY_READ);                     \
+  }
+#define RTI()                                                     \
+  {                                                               \
+    btemp = PULL();                                               \
+    SCATTER_FLAGS(btemp);                                         \
+    PC = PULL();                                                  \
+    PC |= PULL() << 8;                                            \
+    ADD_CYCLES(6);                                                \
+    if (0 == i_flag && cpu.int_pending && remaining_cycles > 0) { \
+      cpu.int_pending = 0;                                        \
+      IRQ_PROC();                                                 \
+      ADD_CYCLES(INT_CYCLES);                                     \
+    }                                                             \
+  }
+#define RTS()                      \
+  {                                \
+    PC = PULL();                   \
+    PC = (PC | (PULL() << 8)) + 1; \
+    ADD_CYCLES(6);                 \
+  }
+#define SAX(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr);                             \
+    data = A & X;                                \
+    write_func(addr, data);                      \
+    ADD_CYCLES(cycles);                          \
+  }
 
 #ifdef NES6502_DECIMAL
-#define SBC(cycles, read_func) { read_func(data); temp = A - data - (c_flag ^ 1); if (d_flag) { uint8_t al, ah; \
-      al = (A & 0x0F) - (data & 0x0F) - (c_flag ^ 1); ah = (A >> 4) - (data >> 4); if (al & 0x10) { al -= 6; ah--; \
-      } if (ah & 0x10) { ah -= 6; c_flag = 0; } else { c_flag = 1; } v_flag = (A ^ temp) & (A ^ data) & 0x80; \
-      SET_NZ_FLAGS(temp & 0xFF); A = (ah << 4) | (al & 0x0F); } else { v_flag = (A ^ temp) & (A ^ data) & 0x80; \
-      c_flag = ((temp & 0x100) >> 8) ^ 1; A = (uint8_t) temp; SET_NZ_FLAGS(A & 0xFF); } ADD_CYCLES(cycles); }
+#define SBC(cycles, read_func)                        \
+  {                                                   \
+    read_func(data);                                  \
+    temp = A - data - (c_flag ^ 1);                   \
+    if (d_flag) {                                     \
+      uint8_t al, ah;                                 \
+      al = (A & 0x0F) - (data & 0x0F) - (c_flag ^ 1); \
+      ah = (A >> 4) - (data >> 4);                    \
+      if (al & 0x10) {                                \
+        al -= 6;                                      \
+        ah--;                                         \
+      }                                               \
+      if (ah & 0x10) {                                \
+        ah -= 6;                                      \
+        c_flag = 0;                                   \
+      } else {                                        \
+        c_flag = 1;                                   \
+      }                                               \
+      v_flag = (A ^ temp) & (A ^ data) & 0x80;        \
+      SET_NZ_FLAGS(temp & 0xFF);                      \
+      A = (ah << 4) | (al & 0x0F);                    \
+    } else {                                          \
+      v_flag = (A ^ temp) & (A ^ data) & 0x80;        \
+      c_flag = ((temp & 0x100) >> 8) ^ 1;             \
+      A = (uint8_t)temp;                              \
+      SET_NZ_FLAGS(A & 0xFF);                         \
+    }                                                 \
+    ADD_CYCLES(cycles);                               \
+  }
 #else
-#define SBC(cycles, read_func) { read_func(data); temp = A - data - (c_flag ^ 1); v_flag = (A ^ data) & (A ^ temp) & 0x80; \
-    c_flag = ((temp >> 8) & 1) ^ 1; A = (uint8_t) temp; SET_NZ_FLAGS(A); ADD_CYCLES(cycles); }
-#endif // NES6502_DECIMAL 
-#define SBX(cycles, read_func) { read_func(data); temp = (A & X) - data; c_flag = ((temp >> 8) & 1) ^ 1; X = temp & 0xFF; \
-    SET_NZ_FLAGS(X); ADD_CYCLES(cycles); }
-#define SEC() { c_flag = 1; ADD_CYCLES(2); }
-#define SED() { d_flag = 1; ADD_CYCLES(2); }
-#define SEI() { i_flag = 1; ADD_CYCLES(2); }
-#define SHA(cycles, read_func, write_func, addr) { read_func(addr); data = A & X & ((uint8_t) ((addr >> 8) + 1)); \
-    write_func(addr, data); ADD_CYCLES(cycles); }
-#define SHS(cycles, read_func, write_func, addr) { read_func(addr); S = A & X; data = S & ((uint8_t) ((addr >> 8) + 1)); \
-    write_func(addr, data); ADD_CYCLES(cycles); }
-#define SHX(cycles, read_func, write_func, addr) { read_func(addr); data = X & ((uint8_t) ((addr >> 8) + 1)); \
-    write_func(addr, data); ADD_CYCLES(cycles); }
-#define SHY(cycles, read_func, write_func, addr) { read_func(addr); data = Y & ((uint8_t) ((addr >> 8 ) + 1)); \
-    write_func(addr, data); ADD_CYCLES(cycles); }
-#define SLO(cycles, read_func, write_func, addr) { read_func(addr, data); c_flag = data >> 7; data <<= 1; \
-    write_func(addr, data); A |= data; SET_NZ_FLAGS(A); ADD_CYCLES(cycles); }
-#define SRE(cycles, read_func, write_func, addr) { read_func(addr, data); c_flag = data & 1; data >>= 1; \
-    write_func(addr, data); A ^= data; SET_NZ_FLAGS(A); ADD_CYCLES(cycles); }
-#define STA(cycles, read_func, write_func, addr) { read_func(addr); write_func(addr, A); ADD_CYCLES(cycles); }
-#define STX(cycles, read_func, write_func, addr) { read_func(addr); write_func(addr, X); ADD_CYCLES(cycles); }
-#define STY(cycles, read_func, write_func, addr) { read_func(addr); write_func(addr, Y); ADD_CYCLES(cycles); }
-#define TAX() { X = A; SET_NZ_FLAGS(X); ADD_CYCLES(2); }
-#define TAY() { Y = A; SET_NZ_FLAGS(Y); ADD_CYCLES(2); }
-#define TOP() { PC += 2; ADD_CYCLES(4); }
-#define TSX() { X = S; SET_NZ_FLAGS(X); ADD_CYCLES(2); }
-#define TXA() { A = X; SET_NZ_FLAGS(A); ADD_CYCLES(2); }
-#define TXS() { S = X; ADD_CYCLES(2); }
-#define TYA() { A = Y; SET_NZ_FLAGS(A); ADD_CYCLES(2); }
+#define SBC(cycles, read_func)               \
+  {                                          \
+    read_func(data);                         \
+    temp = A - data - (c_flag ^ 1);          \
+    v_flag = (A ^ data) & (A ^ temp) & 0x80; \
+    c_flag = ((temp >> 8) & 1) ^ 1;          \
+    A = (uint8_t)temp;                       \
+    SET_NZ_FLAGS(A);                         \
+    ADD_CYCLES(cycles);                      \
+  }
+#endif  // NES6502_DECIMAL
+#define SBX(cycles, read_func)      \
+  {                                 \
+    read_func(data);                \
+    temp = (A & X) - data;          \
+    c_flag = ((temp >> 8) & 1) ^ 1; \
+    X = temp & 0xFF;                \
+    SET_NZ_FLAGS(X);                \
+    ADD_CYCLES(cycles);             \
+  }
+#define SEC()      \
+  {                \
+    c_flag = 1;    \
+    ADD_CYCLES(2); \
+  }
+#define SED()      \
+  {                \
+    d_flag = 1;    \
+    ADD_CYCLES(2); \
+  }
+#define SEI()      \
+  {                \
+    i_flag = 1;    \
+    ADD_CYCLES(2); \
+  }
+#define SHA(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr);                             \
+    data = A & X & ((uint8_t)((addr >> 8) + 1)); \
+    write_func(addr, data);                      \
+    ADD_CYCLES(cycles);                          \
+  }
+#define SHS(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr);                             \
+    S = A & X;                                   \
+    data = S & ((uint8_t)((addr >> 8) + 1));     \
+    write_func(addr, data);                      \
+    ADD_CYCLES(cycles);                          \
+  }
+#define SHX(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr);                             \
+    data = X & ((uint8_t)((addr >> 8) + 1));     \
+    write_func(addr, data);                      \
+    ADD_CYCLES(cycles);                          \
+  }
+#define SHY(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr);                             \
+    data = Y & ((uint8_t)((addr >> 8) + 1));     \
+    write_func(addr, data);                      \
+    ADD_CYCLES(cycles);                          \
+  }
+#define SLO(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr, data);                       \
+    c_flag = data >> 7;                          \
+    data <<= 1;                                  \
+    write_func(addr, data);                      \
+    A |= data;                                   \
+    SET_NZ_FLAGS(A);                             \
+    ADD_CYCLES(cycles);                          \
+  }
+#define SRE(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr, data);                       \
+    c_flag = data & 1;                           \
+    data >>= 1;                                  \
+    write_func(addr, data);                      \
+    A ^= data;                                   \
+    SET_NZ_FLAGS(A);                             \
+    ADD_CYCLES(cycles);                          \
+  }
+#define STA(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr);                             \
+    write_func(addr, A);                         \
+    ADD_CYCLES(cycles);                          \
+  }
+#define STX(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr);                             \
+    write_func(addr, X);                         \
+    ADD_CYCLES(cycles);                          \
+  }
+#define STY(cycles, read_func, write_func, addr) \
+  {                                              \
+    read_func(addr);                             \
+    write_func(addr, Y);                         \
+    ADD_CYCLES(cycles);                          \
+  }
+#define TAX()        \
+  {                  \
+    X = A;           \
+    SET_NZ_FLAGS(X); \
+    ADD_CYCLES(2);   \
+  }
+#define TAY()        \
+  {                  \
+    Y = A;           \
+    SET_NZ_FLAGS(Y); \
+    ADD_CYCLES(2);   \
+  }
+#define TOP()      \
+  {                \
+    PC += 2;       \
+    ADD_CYCLES(4); \
+  }
+#define TSX()        \
+  {                  \
+    X = S;           \
+    SET_NZ_FLAGS(X); \
+    ADD_CYCLES(2);   \
+  }
+#define TXA()        \
+  {                  \
+    A = X;           \
+    SET_NZ_FLAGS(A); \
+    ADD_CYCLES(2);   \
+  }
+#define TXS()      \
+  {                \
+    S = X;         \
+    ADD_CYCLES(2); \
+  }
+#define TYA()        \
+  {                  \
+    A = Y;           \
+    SET_NZ_FLAGS(A); \
+    ADD_CYCLES(2);   \
+  }
 
-#define  ZP_READBYTE(addr)          ram[(addr)]
-#define  ZP_WRITEBYTE(addr, value)  ram[(addr)] = (uint8_t) (value)
+#define ZP_READBYTE(addr) ram[(addr)]
+#define ZP_WRITEBYTE(addr, value) ram[(addr)] = (uint8_t)(value)
 
 #ifdef HOST_LITTLE_ENDIAN
 static inline uint32_t zp_readword(register uint8_t address) {
-  return (uint32_t) (*(uint16_t *)(ram + address));
+  return (uint32_t)(*(uint16_t *)(ram + address));
 }
 static inline uint32_t bank_readword(register uint32_t address) {
-  return (uint32_t) (*(uint16_t *)(cpu.mem_page[address >> NES6502_BANKSHIFT] + (address & NES6502_BANKMASK)));
+  return (uint32_t)(*(uint16_t *)(cpu.mem_page[address >> NES6502_BANKSHIFT] +
+                                  (address & NES6502_BANKMASK)));
 }
-#else // !HOST_LITTLE_ENDIAN 
+#else   // !HOST_LITTLE_ENDIAN
 static inline uint32_t zp_readword(register uint8_t address) {
   uint32_t x = (uint32_t) * (uint16_t *)(ram + address);
   return (x << 8) | (x >> 8);
-
 }
 static inline uint32_t bank_readword(register uint32_t address) {
-  uint32_t x = (uint32_t) * (uint16_t *)(cpu.mem_page[address >> NES6502_BANKSHIFT] + (address & NES6502_BANKMASK));
+  uint32_t x =
+      (uint32_t) * (uint16_t *)(cpu.mem_page[address >> NES6502_BANKSHIFT] +
+                                (address & NES6502_BANKMASK));
   return (x << 8) | (x >> 8);
 }
-#endif // !HOST_LITTLE_ENDIAN 
+#endif  // !HOST_LITTLE_ENDIAN
 
 static inline uint8_t bank_readbyte(register uint32_t address) {
   return cpu.mem_page[address >> NES6502_BANKSHIFT][address & NES6502_BANKMASK];
 }
-static inline void bank_writebyte(register uint32_t address, register uint8_t value) {
-  cpu.mem_page[address >> NES6502_BANKSHIFT][address & NES6502_BANKMASK] = value;
+static inline void bank_writebyte(register uint32_t address,
+                                  register uint8_t value) {
+  cpu.mem_page[address >> NES6502_BANKSHIFT][address & NES6502_BANKMASK] =
+      value;
 }
 static uint8_t mem_readbyte(uint32_t address) {
   nes6502_memread *mr;
 
-  if (address < 0x800) { // RAM
+  if (address < 0x800) {  // RAM
     return ram[address];
   } else if (address >= 0x8000) {
     return bank_readbyte(address);
@@ -1551,9 +2186,7 @@ void nes6502_getcontext(nes6502_context *context) {
   }
 }
 
-uint8_t nes6502_getbyte(uint32_t address) {
-  return bank_readbyte(address);
-}
+uint8_t nes6502_getbyte(uint32_t address) { return bank_readbyte(address); }
 
 uint32_t nes6502_getcycles(bool reset_flag) {
   uint32_t cycles = cpu.total_cycles;
@@ -1561,25 +2194,42 @@ uint32_t nes6502_getcycles(bool reset_flag) {
   return cycles;
 }
 
-#define  GET_GLOBAL_REGS() { PC = cpu.pc_reg; A = cpu.a_reg; X = cpu.x_reg; Y = cpu.y_reg; SCATTER_FLAGS(cpu.p_reg); S = cpu.s_reg; }
-#define  STORE_LOCAL_REGS() { cpu.pc_reg = PC; cpu.a_reg = A; cpu.x_reg = X; cpu.y_reg = Y; cpu.p_reg = COMBINE_FLAGS(); cpu.s_reg = S; }
+#define GET_GLOBAL_REGS()     \
+  {                           \
+    PC = cpu.pc_reg;          \
+    A = cpu.a_reg;            \
+    X = cpu.x_reg;            \
+    Y = cpu.y_reg;            \
+    SCATTER_FLAGS(cpu.p_reg); \
+    S = cpu.s_reg;            \
+  }
+#define STORE_LOCAL_REGS()       \
+  {                              \
+    cpu.pc_reg = PC;             \
+    cpu.a_reg = A;               \
+    cpu.x_reg = X;               \
+    cpu.y_reg = Y;               \
+    cpu.p_reg = COMBINE_FLAGS(); \
+    cpu.s_reg = S;               \
+  }
 
-#define  MIN(a,b)    (((a) < (b)) ? (a) : (b))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 #ifdef NES6502_JUMPTABLE
-#define  OPCODE_BEGIN(xx)  op##xx:
-#define  OPCODE_END if (remaining_cycles <= 0) goto end_execute; goto *opcode_table[bank_readbyte(PC++)];
-#else // !NES6502_JUMPTABLE 
-#define  OPCODE_BEGIN(xx)  case 0x##xx:
-#define  OPCODE_END        break;
-#endif // !NES6502_JUMPTABLE 
-
+#define OPCODE_BEGIN(xx) op##xx:
+#define OPCODE_END                             \
+  if (remaining_cycles <= 0) goto end_execute; \
+  goto *opcode_table[bank_readbyte(PC++)];
+#else  // !NES6502_JUMPTABLE
+#define OPCODE_BEGIN(xx) case 0x##xx:
+#define OPCODE_END break;
+#endif  // !NES6502_JUMPTABLE
 
 int nes6502_execute(int timeslice_cycles) {
   int old_cycles = cpu.total_cycles;
 
-  uint32_t temp, addr; // for macros
-  uint8_t btemp, baddr; // for macros
+  uint32_t temp, addr;   // for macros
+  uint8_t btemp, baddr;  // for macros
   uint8_t data;
 
   uint8_t n_flag, v_flag, b_flag;
@@ -1589,42 +2239,37 @@ int nes6502_execute(int timeslice_cycles) {
   uint8_t A, X, Y, S;
 
 #ifdef NES6502_JUMPTABLE
-  static const void *opcode_table[256] =
-  {
-    &&op00, &&op01, &&op02, &&op03, &&op04, &&op05, &&op06, &&op07,
-    &&op08, &&op09, &&op0A, &&op0B, &&op0C, &&op0D, &&op0E, &&op0F,
-    &&op10, &&op11, &&op12, &&op13, &&op14, &&op15, &&op16, &&op17,
-    &&op18, &&op19, &&op1A, &&op1B, &&op1C, &&op1D, &&op1E, &&op1F,
-    &&op20, &&op21, &&op22, &&op23, &&op24, &&op25, &&op26, &&op27,
-    &&op28, &&op29, &&op2A, &&op2B, &&op2C, &&op2D, &&op2E, &&op2F,
-    &&op30, &&op31, &&op32, &&op33, &&op34, &&op35, &&op36, &&op37,
-    &&op38, &&op39, &&op3A, &&op3B, &&op3C, &&op3D, &&op3E, &&op3F,
-    &&op40, &&op41, &&op42, &&op43, &&op44, &&op45, &&op46, &&op47,
-    &&op48, &&op49, &&op4A, &&op4B, &&op4C, &&op4D, &&op4E, &&op4F,
-    &&op50, &&op51, &&op52, &&op53, &&op54, &&op55, &&op56, &&op57,
-    &&op58, &&op59, &&op5A, &&op5B, &&op5C, &&op5D, &&op5E, &&op5F,
-    &&op60, &&op61, &&op62, &&op63, &&op64, &&op65, &&op66, &&op67,
-    &&op68, &&op69, &&op6A, &&op6B, &&op6C, &&op6D, &&op6E, &&op6F,
-    &&op70, &&op71, &&op72, &&op73, &&op74, &&op75, &&op76, &&op77,
-    &&op78, &&op79, &&op7A, &&op7B, &&op7C, &&op7D, &&op7E, &&op7F,
-    &&op80, &&op81, &&op82, &&op83, &&op84, &&op85, &&op86, &&op87,
-    &&op88, &&op89, &&op8A, &&op8B, &&op8C, &&op8D, &&op8E, &&op8F,
-    &&op90, &&op91, &&op92, &&op93, &&op94, &&op95, &&op96, &&op97,
-    &&op98, &&op99, &&op9A, &&op9B, &&op9C, &&op9D, &&op9E, &&op9F,
-    &&opA0, &&opA1, &&opA2, &&opA3, &&opA4, &&opA5, &&opA6, &&opA7,
-    &&opA8, &&opA9, &&opAA, &&opAB, &&opAC, &&opAD, &&opAE, &&opAF,
-    &&opB0, &&opB1, &&opB2, &&opB3, &&opB4, &&opB5, &&opB6, &&opB7,
-    &&opB8, &&opB9, &&opBA, &&opBB, &&opBC, &&opBD, &&opBE, &&opBF,
-    &&opC0, &&opC1, &&opC2, &&opC3, &&opC4, &&opC5, &&opC6, &&opC7,
-    &&opC8, &&opC9, &&opCA, &&opCB, &&opCC, &&opCD, &&opCE, &&opCF,
-    &&opD0, &&opD1, &&opD2, &&opD3, &&opD4, &&opD5, &&opD6, &&opD7,
-    &&opD8, &&opD9, &&opDA, &&opDB, &&opDC, &&opDD, &&opDE, &&opDF,
-    &&opE0, &&opE1, &&opE2, &&opE3, &&opE4, &&opE5, &&opE6, &&opE7,
-    &&opE8, &&opE9, &&opEA, &&opEB, &&opEC, &&opED, &&opEE, &&opEF,
-    &&opF0, &&opF1, &&opF2, &&opF3, &&opF4, &&opF5, &&opF6, &&opF7,
-    &&opF8, &&opF9, &&opFA, &&opFB, &&opFC, &&opFD, &&opFE, &&opFF
-  };
-#endif // NES6502_JUMPTABLE 
+  static const void *opcode_table[256] = {
+      &&op00, &&op01, &&op02, &&op03, &&op04, &&op05, &&op06, &&op07, &&op08,
+      &&op09, &&op0A, &&op0B, &&op0C, &&op0D, &&op0E, &&op0F, &&op10, &&op11,
+      &&op12, &&op13, &&op14, &&op15, &&op16, &&op17, &&op18, &&op19, &&op1A,
+      &&op1B, &&op1C, &&op1D, &&op1E, &&op1F, &&op20, &&op21, &&op22, &&op23,
+      &&op24, &&op25, &&op26, &&op27, &&op28, &&op29, &&op2A, &&op2B, &&op2C,
+      &&op2D, &&op2E, &&op2F, &&op30, &&op31, &&op32, &&op33, &&op34, &&op35,
+      &&op36, &&op37, &&op38, &&op39, &&op3A, &&op3B, &&op3C, &&op3D, &&op3E,
+      &&op3F, &&op40, &&op41, &&op42, &&op43, &&op44, &&op45, &&op46, &&op47,
+      &&op48, &&op49, &&op4A, &&op4B, &&op4C, &&op4D, &&op4E, &&op4F, &&op50,
+      &&op51, &&op52, &&op53, &&op54, &&op55, &&op56, &&op57, &&op58, &&op59,
+      &&op5A, &&op5B, &&op5C, &&op5D, &&op5E, &&op5F, &&op60, &&op61, &&op62,
+      &&op63, &&op64, &&op65, &&op66, &&op67, &&op68, &&op69, &&op6A, &&op6B,
+      &&op6C, &&op6D, &&op6E, &&op6F, &&op70, &&op71, &&op72, &&op73, &&op74,
+      &&op75, &&op76, &&op77, &&op78, &&op79, &&op7A, &&op7B, &&op7C, &&op7D,
+      &&op7E, &&op7F, &&op80, &&op81, &&op82, &&op83, &&op84, &&op85, &&op86,
+      &&op87, &&op88, &&op89, &&op8A, &&op8B, &&op8C, &&op8D, &&op8E, &&op8F,
+      &&op90, &&op91, &&op92, &&op93, &&op94, &&op95, &&op96, &&op97, &&op98,
+      &&op99, &&op9A, &&op9B, &&op9C, &&op9D, &&op9E, &&op9F, &&opA0, &&opA1,
+      &&opA2, &&opA3, &&opA4, &&opA5, &&opA6, &&opA7, &&opA8, &&opA9, &&opAA,
+      &&opAB, &&opAC, &&opAD, &&opAE, &&opAF, &&opB0, &&opB1, &&opB2, &&opB3,
+      &&opB4, &&opB5, &&opB6, &&opB7, &&opB8, &&opB9, &&opBA, &&opBB, &&opBC,
+      &&opBD, &&opBE, &&opBF, &&opC0, &&opC1, &&opC2, &&opC3, &&opC4, &&opC5,
+      &&opC6, &&opC7, &&opC8, &&opC9, &&opCA, &&opCB, &&opCC, &&opCD, &&opCE,
+      &&opCF, &&opD0, &&opD1, &&opD2, &&opD3, &&opD4, &&opD5, &&opD6, &&opD7,
+      &&opD8, &&opD9, &&opDA, &&opDB, &&opDC, &&opDD, &&opDE, &&opDF, &&opE0,
+      &&opE1, &&opE2, &&opE3, &&opE4, &&opE5, &&opE6, &&opE7, &&opE8, &&opE9,
+      &&opEA, &&opEB, &&opEC, &&opED, &&opEE, &&opEF, &&opF0, &&opF1, &&opF2,
+      &&opF3, &&opF4, &&opF5, &&opF6, &&opF7, &&opF8, &&opF9, &&opFA, &&opFB,
+      &&opFC, &&opFD, &&opFE, &&opFF};
+#endif  // NES6502_JUMPTABLE
 
   remaining_cycles = timeslice_cycles;
   GET_GLOBAL_REGS();
@@ -1643,12 +2288,12 @@ int nes6502_execute(int timeslice_cycles) {
   }
 #ifdef NES6502_JUMPTABLE
   OPCODE_END
-#else // !NES6502_JUMPTABLE 
+#else   // !NES6502_JUMPTABLE
 
   // Continue until we run out of cycles
   while (remaining_cycles > 0) {
     switch (bank_readbyte(PC++)) {
-#endif // !NES6502_JUMPTABLE 
+#endif  // !NES6502_JUMPTABLE
 
   OPCODE_BEGIN(00)  // BRK
   BRK();
@@ -2578,31 +3223,34 @@ int nes6502_execute(int timeslice_cycles) {
   OPCODE_END
 #ifdef NES6502_JUMPTABLE
 end_execute:
-#else // !NES6502_JUMPTABLE 
-}
-}
-#endif // !NES6502_JUMPTABLE 
+#else   // !NES6502_JUMPTABLE
+    }
+  }
+#endif  // !NES6502_JUMPTABLE
   STORE_LOCAL_REGS();
   return (cpu.total_cycles - old_cycles);
 }
 
-void nes6502_reset(void) // Issue a CPU Reset
+void nes6502_reset(void)  // Issue a CPU Reset
 {
-  cpu.p_reg = Z_FLAG | R_FLAG | I_FLAG;     // Reserved bit always 1
-  cpu.int_pending = 0;                      // No pending interrupts
-  cpu.int_latency = 0;                      // No latent interrupts
-  cpu.pc_reg = bank_readword(RESET_VECTOR); // Fetch reset vector
+  cpu.p_reg = Z_FLAG | R_FLAG | I_FLAG;      // Reserved bit always 1
+  cpu.int_pending = 0;                       // No pending interrupts
+  cpu.int_latency = 0;                       // No latent interrupts
+  cpu.pc_reg = bank_readword(RESET_VECTOR);  // Fetch reset vector
   cpu.burn_cycles = RESET_CYCLES;
   cpu.jammed = false;
 }
 
-#define  DECLARE_LOCAL_REGS uint32_t PC; uint8_t A, X, Y, S; uint8_t n_flag, v_flag, b_flag; uint8_t d_flag, i_flag, z_flag, c_flag;
+#define DECLARE_LOCAL_REGS        \
+  uint32_t PC;                    \
+  uint8_t A, X, Y, S;             \
+  uint8_t n_flag, v_flag, b_flag; \
+  uint8_t d_flag, i_flag, z_flag, c_flag;
 
-void nes6502_nmi(void) { // Non-maskable interrupt
+void nes6502_nmi(void) {  // Non-maskable interrupt
   DECLARE_LOCAL_REGS
 
-  if (false == cpu.jammed)
-  {
+  if (false == cpu.jammed) {
     GET_GLOBAL_REGS();
     NMI_PROC();
     cpu.burn_cycles += INT_CYCLES;
@@ -2610,7 +3258,7 @@ void nes6502_nmi(void) { // Non-maskable interrupt
   }
 }
 
-void nes6502_irq(void) { // Interrupt request
+void nes6502_irq(void) {  // Interrupt request
   DECLARE_LOCAL_REGS
   if (false == cpu.jammed) {
     GET_GLOBAL_REGS();
@@ -2624,41 +3272,37 @@ void nes6502_irq(void) { // Interrupt request
   }
 }
 
-void nes6502_burn(int cycles) { // Set dead cycle period
+void nes6502_burn(int cycles) {  // Set dead cycle period
   cpu.burn_cycles += cycles;
 }
 
-void nes6502_release(void) { // Release our timeslice
+void nes6502_release(void) {  // Release our timeslice
   remaining_cycles = 0;
 }
 //--------------------------------------------------------------------------------
-//NES.C part
+// NES.C part
 void nes_setfiq(uint8_t value) {
   nes.fiq_state = value;
-  nes.fiq_cycles = (int) NES_FIQ_PERIOD;
+  nes.fiq_cycles = (int)NES_FIQ_PERIOD;
 }
-void nes_nmi(void) {
-  nes6502_nmi();
-}
+void nes_nmi(void) { nes6502_nmi(); }
 //--------------------------------------------------------------------------------
-//PPU.C:
+// PPU.C:
 
 // PPU access
-#define  PPU_MEM(x)           ppu.page[(x) >> 10][(x)]
+#define PPU_MEM(x) ppu.page[(x) >> 10][(x)]
 
 // Background (color 0) and solid sprite pixel flags
-#define  BG_TRANS             0x80
-#define  SP_PIXEL             0x40
-#define  BG_CLEAR(V)          ((V) & BG_TRANS)
-#define  BG_SOLID(V)          (0 == BG_CLEAR(V))
-#define  SP_CLEAR(V)          (0 == ((V) & SP_PIXEL))
+#define BG_TRANS 0x80
+#define SP_PIXEL 0x40
+#define BG_CLEAR(V) ((V)&BG_TRANS)
+#define BG_SOLID(V) (0 == BG_CLEAR(V))
+#define SP_CLEAR(V) (0 == ((V)&SP_PIXEL))
 
 // Full BG color
-#define  FULLBG               (ppu.palette[0] | BG_TRANS)
+#define FULLBG (ppu.palette[0] | BG_TRANS)
 
-void ppu_displaysprites(bool display) {
-  ppu.drawsprites = display;
-}
+void ppu_displaysprites(bool display) { ppu.drawsprites = display; }
 
 void ppu_getcontext(ppu_t *dest_ppu);
 void ppu_getcontext(ppu_t *dest_ppu) {
@@ -2724,10 +3368,8 @@ ppu_t *ppu_create(void);
 ppu_t *ppu_create(void) {
   static bool pal_generated = false;
 
-
-  if (NULL == temp) temp = (ppu_t*) malloc(sizeof(ppu_t));
-  if (NULL == temp)
-    return NULL;
+  if (NULL == temp) temp = (ppu_t *)malloc(sizeof(ppu_t));
+  if (NULL == temp) return NULL;
 
   memset(temp, 0, sizeof(ppu_t));
 
@@ -2737,22 +3379,19 @@ ppu_t *ppu_create(void) {
   temp->drawsprites = true;
 
   // TODO: probably a better way to do this...
-  if (false == pal_generated)
-  {
-    ///pal_generate();
+  if (false == pal_generated) {
+    /// pal_generate();
     pal_generated = true;
   }
 
-  ///ppu_setdefaultpal(temp);
+  /// ppu_setdefaultpal(temp);
 
   return temp;
 }
 
-void ppu_setpage(int size, int page_num, uint8_t *location)
-{
+void ppu_setpage(int size, int page_num, uint8_t *location) {
   // deliberately fall through
-  switch (size)
-  {
+  switch (size) {
     case 8:
       ppu.page[page_num++] = location;
       ppu.page[page_num++] = location;
@@ -2770,16 +3409,14 @@ void ppu_setpage(int size, int page_num, uint8_t *location)
 }
 
 // make sure $3000-$3F00 mirrors $2000-$2F00
-void ppu_mirrorhipages(void)
-{
+void ppu_mirrorhipages(void) {
   ppu.page[12] = ppu.page[8] - 0x1000;
   ppu.page[13] = ppu.page[9] - 0x1000;
   ppu.page[14] = ppu.page[10] - 0x1000;
   ppu.page[15] = ppu.page[11] - 0x1000;
 }
 
-void ppu_mirror(int nt1, int nt2, int nt3, int nt4)
-{
+void ppu_mirror(int nt1, int nt2, int nt3, int nt4) {
   ppu.page[8] = ppu.nametab + (nt1 << 10) - 0x2000;
   ppu.page[9] = ppu.nametab + (nt2 << 10) - 0x2400;
   ppu.page[10] = ppu.nametab + (nt3 << 10) - 0x2800;
@@ -2791,25 +3428,19 @@ void ppu_mirror(int nt1, int nt2, int nt3, int nt4)
 }
 
 // bleh, for snss
-uint8_t *ppu_getpage(int page)
-{
-  return ppu.page[page];
-}
+uint8_t *ppu_getpage(int page) { return ppu.page[page]; }
 
-void mem_trash(uint8_t *buffer, int length)
-{
+void mem_trash(uint8_t *buffer, int length) {
   int i;
 
-  for (i = 0; i < length; i++)
-    buffer[i] = (uint8_t) rand();
+  for (i = 0; i < length; i++) buffer[i] = (uint8_t)rand();
 }
 
 // reset state of ppu
-void ppu_reset()
-{
-  ///if (HARD_RESET == reset_type)
+void ppu_reset() {
+  /// if (HARD_RESET == reset_type)
   mem_trash(ppu.oam, 256);
-  ///memset(ppu.oam, 0, 256);
+  /// memset(ppu.oam, 0, 256);
 
   ppu.ctrl0 = 0;
   ppu.ctrl1 = PPU_CTRL1F_OBJON | PPU_CTRL1F_BGON;
@@ -2828,10 +3459,8 @@ void ppu_reset()
 // we render a scanline of graphics first so we know exactly
 // where the sprite 0 strike is going to occur (in terms of
 // cpu cycles), using the relation that 3 pixels == 1 cpu cycle
-void ppu_setstrike(int x_loc)
-{
-  if (false == ppu.strikeflag)
-  {
+void ppu_setstrike(int x_loc) {
+  if (false == ppu.strikeflag) {
     ppu.strikeflag = true;
 
     // 3 pixels per cpu cycle
@@ -2839,29 +3468,28 @@ void ppu_setstrike(int x_loc)
   }
 }
 
-void ppu_oamdma(uint8_t value)
-{
+void ppu_oamdma(uint8_t value) {
   uint32_t cpu_address;
   uint8_t oam_loc;
 
-  cpu_address = (uint32_t) (value << 8);
+  cpu_address = (uint32_t)(value << 8);
 
   // Sprite DMA starts at the current SPRRAM address
   oam_loc = ppu.oam_addr;
-  do
-  {
+  do {
     ppu.oam[oam_loc++] = nes6502_getbyte(cpu_address++);
-  }
-  while (oam_loc != ppu.oam_addr);
+  } while (oam_loc != ppu.oam_addr);
 
   // TODO: enough with houdini
   cpu_address -= 256;
   // Odd address in $2003
   if ((ppu.oam_addr >> 2) & 1) {
-    for (oam_loc = 4; oam_loc < 8; oam_loc++) ppu.oam[oam_loc] = nes6502_getbyte(cpu_address++);
+    for (oam_loc = 4; oam_loc < 8; oam_loc++)
+      ppu.oam[oam_loc] = nes6502_getbyte(cpu_address++);
     cpu_address += 248;
-    for (oam_loc = 0; oam_loc < 4; oam_loc++) ppu.oam[oam_loc] = nes6502_getbyte(cpu_address++);
-  } else { // Even address in $2003
+    for (oam_loc = 0; oam_loc < 4; oam_loc++)
+      ppu.oam[oam_loc] = nes6502_getbyte(cpu_address++);
+  } else {  // Even address in $2003
     for (oam_loc = 0; oam_loc < 8; oam_loc++)
       ppu.oam[oam_loc] = nes6502_getbyte(cpu_address++);
   }
@@ -2871,10 +3499,8 @@ void ppu_oamdma(uint8_t value)
   nes6502_release();
 }
 
-void ppu_writehigh(uint32_t address, uint8_t value)
-{
-  switch (address)
-  {
+void ppu_writehigh(uint32_t address, uint8_t value) {
+  switch (address) {
     case PPU_OAMDMA:
       ppu_oamdma(value);
       break;
@@ -2890,14 +3516,14 @@ void ppu_writehigh(uint32_t address, uint8_t value)
 
       ppu.strobe = value;
 
-      //NES Controller strobe
+      // NES Controller strobe
       ///  digitalWrite(NESCTRL_Latch, HIGH);
       ///  digitalWrite(NESCTRL_Latch, LOW);
       //----------------------
 
       break;
 
-    case PPU_JOY1: // frame IRQ control
+    case PPU_JOY1:  // frame IRQ control
       nes_setfiq(value);
       break;
 
@@ -2908,15 +3534,14 @@ void ppu_writehigh(uint32_t address, uint8_t value)
 
 uint8_t ppu_readhigh(uint32_t address) {
   uint8_t value;
-  switch (address)
-  {
+  switch (address) {
     case PPU_JOY0:
       value = get_pad0();
 
       ///      if (digitalRead(NESCTRL_Data) == LOW) value=255;
       ///      digitalWrite(NESCTRL_Clock, HIGH);
       ///      digitalWrite(NESCTRL_Clock, LOW);
-      ///pad0_readcount++;
+      /// pad0_readcount++;
 
       break;
 
@@ -2936,8 +3561,7 @@ uint8_t ppu_readhigh(uint32_t address) {
 uint8_t ppu_read(uint32_t address) {
   uint8_t value;
   // handle mirrored reads up to $3FFF
-  switch (address & 0x2007)
-  {
+  switch (address & 0x2007) {
     case PPU_STAT:
       value = (ppu.stat & 0xE0) | (ppu.latch & 0x1F);
 
@@ -2958,7 +3582,8 @@ uint8_t ppu_read(uint32_t address) {
       // VRAM only accessible during VBL
       if ((ppu.bg_on || ppu.obj_on) && !ppu.vram_accessible) {
         ppu.vdata_latch = 0xFF;
-        ///nes_log_printf("VRAM read at $%04X, scanline %d\n", ppu.vaddr, nes_getcontextptr()->scanline);
+        /// nes_log_printf("VRAM read at $%04X, scanline %d\n", ppu.vaddr,
+        /// nes_getcontextptr()->scanline);
       } else {
         uint32_t addr = ppu.vaddr;
         if (addr >= 0x3000) addr -= 0x1000;
@@ -2987,8 +3612,7 @@ void ppu_write(uint32_t address, uint8_t value) {
   // write goes into ppu latch...
   ppu.latch = value;
 
-  switch (address & 0x2007)
-  {
+  switch (address & 0x2007) {
     case PPU_CTRL0:
       ppu.ctrl0 = value;
       ppu.obj_height = (value & PPU_CTRL0F_OBJ16) ? 16 : 8;
@@ -3018,13 +3642,13 @@ void ppu_write(uint32_t address, uint8_t value) {
       if (0 == ppu.flipflop) {
         // Mask out bits 4 - 0 in the ppu latch
         ppu.vaddr_latch &= ~0x001F;
-        ppu.vaddr_latch |= (value >> 3);    // Tile number
-        ppu.tile_xofs = (value & 7);  // Tile offset (0-7 pix)
+        ppu.vaddr_latch |= (value >> 3);  // Tile number
+        ppu.tile_xofs = (value & 7);      // Tile offset (0-7 pix)
       } else {
         // Mask out bits 14-12 and 9-5 in the ppu latch
         ppu.vaddr_latch &= ~0x73E0;
-        ppu.vaddr_latch |= ((value & 0xF8) << 2);   // Tile number
-        ppu.vaddr_latch |= ((value & 7) << 12);     // Tile offset (0-7 pix)
+        ppu.vaddr_latch |= ((value & 0xF8) << 2);  // Tile number
+        ppu.vaddr_latch |= ((value & 7) << 12);    // Tile offset (0-7 pix)
       }
       ppu.flipflop ^= 1;
       break;
@@ -3045,8 +3669,9 @@ void ppu_write(uint32_t address, uint8_t value) {
       if (ppu.vaddr < 0x3F00) {
         // VRAM only accessible during scanlines 241-260
         if ((ppu.bg_on || ppu.obj_on) && !ppu.vram_accessible) {
-          ///nes_log_printf("VRAM write to $%04X, scanline %d\n", ppu.vaddr, nes_getcontextptr()->scanline);
-          PPU_MEM(ppu.vaddr) = 0xFF; // corrupt
+          /// nes_log_printf("VRAM write to $%04X, scanline %d\n", ppu.vaddr,
+          /// nes_getcontextptr()->scanline);
+          PPU_MEM(ppu.vaddr) = 0xFF;  // corrupt
         } else {
           uint32_t addr = ppu.vaddr;
           if (false == ppu.vram_present && addr >= 0x3000) ppu.vaddr -= 0x1000;
@@ -3055,7 +3680,8 @@ void ppu_write(uint32_t address, uint8_t value) {
       } else {
         if (0 == (ppu.vaddr & 0x0F)) {
           int i;
-          for (i = 0; i < 8; i ++) ppu.palette[i << 2] = (value & 0x3F) | BG_TRANS;
+          for (i = 0; i < 8; i++)
+            ppu.palette[i << 2] = (value & 0x3F) | BG_TRANS;
         } else if (ppu.vaddr & 3) {
           ppu.palette[ppu.vaddr & 0x1F] = value & 0x3F;
         }
@@ -3069,9 +3695,10 @@ void ppu_write(uint32_t address, uint8_t value) {
 }
 
 // rendering routines
-inline void draw_bgtile(uint8_t *surface, uint8_t pat1, uint8_t pat2, const uint8_t *colors)
-{
-  uint32_t pattern = ((pat2 & 0xAA) << 8) | ((pat2 & 0x55) << 1) | ((pat1 & 0xAA) << 7) | (pat1 & 0x55);
+inline void draw_bgtile(uint8_t *surface, uint8_t pat1, uint8_t pat2,
+                        const uint8_t *colors) {
+  uint32_t pattern = ((pat2 & 0xAA) << 8) | ((pat2 & 0x55) << 1) |
+                     ((pat1 & 0xAA) << 7) | (pat1 & 0x55);
   *surface++ = colors[(pattern >> 14) & 3];
   *surface++ = colors[(pattern >> 6) & 3];
   *surface++ = colors[(pattern >> 12) & 3];
@@ -3082,9 +3709,12 @@ inline void draw_bgtile(uint8_t *surface, uint8_t pat1, uint8_t pat2, const uint
   *surface = colors[pattern & 3];
 }
 
-inline int draw_oamtile(uint8_t *surface, uint8_t attrib, uint8_t pat1, uint8_t pat2, const uint8_t *col_tbl, bool check_strike) {
+inline int draw_oamtile(uint8_t *surface, uint8_t attrib, uint8_t pat1,
+                        uint8_t pat2, const uint8_t *col_tbl,
+                        bool check_strike) {
   int strike_pixel = -1;
-  uint32_t color = ((pat2 & 0xAA) << 8) | ((pat2 & 0x55) << 1) | ((pat1 & 0xAA) << 7) | (pat1 & 0x55);
+  uint32_t color = ((pat2 & 0xAA) << 8) | ((pat2 & 0x55) << 1) |
+                   ((pat1 & 0xAA) << 7) | (pat1 & 0x55);
   // sprite is not 100% transparent
   if (color) {
     uint8_t colors[8];
@@ -3110,38 +3740,68 @@ inline int draw_oamtile(uint8_t *surface, uint8_t attrib, uint8_t pat1, uint8_t 
     }
 
     // check for solid sprite pixel overlapping solid bg pixel
-    if (check_strike)
-    {
-      if (colors[0] && BG_SOLID(surface[0])) strike_pixel = 0;
-      else if (colors[1] && BG_SOLID(surface[1])) strike_pixel = 1;
-      else if (colors[2] && BG_SOLID(surface[2])) strike_pixel = 2;
-      else if (colors[3] && BG_SOLID(surface[3])) strike_pixel = 3;
-      else if (colors[4] && BG_SOLID(surface[4])) strike_pixel = 4;
-      else if (colors[5] && BG_SOLID(surface[5])) strike_pixel = 5;
-      else if (colors[6] && BG_SOLID(surface[6])) strike_pixel = 6;
-      else if (colors[7] && BG_SOLID(surface[7])) strike_pixel = 7;
+    if (check_strike) {
+      if (colors[0] && BG_SOLID(surface[0]))
+        strike_pixel = 0;
+      else if (colors[1] && BG_SOLID(surface[1]))
+        strike_pixel = 1;
+      else if (colors[2] && BG_SOLID(surface[2]))
+        strike_pixel = 2;
+      else if (colors[3] && BG_SOLID(surface[3]))
+        strike_pixel = 3;
+      else if (colors[4] && BG_SOLID(surface[4]))
+        strike_pixel = 4;
+      else if (colors[5] && BG_SOLID(surface[5]))
+        strike_pixel = 5;
+      else if (colors[6] && BG_SOLID(surface[6]))
+        strike_pixel = 6;
+      else if (colors[7] && BG_SOLID(surface[7]))
+        strike_pixel = 7;
     }
 
     // draw the character
-    if (attrib & OAMF_BEHIND)
-    {
-      if (colors[0]) surface[0] = SP_PIXEL | (BG_CLEAR(surface[0]) ? col_tbl[colors[0]] : surface[0]);
-      if (colors[1]) surface[1] = SP_PIXEL | (BG_CLEAR(surface[1]) ? col_tbl[colors[1]] : surface[1]);
-      if (colors[2]) surface[2] = SP_PIXEL | (BG_CLEAR(surface[2]) ? col_tbl[colors[2]] : surface[2]);
-      if (colors[3]) surface[3] = SP_PIXEL | (BG_CLEAR(surface[3]) ? col_tbl[colors[3]] : surface[3]);
-      if (colors[4]) surface[4] = SP_PIXEL | (BG_CLEAR(surface[4]) ? col_tbl[colors[4]] : surface[4]);
-      if (colors[5]) surface[5] = SP_PIXEL | (BG_CLEAR(surface[5]) ? col_tbl[colors[5]] : surface[5]);
-      if (colors[6]) surface[6] = SP_PIXEL | (BG_CLEAR(surface[6]) ? col_tbl[colors[6]] : surface[6]);
-      if (colors[7]) surface[7] = SP_PIXEL | (BG_CLEAR(surface[7]) ? col_tbl[colors[7]] : surface[7]);
+    if (attrib & OAMF_BEHIND) {
+      if (colors[0])
+        surface[0] =
+            SP_PIXEL | (BG_CLEAR(surface[0]) ? col_tbl[colors[0]] : surface[0]);
+      if (colors[1])
+        surface[1] =
+            SP_PIXEL | (BG_CLEAR(surface[1]) ? col_tbl[colors[1]] : surface[1]);
+      if (colors[2])
+        surface[2] =
+            SP_PIXEL | (BG_CLEAR(surface[2]) ? col_tbl[colors[2]] : surface[2]);
+      if (colors[3])
+        surface[3] =
+            SP_PIXEL | (BG_CLEAR(surface[3]) ? col_tbl[colors[3]] : surface[3]);
+      if (colors[4])
+        surface[4] =
+            SP_PIXEL | (BG_CLEAR(surface[4]) ? col_tbl[colors[4]] : surface[4]);
+      if (colors[5])
+        surface[5] =
+            SP_PIXEL | (BG_CLEAR(surface[5]) ? col_tbl[colors[5]] : surface[5]);
+      if (colors[6])
+        surface[6] =
+            SP_PIXEL | (BG_CLEAR(surface[6]) ? col_tbl[colors[6]] : surface[6]);
+      if (colors[7])
+        surface[7] =
+            SP_PIXEL | (BG_CLEAR(surface[7]) ? col_tbl[colors[7]] : surface[7]);
     } else {
-      if (colors[0] && SP_CLEAR(surface[0])) surface[0] = SP_PIXEL | col_tbl[colors[0]];
-      if (colors[1] && SP_CLEAR(surface[1])) surface[1] = SP_PIXEL | col_tbl[colors[1]];
-      if (colors[2] && SP_CLEAR(surface[2])) surface[2] = SP_PIXEL | col_tbl[colors[2]];
-      if (colors[3] && SP_CLEAR(surface[3])) surface[3] = SP_PIXEL | col_tbl[colors[3]];
-      if (colors[4] && SP_CLEAR(surface[4])) surface[4] = SP_PIXEL | col_tbl[colors[4]];
-      if (colors[5] && SP_CLEAR(surface[5])) surface[5] = SP_PIXEL | col_tbl[colors[5]];
-      if (colors[6] && SP_CLEAR(surface[6])) surface[6] = SP_PIXEL | col_tbl[colors[6]];
-      if (colors[7] && SP_CLEAR(surface[7])) surface[7] = SP_PIXEL | col_tbl[colors[7]];
+      if (colors[0] && SP_CLEAR(surface[0]))
+        surface[0] = SP_PIXEL | col_tbl[colors[0]];
+      if (colors[1] && SP_CLEAR(surface[1]))
+        surface[1] = SP_PIXEL | col_tbl[colors[1]];
+      if (colors[2] && SP_CLEAR(surface[2]))
+        surface[2] = SP_PIXEL | col_tbl[colors[2]];
+      if (colors[3] && SP_CLEAR(surface[3]))
+        surface[3] = SP_PIXEL | col_tbl[colors[3]];
+      if (colors[4] && SP_CLEAR(surface[4]))
+        surface[4] = SP_PIXEL | col_tbl[colors[4]];
+      if (colors[5] && SP_CLEAR(surface[5]))
+        surface[5] = SP_PIXEL | col_tbl[colors[5]];
+      if (colors[6] && SP_CLEAR(surface[6]))
+        surface[6] = SP_PIXEL | col_tbl[colors[6]];
+      if (colors[7] && SP_CLEAR(surface[7]))
+        surface[7] = SP_PIXEL | col_tbl[colors[7]];
     }
   }
   return strike_pixel;
@@ -3160,14 +3820,14 @@ void ppu_renderbg(uint8_t *vidbuf) {
     return;
   }
 
-  bmp_ptr = vidbuf - ppu.tile_xofs; // scroll x
-  refresh_vaddr = 0x2000 + (ppu.vaddr & 0x0FE0); // mask out x tile
+  bmp_ptr = vidbuf - ppu.tile_xofs;               // scroll x
+  refresh_vaddr = 0x2000 + (ppu.vaddr & 0x0FE0);  // mask out x tile
   x_tile = ppu.vaddr & 0x1F;
-  y_tile = (ppu.vaddr >> 5) & 0x1F; // to simplify calculations
-  bg_offset = ((ppu.vaddr >> 12) & 7) + ppu.bg_base; // offset in y tile
+  y_tile = (ppu.vaddr >> 5) & 0x1F;  // to simplify calculations
+  bg_offset = ((ppu.vaddr >> 12) & 7) + ppu.bg_base;  // offset in y tile
 
   // calculate initial values
-  tile_ptr = &PPU_MEM(refresh_vaddr + x_tile); // pointer to tile index
+  tile_ptr = &PPU_MEM(refresh_vaddr + x_tile);  // pointer to tile index
   attrib_base = (refresh_vaddr & 0x2C00) + 0x3C0 + ((y_tile & 0x1C) << 1);
   attrib_ptr = &PPU_MEM(attrib_base + (x_tile >> 2));
   attrib = *attrib_ptr++;
@@ -3190,9 +3850,9 @@ void ppu_renderbg(uint8_t *vidbuf) {
     x_tile++;
     if (0 == (x_tile & 1)) {    // check every 2 tiles
       if (0 == (x_tile & 3)) {  // check every 4 tiles
-        if (32 == x_tile) {    // check every 32 tiles
+        if (32 == x_tile) {     // check every 32 tiles
           x_tile = 0;
-          refresh_vaddr ^= (1 << 10); // switch nametable
+          refresh_vaddr ^= (1 << 10);  // switch nametable
           attrib_base ^= (1 << 10);
           // recalculate pointers
           tile_ptr = &PPU_MEM(refresh_vaddr);
@@ -3207,16 +3867,15 @@ void ppu_renderbg(uint8_t *vidbuf) {
   }
   // Blank left hand column if need be
   if (ppu.bg_mask) {
-    uint32_t *buf_ptr = (uint32_t *) vidbuf;
+    uint32_t *buf_ptr = (uint32_t *)vidbuf;
     uint32_t bg_clear = FULLBG | FULLBG << 8 | FULLBG << 16 | FULLBG << 24;
-    ((uint32_t *) buf_ptr)[0] = bg_clear;
-    ((uint32_t *) buf_ptr)[1] = bg_clear;
+    ((uint32_t *)buf_ptr)[0] = bg_clear;
+    ((uint32_t *)buf_ptr)[1] = bg_clear;
   }
 }
 
 // OAM entry
-typedef struct obj_s
-{
+typedef struct obj_s {
   uint8_t y_loc;
   uint8_t tile;
   uint8_t atr;
@@ -3224,8 +3883,7 @@ typedef struct obj_s
 } obj_t;
 
 // TODO: fetch valid OAM a scanline before, like the Real Thing
-void ppu_renderoam(uint8_t *vidbuf, int scanline)
-{
+void ppu_renderoam(uint8_t *vidbuf, int scanline) {
   uint8_t *buf_ptr;
   uint32_t vram_offset, savecol[2] = {0};
   int sprite_num, spritecount;
@@ -3236,13 +3894,13 @@ void ppu_renderoam(uint8_t *vidbuf, int scanline)
   buf_ptr = vidbuf;
   // Save left hand column?
   if (ppu.obj_mask) {
-    savecol[0] = ((uint32_t *) buf_ptr)[0];
-    savecol[1] = ((uint32_t *) buf_ptr)[1];
+    savecol[0] = ((uint32_t *)buf_ptr)[0];
+    savecol[1] = ((uint32_t *)buf_ptr)[1];
   }
   sprite_height = ppu.obj_height;
   vram_offset = ppu.obj_base;
   spritecount = 0;
-  sprite_ptr = (obj_t *) ppu.oam;
+  sprite_ptr = (obj_t *)ppu.oam;
   for (sprite_num = 0; sprite_num < 64; sprite_num++, sprite_ptr++) {
     uint8_t *data_ptr, *bmp_ptr;
     uint32_t vram_adr;
@@ -3253,7 +3911,9 @@ void ppu_renderoam(uint8_t *vidbuf, int scanline)
     int strike_pixel;
     sprite_y = sprite_ptr->y_loc + 1;
     // Check to see if sprite is out of range
-    if ((sprite_y > scanline) || (sprite_y <= (scanline - sprite_height)) || (0 == sprite_y) || (sprite_y >= 240)) continue;
+    if ((sprite_y > scanline) || (sprite_y <= (scanline - sprite_height)) ||
+        (0 == sprite_y) || (sprite_y >= 240))
+      continue;
     sprite_x = sprite_ptr->x_loc;
     tile_index = sprite_ptr->tile;
     attrib = sprite_ptr->atr;
@@ -3263,8 +3923,10 @@ void ppu_renderoam(uint8_t *vidbuf, int scanline)
     // Get upper two bits of color
     col_high = ((attrib & 3) << 2);
     // 8x16 even sprites use $0000, odd use $1000
-    if (16 == ppu.obj_height) vram_adr = ((tile_index & 1) << 12) | ((tile_index & 0xFE) << 4);
-    else vram_adr = vram_offset + (tile_index << 4);
+    if (16 == ppu.obj_height)
+      vram_adr = ((tile_index & 1) << 12) | ((tile_index & 0xFE) << 4);
+    else
+      vram_adr = vram_offset + (tile_index << 4);
     // Get the address of the tile
     data_ptr = &PPU_MEM(vram_adr);
     // Calculate offset (line within the sprite)
@@ -3272,16 +3934,20 @@ void ppu_renderoam(uint8_t *vidbuf, int scanline)
     if (y_offset > 7) y_offset += 8;
     // Account for vertical flippage
     if (attrib & OAMF_VFLIP) {
-      if (16 == ppu.obj_height) y_offset -= 23;
-      else y_offset -= 7;
+      if (16 == ppu.obj_height)
+        y_offset -= 23;
+      else
+        y_offset -= 7;
       data_ptr -= y_offset;
     } else {
       data_ptr += y_offset;
     }
 
-    // if we're on sprite 0 and sprite 0 strike flag isn't set, check for a strike
+    // if we're on sprite 0 and sprite 0 strike flag isn't set, check for a
+    // strike
     check_strike = (0 == sprite_num) && (false == ppu.strikeflag);
-    strike_pixel = draw_oamtile(bmp_ptr, attrib, data_ptr[0], data_ptr[8], ppu.palette + 16 + col_high, check_strike);
+    strike_pixel = draw_oamtile(bmp_ptr, attrib, data_ptr[0], data_ptr[8],
+                                ppu.palette + 16 + col_high, check_strike);
     if (strike_pixel >= 0) ppu_setstrike(strike_pixel);
 
     // maximum of 8 sprites per scanline
@@ -3292,12 +3958,13 @@ void ppu_renderoam(uint8_t *vidbuf, int scanline)
   }
   // Restore lefthand column
   if (ppu.obj_mask) {
-    ((uint32_t *) buf_ptr)[0] = savecol[0];
-    ((uint32_t *) buf_ptr)[1] = savecol[1];
+    ((uint32_t *)buf_ptr)[0] = savecol[0];
+    ((uint32_t *)buf_ptr)[1] = savecol[1];
   }
 }
 
-// Fake rendering a line - This is needed for sprite 0 hits when we're skipping drawing a frame
+// Fake rendering a line - This is needed for sprite 0 hits when we're skipping
+// drawing a frame
 void ppu_fakeoam(int scanline) {
   uint8_t *data_ptr;
   obj_t *sprite_ptr;
@@ -3311,16 +3978,20 @@ void ppu_fakeoam(int scanline) {
   if (false == ppu.obj_on || ppu.strikeflag) return;
 
   sprite_height = ppu.obj_height;
-  sprite_ptr = (obj_t *) ppu.oam;
+  sprite_ptr = (obj_t *)ppu.oam;
   sprite_y = sprite_ptr->y_loc + 1;
   // Check to see if sprite is out of range
-  if ((sprite_y > scanline) || (sprite_y <= (scanline - sprite_height)) || (0 == sprite_y) || (sprite_y > 240)) return;
+  if ((sprite_y > scanline) || (sprite_y <= (scanline - sprite_height)) ||
+      (0 == sprite_y) || (sprite_y > 240))
+    return;
   sprite_x = sprite_ptr->x_loc;
   tile_index = sprite_ptr->tile;
   attrib = sprite_ptr->atr;
   // 8x16 even sprites use $0000, odd use $1000
-  if (16 == ppu.obj_height) vram_adr = ((tile_index & 1) << 12) | ((tile_index & 0xFE) << 4);
-  else vram_adr = ppu.obj_base + (tile_index << 4);
+  if (16 == ppu.obj_height)
+    vram_adr = ((tile_index & 1) << 12) | ((tile_index & 0xFE) << 4);
+  else
+    vram_adr = ppu.obj_base + (tile_index << 4);
   data_ptr = &PPU_MEM(vram_adr);
   // Calculate offset (line within the sprite)
   y_offset = scanline - sprite_y;
@@ -3328,8 +3999,10 @@ void ppu_fakeoam(int scanline) {
 
   // Account for vertical flippage
   if (attrib & OAMF_VFLIP) {
-    if (16 == ppu.obj_height) y_offset -= 23;
-    else y_offset -= 7;
+    if (16 == ppu.obj_height)
+      y_offset -= 23;
+    else
+      y_offset -= 7;
     data_ptr -= y_offset;
   } else {
     data_ptr += y_offset;
@@ -3338,7 +4011,8 @@ void ppu_fakeoam(int scanline) {
   // check for a solid sprite 0 pixel
   pat1 = data_ptr[0];
   pat2 = data_ptr[8];
-  color = ((pat2 & 0xAA) << 8) | ((pat2 & 0x55) << 1) | ((pat1 & 0xAA) << 7) | (pat1 & 0x55);
+  color = ((pat2 & 0xAA) << 8) | ((pat2 & 0x55) << 1) | ((pat1 & 0xAA) << 7) |
+          (pat1 & 0x55);
 
   if (color) {
     uint8_t colors[8];
@@ -3364,26 +4038,32 @@ void ppu_fakeoam(int scanline) {
       colors[0] = color & 3;
     }
 
-    if (colors[0]) ppu_setstrike(sprite_x + 0);
-    else if (colors[1]) ppu_setstrike(sprite_x + 1);
-    else if (colors[2]) ppu_setstrike(sprite_x + 2);
-    else if (colors[3]) ppu_setstrike(sprite_x + 3);
-    else if (colors[4]) ppu_setstrike(sprite_x + 4);
-    else if (colors[5]) ppu_setstrike(sprite_x + 5);
-    else if (colors[6]) ppu_setstrike(sprite_x + 6);
-    else if (colors[7]) ppu_setstrike(sprite_x + 7);
+    if (colors[0])
+      ppu_setstrike(sprite_x + 0);
+    else if (colors[1])
+      ppu_setstrike(sprite_x + 1);
+    else if (colors[2])
+      ppu_setstrike(sprite_x + 2);
+    else if (colors[3])
+      ppu_setstrike(sprite_x + 3);
+    else if (colors[4])
+      ppu_setstrike(sprite_x + 4);
+    else if (colors[5])
+      ppu_setstrike(sprite_x + 5);
+    else if (colors[6])
+      ppu_setstrike(sprite_x + 6);
+    else if (colors[7])
+      ppu_setstrike(sprite_x + 7);
   }
 }
 
-bool ppu_enabled(void) {
-  return (ppu.bg_on || ppu.obj_on);
-}
+bool ppu_enabled(void) { return (ppu.bg_on || ppu.obj_on); }
 
 void ppu_renderscanline(int scanline, bool draw_flag) {
   uint8_t *buf = SCREENMEMORY[scanline];
   // start scanline - transfer ppu latch into vaddr
-  if (ppu.bg_on || ppu.obj_on)  {
-    if (0 == scanline)    {
+  if (ppu.bg_on || ppu.obj_on) {
+    if (0 == scanline) {
       ppu.vaddr = ppu.vaddr_latch;
     } else {
       ppu.vaddr &= ~0x041F;
@@ -3391,34 +4071,35 @@ void ppu_renderscanline(int scanline, bool draw_flag) {
     }
   }
 
-  if (draw_flag)  ppu_renderbg(buf);
+  if (draw_flag) ppu_renderbg(buf);
 
   // TODO: fetch obj data 1 scanline before
-  if (true == ppu.drawsprites && true == draw_flag) ppu_renderoam(buf, scanline);
-  else ppu_fakeoam(scanline);
+  if (true == ppu.drawsprites && true == draw_flag)
+    ppu_renderoam(buf, scanline);
+  else
+    ppu_fakeoam(scanline);
 }
 
-void ppu_endscanline(int scanline)
-{
+void ppu_endscanline(int scanline) {
   // modify vram address at end of scanline
   if (scanline < 240 && (ppu.bg_on || ppu.obj_on)) {
     int ytile;
 
     // check for max 3 bit y tile offset
     if (7 == (ppu.vaddr >> 12)) {
-      ppu.vaddr &= ~0x7000;      // clear y tile offset
+      ppu.vaddr &= ~0x7000;  // clear y tile offset
       ytile = (ppu.vaddr >> 5) & 0x1F;
 
       if (29 == ytile) {
-        ppu.vaddr &= ~0x03E0;   // clear y tile
-        ppu.vaddr ^= 0x0800;    // toggle nametable
+        ppu.vaddr &= ~0x03E0;  // clear y tile
+        ppu.vaddr ^= 0x0800;   // toggle nametable
       } else if (31 == ytile) {
-        ppu.vaddr &= ~0x03E0;   // clear y tile
+        ppu.vaddr &= ~0x03E0;  // clear y tile
       } else {
-        ppu.vaddr += 0x20;      // increment y tile
+        ppu.vaddr += 0x20;  // increment y tile
       }
     } else {
-      ppu.vaddr += 0x1000;       // increment tile y offset
+      ppu.vaddr += 0x1000;  // increment tile y offset
     }
   }
 }
@@ -3438,33 +4119,33 @@ void ppu_scanline(int scanline, bool draw_flag) {
   } else if (261 == scanline) {
     ppu.stat &= ~PPU_STATF_VBLANK;
     ppu.strikeflag = false;
-    ppu.strike_cycle = (uint32_t) - 1;
+    ppu.strike_cycle = (uint32_t)-1;
     ppu.vram_accessible = false;
   }
 
-  if (LCD_ENABLED) xQueueSend(vidQueue, &SCREENMEMORY, 0); //refresh LCD
-
+  if (LCD_ENABLED) xQueueSend(vidQueue, &SCREENMEMORY, 0);  // refresh LCD
 }
 
 void ppu_destroy(ppu_t **src_ppu);
-void ppu_destroy(ppu_t **src_ppu)
-{
-  if (*src_ppu)
-  {
+void ppu_destroy(ppu_t **src_ppu) {
+  if (*src_ppu) {
     free(*src_ppu);
     *src_ppu = NULL;
   }
 }
 
 //--------------------------------------------------------------------------------
-//APU.C
-#define  APU_OVERSAMPLE
-#define  APU_VOLUME_DECAY(x)  ((x) -= ((x) >> 7))
+// APU.C
+#define APU_OVERSAMPLE
+#define APU_VOLUME_DECAY(x) ((x) -= ((x) >> 7))
 
-#define  APU_RECTANGLE_OUTPUT(channel) (apu.rectangle[channel].output_vol)
-#define  APU_TRIANGLE_OUTPUT           (apu.triangle.output_vol + (apu.triangle.output_vol >> 2))
-#define  APU_NOISE_OUTPUT              ((apu.noise.output_vol + apu.noise.output_vol + apu.noise.output_vol) >> 2)
-#define  APU_DMC_OUTPUT                ((apu.dmc.output_vol + apu.dmc.output_vol + apu.dmc.output_vol) >> 2)
+#define APU_RECTANGLE_OUTPUT(channel) (apu.rectangle[channel].output_vol)
+#define APU_TRIANGLE_OUTPUT \
+  (apu.triangle.output_vol + (apu.triangle.output_vol >> 2))
+#define APU_NOISE_OUTPUT \
+  ((apu.noise.output_vol + apu.noise.output_vol + apu.noise.output_vol) >> 2)
+#define APU_DMC_OUTPUT \
+  ((apu.dmc.output_vol + apu.dmc.output_vol + apu.dmc.output_vol) >> 2)
 
 // look up table madness
 int32_t decay_lut[16];
@@ -3475,73 +4156,46 @@ int trilength_lut[128];
 #ifndef REALTIME_NOISE
 int8_t noise_long_lut[APU_NOISE_32K];
 int8_t noise_short_lut[APU_NOISE_93];
-#endif // !REALTIME_NOISE 
+#endif  // !REALTIME_NOISE
 
 // vblank length table used for rectangles, triangle, noise
-const uint8_t vbl_length[32] = {
-  5, 127,
-  10,   1,
-  19,   2,
-  40,   3,
-  80,   4,
-  30,   5,
-  7,   6,
-  13,   7,
-  6,   8,
-  12,   9,
-  24,  10,
-  48,  11,
-  96,  12,
-  36,  13,
-  8,  14,
-  16,  15
-};
+const uint8_t vbl_length[32] = {5,  127, 10, 1,  19, 2,  40, 3,  80, 4,  30,
+                                5,  7,   6,  13, 7,  6,  8,  12, 9,  24, 10,
+                                48, 11,  96, 12, 36, 13, 8,  14, 16, 15};
 
 // frequency limit of rectangle channels
-const int freq_limit[8] =
-{
-  0x3FF, 0x555, 0x666, 0x71C, 0x787, 0x7C1, 0x7E0, 0x7F0
-};
+const int freq_limit[8] = {0x3FF, 0x555, 0x666, 0x71C,
+                           0x787, 0x7C1, 0x7E0, 0x7F0};
 
 // noise frequency lookup table
-const int noise_freq[16] =
-{
-  4,    8,   16,   32,   64,   96,  128,  160,
-  202,  254,  380,  508,  762, 1016, 2034, 4068
-};
+const int noise_freq[16] = {4,   8,   16,  32,  64,  96,   128,  160,
+                            202, 254, 380, 508, 762, 1016, 2034, 4068};
 
 // DMC transfer freqs
-const int dmc_clocks[16] =
-{
-  428, 380, 340, 320, 286, 254, 226, 214,
-  190, 160, 142, 128, 106,  85,  72,  54
-};
+const int dmc_clocks[16] = {428, 380, 340, 320, 286, 254, 226, 214,
+                            190, 160, 142, 128, 106, 85,  72,  54};
 
 // ratios of pos/neg pulse for rectangle waves
-const int duty_flip[4] = { 2, 4, 8, 12 };
+const int duty_flip[4] = {2, 4, 8, 12};
 
 void apu_setcontext(apu_t *src_apu);
-void apu_setcontext(apu_t *src_apu) {
-  apu = *src_apu;
-}
+void apu_setcontext(apu_t *src_apu) { apu = *src_apu; }
 
 void apu_getcontext(apu_t *dest_apu);
-void apu_getcontext(apu_t *dest_apu) {
-  *dest_apu = apu;
-}
+void apu_getcontext(apu_t *dest_apu) { *dest_apu = apu; }
 
-void apu_setchan(int chan, bool enabled)
-{
-  if (enabled) apu.mix_enable |= (1 << chan);
-  else apu.mix_enable &= ~(1 << chan);
+void apu_setchan(int chan, bool enabled) {
+  if (enabled)
+    apu.mix_enable |= (1 << chan);
+  else
+    apu.mix_enable &= ~(1 << chan);
 }
 
 // emulation of the 15-bit shift register the
 // NES uses to generate pseudo-random series
 // for the white noise channel
 #ifdef REALTIME_NOISE
-int8_t shift_register15(uint8_t xor_tap)
-{
+int8_t shift_register15(uint8_t xor_tap) {
   int sreg = 0x4000;
   int bit0, tap, bit14;
 
@@ -3552,15 +4206,13 @@ int8_t shift_register15(uint8_t xor_tap)
   sreg |= (bit14 << 14);
   return (bit0 ^ 1);
 }
-#else // !REALTIME_NOISE 
-void shift_register15(int8_t *buf, int count)
-{
+#else   // !REALTIME_NOISE
+void shift_register15(int8_t *buf, int count) {
   int sreg = 0x4000;
   int bit0, bit1, bit6, bit14;
 
   if (count == APU_NOISE_93) {
-    while (count--)
-    {
+    while (count--) {
       bit0 = sreg & 1;
       bit6 = (sreg & 0x40) >> 6;
       bit14 = (bit0 ^ bit6);
@@ -3568,9 +4220,8 @@ void shift_register15(int8_t *buf, int count)
       sreg |= (bit14 << 14);
       *buf++ = bit0 ^ 1;
     }
-  } else { // 32K noise
-    while (count--)
-    {
+  } else {  // 32K noise
+    while (count--) {
       bit0 = sreg & 1;
       bit1 = (sreg & 2) >> 1;
       bit14 = (bit0 ^ bit1);
@@ -3580,7 +4231,7 @@ void shift_register15(int8_t *buf, int count)
     }
   }
 }
-#endif // !REALTIME_NOISE 
+#endif  // !REALTIME_NOISE
 
 // RECTANGLE WAVE
 // ==============
@@ -3591,158 +4242,148 @@ void shift_register15(int8_t *buf, int count)
 //
 #ifdef APU_OVERSAMPLE
 
-#define  APU_MAKE_RECTANGLE(ch) \
-  int32_t apu_rectangle_##ch(void) \
-  { \
-    int32_t output, total; \
-    int num_times; \
-    \
-    APU_VOLUME_DECAY(apu.rectangle[ch].output_vol); \
-    \
-    if (false == apu.rectangle[ch].enabled || 0 == apu.rectangle[ch].vbl_length) \
-      return APU_RECTANGLE_OUTPUT(ch); \
-    \
-    if (false == apu.rectangle[ch].holdnote) \
-      apu.rectangle[ch].vbl_length--; \
-    \
-    apu.rectangle[ch].env_phase -= 4; \
-    while (apu.rectangle[ch].env_phase < 0) \
-    { \
-      apu.rectangle[ch].env_phase += apu.rectangle[ch].env_delay; \
-      \
-      if (apu.rectangle[ch].holdnote) \
-        apu.rectangle[ch].env_vol = (apu.rectangle[ch].env_vol + 1) & 0x0F; \
-      else if (apu.rectangle[ch].env_vol < 0x0F) \
-        apu.rectangle[ch].env_vol++; \
-    } \
-    \
-    if (apu.rectangle[ch].freq < 8 \
-        || (false == apu.rectangle[ch].sweep_inc \
-            && apu.rectangle[ch].freq > apu.rectangle[ch].freq_limit)) \
-      return APU_RECTANGLE_OUTPUT(ch); \
-    \
-    if (apu.rectangle[ch].sweep_on && apu.rectangle[ch].sweep_shifts) \
-    { \
-      apu.rectangle[ch].sweep_phase -= 2;  \
-      while (apu.rectangle[ch].sweep_phase < 0) \
-      { \
-        apu.rectangle[ch].sweep_phase += apu.rectangle[ch].sweep_delay; \
-        \
-        if (apu.rectangle[ch].sweep_inc)  \
-        { \
-          if (0 == ch) \
-            apu.rectangle[ch].freq += ~(apu.rectangle[ch].freq >> apu.rectangle[ch].sweep_shifts); \
-          else \
-            apu.rectangle[ch].freq -= (apu.rectangle[ch].freq >> apu.rectangle[ch].sweep_shifts); \
-        } \
-        else  \
-        { \
-          apu.rectangle[ch].freq += (apu.rectangle[ch].freq >> apu.rectangle[ch].sweep_shifts); \
-        } \
-      } \
-    } \
-    \
-    apu.rectangle[ch].accum -= apu.cycle_rate; \
-    if (apu.rectangle[ch].accum >= 0) \
-      return APU_RECTANGLE_OUTPUT(ch); \
-    \
-    if (apu.rectangle[ch].fixed_envelope) \
-      output = apu.rectangle[ch].volume << 8;  \
-    else \
-      output = (apu.rectangle[ch].env_vol ^ 0x0F) << 8; \
-    \
-    num_times = total = 0; \
-    \
-    while (apu.rectangle[ch].accum < 0) \
-    { \
-      apu.rectangle[ch].accum += apu.rectangle[ch].freq + 1; \
-      apu.rectangle[ch].adder = (apu.rectangle[ch].adder + 1) & 0x0F; \
-      \
-      if (apu.rectangle[ch].adder < apu.rectangle[ch].duty_flip) \
-        total += output; \
-      else \
-        total -= output; \
-      \
-      num_times++; \
-    } \
-    \
-    apu.rectangle[ch].output_vol = total / num_times; \
-    return APU_RECTANGLE_OUTPUT(ch); \
+#define APU_MAKE_RECTANGLE(ch)                                               \
+  int32_t apu_rectangle_##ch(void) {                                         \
+    int32_t output, total;                                                   \
+    int num_times;                                                           \
+                                                                             \
+    APU_VOLUME_DECAY(apu.rectangle[ch].output_vol);                          \
+                                                                             \
+    if (false == apu.rectangle[ch].enabled ||                                \
+        0 == apu.rectangle[ch].vbl_length)                                   \
+      return APU_RECTANGLE_OUTPUT(ch);                                       \
+                                                                             \
+    if (false == apu.rectangle[ch].holdnote) apu.rectangle[ch].vbl_length--; \
+                                                                             \
+    apu.rectangle[ch].env_phase -= 4;                                        \
+    while (apu.rectangle[ch].env_phase < 0) {                                \
+      apu.rectangle[ch].env_phase += apu.rectangle[ch].env_delay;            \
+                                                                             \
+      if (apu.rectangle[ch].holdnote)                                        \
+        apu.rectangle[ch].env_vol = (apu.rectangle[ch].env_vol + 1) & 0x0F;  \
+      else if (apu.rectangle[ch].env_vol < 0x0F)                             \
+        apu.rectangle[ch].env_vol++;                                         \
+    }                                                                        \
+                                                                             \
+    if (apu.rectangle[ch].freq < 8 ||                                        \
+        (false == apu.rectangle[ch].sweep_inc &&                             \
+         apu.rectangle[ch].freq > apu.rectangle[ch].freq_limit))             \
+      return APU_RECTANGLE_OUTPUT(ch);                                       \
+                                                                             \
+    if (apu.rectangle[ch].sweep_on && apu.rectangle[ch].sweep_shifts) {      \
+      apu.rectangle[ch].sweep_phase -= 2;                                    \
+      while (apu.rectangle[ch].sweep_phase < 0) {                            \
+        apu.rectangle[ch].sweep_phase += apu.rectangle[ch].sweep_delay;      \
+                                                                             \
+        if (apu.rectangle[ch].sweep_inc) {                                   \
+          if (0 == ch)                                                       \
+            apu.rectangle[ch].freq +=                                        \
+                ~(apu.rectangle[ch].freq >> apu.rectangle[ch].sweep_shifts); \
+          else                                                               \
+            apu.rectangle[ch].freq -=                                        \
+                (apu.rectangle[ch].freq >> apu.rectangle[ch].sweep_shifts);  \
+        } else {                                                             \
+          apu.rectangle[ch].freq +=                                          \
+              (apu.rectangle[ch].freq >> apu.rectangle[ch].sweep_shifts);    \
+        }                                                                    \
+      }                                                                      \
+    }                                                                        \
+                                                                             \
+    apu.rectangle[ch].accum -= apu.cycle_rate;                               \
+    if (apu.rectangle[ch].accum >= 0) return APU_RECTANGLE_OUTPUT(ch);       \
+                                                                             \
+    if (apu.rectangle[ch].fixed_envelope)                                    \
+      output = apu.rectangle[ch].volume << 8;                                \
+    else                                                                     \
+      output = (apu.rectangle[ch].env_vol ^ 0x0F) << 8;                      \
+                                                                             \
+    num_times = total = 0;                                                   \
+                                                                             \
+    while (apu.rectangle[ch].accum < 0) {                                    \
+      apu.rectangle[ch].accum += apu.rectangle[ch].freq + 1;                 \
+      apu.rectangle[ch].adder = (apu.rectangle[ch].adder + 1) & 0x0F;        \
+                                                                             \
+      if (apu.rectangle[ch].adder < apu.rectangle[ch].duty_flip)             \
+        total += output;                                                     \
+      else                                                                   \
+        total -= output;                                                     \
+                                                                             \
+      num_times++;                                                           \
+    }                                                                        \
+                                                                             \
+    apu.rectangle[ch].output_vol = total / num_times;                        \
+    return APU_RECTANGLE_OUTPUT(ch);                                         \
   }
 
-#else // !APU_OVERSAMPLE 
-#define  APU_MAKE_RECTANGLE(ch) \
-  int32_t apu_rectangle_##ch(void) \
-  { \
-    int32_t output; \
-    \
-    APU_VOLUME_DECAY(apu.rectangle[ch].output_vol); \
-    \
-    if (false == apu.rectangle[ch].enabled || 0 == apu.rectangle[ch].vbl_length) \
-      return APU_RECTANGLE_OUTPUT(ch); \
-    \
-    if (false == apu.rectangle[ch].holdnote) \
-      apu.rectangle[ch].vbl_length--; \
-    \
-    apu.rectangle[ch].env_phase -= 4;  \
-    while (apu.rectangle[ch].env_phase < 0) \
-    { \
-      apu.rectangle[ch].env_phase += apu.rectangle[ch].env_delay; \
-      \
-      if (apu.rectangle[ch].holdnote) \
-        apu.rectangle[ch].env_vol = (apu.rectangle[ch].env_vol + 1) & 0x0F; \
-      else if (apu.rectangle[ch].env_vol < 0x0F) \
-        apu.rectangle[ch].env_vol++; \
-    } \
-    \
-    if (apu.rectangle[ch].freq < 8 || (false == apu.rectangle[ch].sweep_inc && apu.rectangle[ch].freq > apu.rectangle[ch].freq_limit)) \
-      return APU_RECTANGLE_OUTPUT(ch); \
-    \
-    if (apu.rectangle[ch].sweep_on && apu.rectangle[ch].sweep_shifts) \
-    { \
-      apu.rectangle[ch].sweep_phase -= 2;  \
-      while (apu.rectangle[ch].sweep_phase < 0) \
-      { \
-        apu.rectangle[ch].sweep_phase += apu.rectangle[ch].sweep_delay; \
-        \
-        if (apu.rectangle[ch].sweep_inc)  \
-        { \
-          if (0 == ch) \
-            apu.rectangle[ch].freq += ~(apu.rectangle[ch].freq >> apu.rectangle[ch].sweep_shifts); \
-          else \
-            apu.rectangle[ch].freq -= (apu.rectangle[ch].freq >> apu.rectangle[ch].sweep_shifts); \
-        } \
-        else  \
-        { \
-          apu.rectangle[ch].freq += (apu.rectangle[ch].freq >> apu.rectangle[ch].sweep_shifts); \
-        } \
-      } \
-    } \
-    \
-    apu.rectangle[ch].accum -= apu.cycle_rate; \
-    if (apu.rectangle[ch].accum >= 0) \
-      return APU_RECTANGLE_OUTPUT(ch); \
-    \
-    while (apu.rectangle[ch].accum < 0) \
-    { \
-      apu.rectangle[ch].accum += (apu.rectangle[ch].freq + 1); \
-      apu.rectangle[ch].adder = (apu.rectangle[ch].adder + 1) & 0x0F; \
-    } \
-    \
-    if (apu.rectangle[ch].fixed_envelope) \
-      output = apu.rectangle[ch].volume << 8;  \
-    else \
-      output = (apu.rectangle[ch].env_vol ^ 0x0F) << 8; \
-    \
-    if (0 == apu.rectangle[ch].adder) \
-      apu.rectangle[ch].output_vol = output; \
-    else if (apu.rectangle[ch].adder == apu.rectangle[ch].duty_flip) \
-      apu.rectangle[ch].output_vol = -output; \
-    \
-    return APU_RECTANGLE_OUTPUT(ch); \
+#else  // !APU_OVERSAMPLE
+#define APU_MAKE_RECTANGLE(ch)                                               \
+  int32_t apu_rectangle_##ch(void) {                                         \
+    int32_t output;                                                          \
+                                                                             \
+    APU_VOLUME_DECAY(apu.rectangle[ch].output_vol);                          \
+                                                                             \
+    if (false == apu.rectangle[ch].enabled ||                                \
+        0 == apu.rectangle[ch].vbl_length)                                   \
+      return APU_RECTANGLE_OUTPUT(ch);                                       \
+                                                                             \
+    if (false == apu.rectangle[ch].holdnote) apu.rectangle[ch].vbl_length--; \
+                                                                             \
+    apu.rectangle[ch].env_phase -= 4;                                        \
+    while (apu.rectangle[ch].env_phase < 0) {                                \
+      apu.rectangle[ch].env_phase += apu.rectangle[ch].env_delay;            \
+                                                                             \
+      if (apu.rectangle[ch].holdnote)                                        \
+        apu.rectangle[ch].env_vol = (apu.rectangle[ch].env_vol + 1) & 0x0F;  \
+      else if (apu.rectangle[ch].env_vol < 0x0F)                             \
+        apu.rectangle[ch].env_vol++;                                         \
+    }                                                                        \
+                                                                             \
+    if (apu.rectangle[ch].freq < 8 ||                                        \
+        (false == apu.rectangle[ch].sweep_inc &&                             \
+         apu.rectangle[ch].freq > apu.rectangle[ch].freq_limit))             \
+      return APU_RECTANGLE_OUTPUT(ch);                                       \
+                                                                             \
+    if (apu.rectangle[ch].sweep_on && apu.rectangle[ch].sweep_shifts) {      \
+      apu.rectangle[ch].sweep_phase -= 2;                                    \
+      while (apu.rectangle[ch].sweep_phase < 0) {                            \
+        apu.rectangle[ch].sweep_phase += apu.rectangle[ch].sweep_delay;      \
+                                                                             \
+        if (apu.rectangle[ch].sweep_inc) {                                   \
+          if (0 == ch)                                                       \
+            apu.rectangle[ch].freq +=                                        \
+                ~(apu.rectangle[ch].freq >> apu.rectangle[ch].sweep_shifts); \
+          else                                                               \
+            apu.rectangle[ch].freq -=                                        \
+                (apu.rectangle[ch].freq >> apu.rectangle[ch].sweep_shifts);  \
+        } else {                                                             \
+          apu.rectangle[ch].freq +=                                          \
+              (apu.rectangle[ch].freq >> apu.rectangle[ch].sweep_shifts);    \
+        }                                                                    \
+      }                                                                      \
+    }                                                                        \
+                                                                             \
+    apu.rectangle[ch].accum -= apu.cycle_rate;                               \
+    if (apu.rectangle[ch].accum >= 0) return APU_RECTANGLE_OUTPUT(ch);       \
+                                                                             \
+    while (apu.rectangle[ch].accum < 0) {                                    \
+      apu.rectangle[ch].accum += (apu.rectangle[ch].freq + 1);               \
+      apu.rectangle[ch].adder = (apu.rectangle[ch].adder + 1) & 0x0F;        \
+    }                                                                        \
+                                                                             \
+    if (apu.rectangle[ch].fixed_envelope)                                    \
+      output = apu.rectangle[ch].volume << 8;                                \
+    else                                                                     \
+      output = (apu.rectangle[ch].env_vol ^ 0x0F) << 8;                      \
+                                                                             \
+    if (0 == apu.rectangle[ch].adder)                                        \
+      apu.rectangle[ch].output_vol = output;                                 \
+    else if (apu.rectangle[ch].adder == apu.rectangle[ch].duty_flip)         \
+      apu.rectangle[ch].output_vol = -output;                                \
+                                                                             \
+    return APU_RECTANGLE_OUTPUT(ch);                                         \
   }
 
-#endif // !APU_OVERSAMPLE 
+#endif  // !APU_OVERSAMPLE
 
 // generate the functions
 APU_MAKE_RECTANGLE(0)
@@ -3754,32 +4395,25 @@ APU_MAKE_RECTANGLE(1)
 // reg2: low 8 bits of frequency
 // reg3: 7-3=length counter, 2-0=high 3 bits of frequency
 //
-int32_t apu_triangle(void)
-{
+int32_t apu_triangle(void) {
   APU_VOLUME_DECAY(apu.triangle.output_vol);
 
   if (false == apu.triangle.enabled || 0 == apu.triangle.vbl_length)
     return APU_TRIANGLE_OUTPUT;
 
-  if (apu.triangle.counter_started)
-  {
-    if (apu.triangle.linear_length > 0)
-      apu.triangle.linear_length--;
+  if (apu.triangle.counter_started) {
+    if (apu.triangle.linear_length > 0) apu.triangle.linear_length--;
     if (apu.triangle.vbl_length && false == apu.triangle.holdnote)
       apu.triangle.vbl_length--;
-  }
-  else if (false == apu.triangle.holdnote && apu.triangle.write_latency)
-  {
-    if (--apu.triangle.write_latency == 0)
-      apu.triangle.counter_started = true;
+  } else if (false == apu.triangle.holdnote && apu.triangle.write_latency) {
+    if (--apu.triangle.write_latency == 0) apu.triangle.counter_started = true;
   }
 
-  if (0 == apu.triangle.linear_length || apu.triangle.freq < 4) // inaudible
+  if (0 == apu.triangle.linear_length || apu.triangle.freq < 4)  // inaudible
     return APU_TRIANGLE_OUTPUT;
 
-  apu.triangle.accum -= apu.cycle_rate; \
-  while (apu.triangle.accum < 0)
-  {
+  apu.triangle.accum -= apu.cycle_rate;
+  while (apu.triangle.accum < 0) {
     apu.triangle.accum += apu.triangle.freq;
     apu.triangle.adder = (apu.triangle.adder + 1) & 0x1F;
 
@@ -3792,7 +4426,6 @@ int32_t apu_triangle(void)
   return APU_TRIANGLE_OUTPUT;
 }
 
-
 // WHITE NOISE CHANNEL
 // ===================
 // reg0: 0-3=volume, 4=envelope, 5=hold
@@ -3801,18 +4434,17 @@ int32_t apu_triangle(void)
 //
 // TODO: AAAAAAAAAAAAAAAAAAAAAAAA!  #ifdef MADNESS!
 
-int32_t apu_noise(void)
-{
+int32_t apu_noise(void) {
   int32_t outvol;
 
 #if defined(APU_OVERSAMPLE) && defined(REALTIME_NOISE)
-#else // !(APU_OVERSAMPLE && REALTIME_NOISE) 
+#else   // !(APU_OVERSAMPLE && REALTIME_NOISE)
   int32_t noise_bit;
-#endif // !(APU_OVERSAMPLE && REALTIME_NOISE) 
+#endif  // !(APU_OVERSAMPLE && REALTIME_NOISE)
 #ifdef APU_OVERSAMPLE
   int num_times;
   int32_t total;
-#endif // APU_OVERSAMPLE 
+#endif  // APU_OVERSAMPLE
 
   APU_VOLUME_DECAY(apu.noise.output_vol);
 
@@ -3820,13 +4452,11 @@ int32_t apu_noise(void)
     return APU_NOISE_OUTPUT;
 
   // vbl length counter
-  if (false == apu.noise.holdnote)
-    apu.noise.vbl_length--;
+  if (false == apu.noise.holdnote) apu.noise.vbl_length--;
 
   // envelope decay at a rate of (env_delay + 1) / 240 secs
-  apu.noise.env_phase -= 4; // 240/60
-  while (apu.noise.env_phase < 0)
-  {
+  apu.noise.env_phase -= 4;  // 240/60
+  while (apu.noise.env_phase < 0) {
     apu.noise.env_phase += apu.noise.env_delay;
 
     if (apu.noise.holdnote)
@@ -3836,20 +4466,18 @@ int32_t apu_noise(void)
   }
 
   apu.noise.accum -= apu.cycle_rate;
-  if (apu.noise.accum >= 0)
-    return APU_NOISE_OUTPUT;
+  if (apu.noise.accum >= 0) return APU_NOISE_OUTPUT;
 
 #ifdef APU_OVERSAMPLE
   if (apu.noise.fixed_envelope)
-    outvol = apu.noise.volume << 8; // fixed volume
+    outvol = apu.noise.volume << 8;  // fixed volume
   else
     outvol = (apu.noise.env_vol ^ 0x0F) << 8;
 
   num_times = total = 0;
-#endif // APU_OVERSAMPLE 
+#endif  // APU_OVERSAMPLE
 
-  while (apu.noise.accum < 0)
-  {
+  while (apu.noise.accum < 0) {
     apu.noise.accum += apu.noise.freq;
 
 #ifdef REALTIME_NOISE
@@ -3861,19 +4489,17 @@ int32_t apu_noise(void)
       total -= outvol;
 
     num_times++;
-#else // !APU_OVERSAMPLE 
+#else   // !APU_OVERSAMPLE
     noise_bit = shift_register15(apu.noise.xor_tap);
-#endif // !APU_OVERSAMPLE 
+#endif  // !APU_OVERSAMPLE
 
-#else // !REALTIME_NOISE 
+#else  // !REALTIME_NOISE
     apu.noise.cur_pos++;
 
-    if (apu.noise.short_sample)    {
-      if (APU_NOISE_93 == apu.noise.cur_pos)
-        apu.noise.cur_pos = 0;
+    if (apu.noise.short_sample) {
+      if (APU_NOISE_93 == apu.noise.cur_pos) apu.noise.cur_pos = 0;
     } else {
-      if (APU_NOISE_32K == apu.noise.cur_pos)
-        apu.noise.cur_pos = 0;
+      if (APU_NOISE_32K == apu.noise.cur_pos) apu.noise.cur_pos = 0;
     }
 
 #ifdef APU_OVERSAMPLE
@@ -3882,28 +4508,36 @@ int32_t apu_noise(void)
     else
       noise_bit = noise_long_lut[apu.noise.cur_pos];
 
-    if (noise_bit) total += outvol;
-    else total -= outvol;
+    if (noise_bit)
+      total += outvol;
+    else
+      total -= outvol;
 
     num_times++;
-#endif // APU_OVERSAMPLE 
-#endif // !REALTIME_NOISE 
+#endif  // APU_OVERSAMPLE
+#endif  // !REALTIME_NOISE
   }
 
 #ifdef APU_OVERSAMPLE
   apu.noise.output_vol = total / num_times;
-#else // !APU_OVERSAMPLE 
-  if (apu.noise.fixed_envelope) outvol = apu.noise.volume << 8; // fixed volume
-  else outvol = (apu.noise.env_vol ^ 0x0F) << 8;
+#else  // !APU_OVERSAMPLE
+  if (apu.noise.fixed_envelope)
+    outvol = apu.noise.volume << 8;  // fixed volume
+  else
+    outvol = (apu.noise.env_vol ^ 0x0F) << 8;
 
 #ifndef REALTIME_NOISE
-  if (apu.noise.short_sample) noise_bit = noise_short_lut[apu.noise.cur_pos];
-  else noise_bit = noise_long_lut[apu.noise.cur_pos];
-#endif // !REALTIME_NOISE 
+  if (apu.noise.short_sample)
+    noise_bit = noise_short_lut[apu.noise.cur_pos];
+  else
+    noise_bit = noise_long_lut[apu.noise.cur_pos];
+#endif  // !REALTIME_NOISE
 
-  if (noise_bit) apu.noise.output_vol = outvol;
-  else apu.noise.output_vol = -outvol;
-#endif // !APU_OVERSAMPLE 
+  if (noise_bit)
+    apu.noise.output_vol = outvol;
+  else
+    apu.noise.output_vol = -outvol;
+#endif  // !APU_OVERSAMPLE
   return APU_NOISE_OUTPUT;
 }
 
@@ -3941,8 +4575,10 @@ static int32_t apu_dmc(void) {
         nes6502_burn(1);
 
         // prevent wraparound
-        if (0xFFFF == apu.dmc.address) apu.dmc.address = 0x8000;
-        else apu.dmc.address++;
+        if (0xFFFF == apu.dmc.address)
+          apu.dmc.address = 0x8000;
+        else
+          apu.dmc.address++;
       }
 
       if (--apu.dmc.dma_length == 0) {
@@ -3968,7 +4604,7 @@ static int32_t apu_dmc(void) {
           apu.dmc.regs[1] += 2;
           apu.dmc.output_vol += (2 << 8);
         }
-      } else { // negative delta
+      } else {  // negative delta
         if (apu.dmc.regs[1] > 1) {
           apu.dmc.regs[1] -= 2;
           apu.dmc.output_vol -= (2 << 8);
@@ -3980,10 +4616,7 @@ static int32_t apu_dmc(void) {
 }
 
 void apu_write(uint32_t address, uint8_t value) {
-
   if (SOUND_ENABLED) {
-
-
     int chan;
     switch (address) {
       // rectangles
@@ -4019,7 +4652,8 @@ void apu_write(uint32_t address, uint8_t value) {
         apu.rectangle[chan].regs[3] = value;
         apu.rectangle[chan].vbl_length = vbl_lut[value >> 3];
         apu.rectangle[chan].env_vol = 0;
-        apu.rectangle[chan].freq = ((value & 7) << 8) | (apu.rectangle[chan].freq & 0xFF);
+        apu.rectangle[chan].freq =
+            ((value & 7) << 8) | (apu.rectangle[chan].freq & 0xFF);
         apu.rectangle[chan].adder = 0;
         break;
       // triangle
@@ -4047,7 +4681,7 @@ void apu_write(uint32_t address, uint8_t value) {
         // for the 6502 code to do a couple of table dereferences and load up
         // the other triregs
 
-        apu.triangle.write_latency = (int) (228 / apu.cycle_rate);
+        apu.triangle.write_latency = (int)(228 / apu.cycle_rate);
         apu.triangle.freq = (((value & 7) << 8) + apu.triangle.regs[1]) + 1;
         apu.triangle.vbl_length = vbl_lut[value >> 3];
         apu.triangle.counter_started = false;
@@ -4066,7 +4700,7 @@ void apu_write(uint32_t address, uint8_t value) {
         apu.noise.freq = noise_freq[value & 0x0F];
 #ifdef REALTIME_NOISE
         apu.noise.xor_tap = (value & 0x80) ? 0x40 : 0x02;
-#else // !REALTIME_NOISE 
+#else   // !REALTIME_NOISE
         // detect transition from long->short sample
         if ((value & 0x80) && false == apu.noise.short_sample) {
           // recalculate short noise buffer
@@ -4074,12 +4708,12 @@ void apu_write(uint32_t address, uint8_t value) {
           apu.noise.cur_pos = 0;
         }
         apu.noise.short_sample = (value & 0x80) ? true : false;
-#endif // !REALTIME_NOISE 
+#endif  // !REALTIME_NOISE
         break;
       case APU_WRD3:
         apu.noise.regs[2] = value;
         apu.noise.vbl_length = vbl_lut[value >> 3];
-        apu.noise.env_vol = 0; // reset envelope
+        apu.noise.env_vol = 0;  // reset envelope
         break;
       // DMC
       case APU_WRE0:
@@ -4093,16 +4727,16 @@ void apu_write(uint32_t address, uint8_t value) {
           apu.dmc.irq_occurred = false;
         }
         break;
-      case APU_WRE1: // 7-bit DAC
+      case APU_WRE1:  // 7-bit DAC
         // add the _delta_ between written value and
         // current output level of the volume reg
-        value &= 0x7F; // bit 7 ignored
+        value &= 0x7F;  // bit 7 ignored
         apu.dmc.output_vol += ((value - apu.dmc.regs[1]) << 8);
         apu.dmc.regs[1] = value;
         break;
       case APU_WRE2:
         apu.dmc.regs[2] = value;
-        apu.dmc.cached_addr = 0xC000 + (uint16_t) (value << 6);
+        apu.dmc.cached_addr = 0xC000 + (uint16_t)(value << 6);
         break;
       case APU_WRE3:
         apu.dmc.regs[3] = value;
@@ -4140,8 +4774,7 @@ void apu_write(uint32_t address, uint8_t value) {
         }
 
         if (value & 0x10) {
-          if (0 == apu.dmc.dma_length)
-            apu_dmcreload();
+          if (0 == apu.dmc.dma_length) apu_dmcreload();
         } else {
           apu.dmc.dma_length = 0;
         }
@@ -4161,13 +4794,14 @@ void apu_write(uint32_t address, uint8_t value) {
 uint8_t apu_read(uint32_t address) {
   uint8_t value;
   if (SOUND_ENABLED) {
-
     switch (address) {
       case APU_SMASK:
         value = 0;
         // Return 1 in 0-5 bit pos if a channel is playing
-        if (apu.rectangle[0].enabled && apu.rectangle[0].vbl_length) value |= 0x01;
-        if (apu.rectangle[1].enabled && apu.rectangle[1].vbl_length) value |= 0x02;
+        if (apu.rectangle[0].enabled && apu.rectangle[0].vbl_length)
+          value |= 0x01;
+        if (apu.rectangle[1].enabled && apu.rectangle[1].vbl_length)
+          value |= 0x02;
         if (apu.triangle.enabled && apu.triangle.vbl_length) value |= 0x04;
         if (apu.noise.enabled && apu.noise.vbl_length) value |= 0x08;
 
@@ -4177,14 +4811,20 @@ uint8_t apu_read(uint32_t address) {
         if (apu.irqclear_callback) value |= apu.irqclear_callback();
         break;
       default:
-        value = (address >> 8); // heavy capacitance on data bus
+        value = (address >> 8);  // heavy capacitance on data bus
         break;
     }
   }
   return value;
 }
 
-#define CLIP_OUTPUT16(out) { if (out > 0x7FFF) out = 0x7FFF; else if (out < -0x8000) out = -0x8000; }
+#define CLIP_OUTPUT16(out)  \
+  {                         \
+    if (out > 0x7FFF)       \
+      out = 0x7FFF;         \
+    else if (out < -0x8000) \
+      out = -0x8000;        \
+  }
 
 void apu_process(void *buffer, int num_samples) {
   static int32_t prev_sample = 0;
@@ -4195,8 +4835,8 @@ void apu_process(void *buffer, int num_samples) {
     // bleh
     apu.buffer = buffer;
 
-    buf16 = (uint16_t *) buffer;
-    buf8 = (uint8_t *) buffer;
+    buf16 = (uint16_t *)buffer;
+    buf8 = (uint8_t *)buffer;
 
     while (num_samples--) {
       int32_t next_sample, accum = 0;
@@ -4214,7 +4854,8 @@ void apu_process(void *buffer, int num_samples) {
         if (APU_FILTER_LOWPASS == apu.filter_type) {
           accum += prev_sample;
           accum >>= 1;
-        } else accum = (accum + accum + accum + prev_sample) >> 2;
+        } else
+          accum = (accum + accum + accum + prev_sample) >> 2;
 
         prev_sample = next_sample;
       }
@@ -4222,23 +4863,23 @@ void apu_process(void *buffer, int num_samples) {
       // do clipping
       CLIP_OUTPUT16(accum);
 
-      //signed 16-bit output, unsigned 8-bit
-      if (16 == apu.sample_bits) *buf16++ = (uint16_t) accum;
-      else *buf8++ = (accum >> 8) ^ 0x80;
+      // signed 16-bit output, unsigned 8-bit
+      if (16 == apu.sample_bits)
+        *buf16++ = (uint16_t)accum;
+      else
+        *buf8++ = (accum >> 8) ^ 0x80;
     }
   }
 }
 
 // set the filter type
-void apu_setfilter(int filter_type) {
-  apu.filter_type = filter_type;
-}
+void apu_setfilter(int filter_type) { apu.filter_type = filter_type; }
 
 void apu_reset(void) {
   uint32_t address;
 
   // initialize all channel members
-  for (address = 0x4000; address <= 0x4013; address++)apu_write(address, 0);
+  for (address = 0x4000; address <= 0x4013; address++) apu_write(address, 0);
   apu_write(0x4015, 0);
   if (apu.ext && NULL != apu.ext->reset) apu.ext->reset();
 }
@@ -4253,17 +4894,17 @@ void apu_build_luts(int num_samples) {
   for (i = 0; i < 32; i++) vbl_lut[i] = vbl_length[i] * num_samples;
 
   // triangle wave channel's linear length table
-  for (i = 0; i < 128; i++) trilength_lut[i] = (int) (0.25 * i * num_samples);
+  for (i = 0; i < 128; i++) trilength_lut[i] = (int)(0.25 * i * num_samples);
 
 #ifndef REALTIME_NOISE
   // generate noise samples
   shift_register15(noise_long_lut, APU_NOISE_32K);
   shift_register15(noise_short_lut, APU_NOISE_93);
-#endif // !REALTIME_NOISE 
+#endif  // !REALTIME_NOISE
 }
 
-void apu_setparams(double base_freq, int sample_rate, int refresh_rate, int sample_bits)
-{
+void apu_setparams(double base_freq, int sample_rate, int refresh_rate,
+                   int sample_bits) {
   apu.sample_rate = sample_rate;
   apu.refresh_rate = refresh_rate;
   apu.sample_bits = sample_bits;
@@ -4272,7 +4913,7 @@ void apu_setparams(double base_freq, int sample_rate, int refresh_rate, int samp
     apu.base_freq = APU_BASEFREQ;
   else
     apu.base_freq = base_freq;
-  apu.cycle_rate = (float) (apu.base_freq / sample_rate);
+  apu.cycle_rate = (float)(apu.base_freq / sample_rate);
 
   // build various lookup tables for apu
   apu_build_luts(apu.num_samples);
@@ -4283,12 +4924,13 @@ void apu_setparams(double base_freq, int sample_rate, int refresh_rate, int samp
 apu_t *temp_apu;
 
 // Initializes emulated sound hardware, creates waveforms/voices
-apu_t *apu_create(double base_freq, int sample_rate, int refresh_rate, int sample_bits);
-apu_t *apu_create(double base_freq, int sample_rate, int refresh_rate, int sample_bits) {
-
+apu_t *apu_create(double base_freq, int sample_rate, int refresh_rate,
+                  int sample_bits);
+apu_t *apu_create(double base_freq, int sample_rate, int refresh_rate,
+                  int sample_bits) {
   int channel;
 
-  if (NULL == temp_apu) temp_apu = (apu_t*)malloc(sizeof(apu_t));
+  if (NULL == temp_apu) temp_apu = (apu_t *)malloc(sizeof(apu_t));
   if (NULL == temp_apu) return NULL;
 
   memset(temp_apu, 0, sizeof(apu_t));
@@ -4312,7 +4954,8 @@ apu_t *apu_create(double base_freq, int sample_rate, int refresh_rate, int sampl
 void apu_destroy(apu_t **src_apu);
 void apu_destroy(apu_t **src_apu) {
   if (*src_apu) {
-    ///    if ((*src_apu)->ext && NULL != (*src_apu)->ext->shutdown) (*src_apu)->ext->shutdown();
+    ///    if ((*src_apu)->ext && NULL != (*src_apu)->ext->shutdown)
+    ///    (*src_apu)->ext->shutdown();
     free(*src_apu);
     *src_apu = NULL;
   }
@@ -4323,15 +4966,13 @@ void apu_setext(apu_t *src_apu, apuext_t *ext) {
   src_apu->ext = ext;
 
   // initialize it
-  if (src_apu->ext && NULL != src_apu->ext->init)  src_apu->ext->init();
+  if (src_apu->ext && NULL != src_apu->ext->init) src_apu->ext->init();
 }
 //--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
 
 nes_t *nes_getcontextptr(void);
-nes_t *nes_getcontextptr(void) {
-  return &nes;
-}
+nes_t *nes_getcontextptr(void) { return &nes; }
 
 //--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
@@ -4339,102 +4980,81 @@ nes_t *nes_getcontextptr(void) {
 //--------------------------------------------------------------------------------
 ///(MMC.C) part
 rominfo_t *mmc_getinfo(void);
-rominfo_t *mmc_getinfo(void) {
-  return mmc.cart;
-}
+rominfo_t *mmc_getinfo(void) { return mmc.cart; }
 void ppu_setlatchfunc(ppulatchfunc_t func);
-void ppu_setlatchfunc(ppulatchfunc_t func) {
-  ppu.latchfunc = func;
-}
+void ppu_setlatchfunc(ppulatchfunc_t func) { ppu.latchfunc = func; }
 void ppu_setvromswitch(ppuvromswitch_t func);
-void ppu_setvromswitch(ppuvromswitch_t func) {
-  ppu.vromswitch = func;
-}
+void ppu_setvromswitch(ppuvromswitch_t func) { ppu.vromswitch = func; }
 
 //--------------------------------------------------------------------------------
-//MMC.C
-#define  MMC_8KROM         (mmc.cart->rom_banks * 2)
-#define  MMC_16KROM        (mmc.cart->rom_banks)
-#define  MMC_32KROM        (mmc.cart->rom_banks / 2)
-#define  MMC_8KVROM        (mmc.cart->vrom_banks)
-#define  MMC_4KVROM        (mmc.cart->vrom_banks * 2)
-#define  MMC_2KVROM        (mmc.cart->vrom_banks * 4)
-#define  MMC_1KVROM        (mmc.cart->vrom_banks * 8)
+// MMC.C
+#define MMC_8KROM (mmc.cart->rom_banks * 2)
+#define MMC_16KROM (mmc.cart->rom_banks)
+#define MMC_32KROM (mmc.cart->rom_banks / 2)
+#define MMC_8KVROM (mmc.cart->vrom_banks)
+#define MMC_4KVROM (mmc.cart->vrom_banks * 2)
+#define MMC_2KVROM (mmc.cart->vrom_banks * 4)
+#define MMC_1KVROM (mmc.cart->vrom_banks * 8)
 
-#define  MMC_LAST8KROM     (MMC_8KROM - 1)
-#define  MMC_LAST16KROM    (MMC_16KROM - 1)
-#define  MMC_LAST32KROM    (MMC_32KROM - 1)
-#define  MMC_LAST8KVROM    (MMC_8KVROM - 1)
-#define  MMC_LAST4KVROM    (MMC_4KVROM - 1)
-#define  MMC_LAST2KVROM    (MMC_2KVROM - 1)
-#define  MMC_LAST1KVROM    (MMC_1KVROM - 1)
+#define MMC_LAST8KROM (MMC_8KROM - 1)
+#define MMC_LAST16KROM (MMC_16KROM - 1)
+#define MMC_LAST32KROM (MMC_32KROM - 1)
+#define MMC_LAST8KVROM (MMC_8KVROM - 1)
+#define MMC_LAST4KVROM (MMC_4KVROM - 1)
+#define MMC_LAST2KVROM (MMC_2KVROM - 1)
+#define MMC_LAST1KVROM (MMC_1KVROM - 1)
 
 void mmc_setcontext(mmc_t *src_mmc);
-void mmc_setcontext(mmc_t *src_mmc) {
-  mmc = *src_mmc;
-}
-
-
+void mmc_setcontext(mmc_t *src_mmc) { mmc = *src_mmc; }
 
 // raise an IRQ
-void nes_irq(void) {
-  nes6502_irq();
-}
-
+void nes_irq(void) { nes6502_irq(); }
 
 void mmc_getcontext(mmc_t *dest_mmc);
-void mmc_getcontext(mmc_t *dest_mmc) {
-  *dest_mmc = mmc;
-}
+void mmc_getcontext(mmc_t *dest_mmc) { *dest_mmc = mmc; }
 
 // VROM bankswitching
-void mmc_bankvrom(int size, uint32_t address, int bank)
-{
-  if (0 == mmc.cart->vrom_banks)
-    return;
+void mmc_bankvrom(int size, uint32_t address, int bank) {
+  if (0 == mmc.cart->vrom_banks) return;
 
-  switch (size)
-  {
+  switch (size) {
     case 1:
-      if (bank == MMC_LASTBANK)
-        bank = MMC_LAST1KVROM;
-      ppu_setpage(1, address >> 10, &mmc.cart->vrom[(bank % MMC_1KVROM) << 10] - address);
+      if (bank == MMC_LASTBANK) bank = MMC_LAST1KVROM;
+      ppu_setpage(1, address >> 10,
+                  &mmc.cart->vrom[(bank % MMC_1KVROM) << 10] - address);
       break;
 
     case 2:
-      if (bank == MMC_LASTBANK)
-        bank = MMC_LAST2KVROM;
-      ppu_setpage(2, address >> 10, &mmc.cart->vrom[(bank % MMC_2KVROM) << 11] - address);
+      if (bank == MMC_LASTBANK) bank = MMC_LAST2KVROM;
+      ppu_setpage(2, address >> 10,
+                  &mmc.cart->vrom[(bank % MMC_2KVROM) << 11] - address);
       break;
 
     case 4:
-      if (bank == MMC_LASTBANK)
-        bank = MMC_LAST4KVROM;
-      ppu_setpage(4, address >> 10, &mmc.cart->vrom[(bank % MMC_4KVROM) << 12] - address);
+      if (bank == MMC_LASTBANK) bank = MMC_LAST4KVROM;
+      ppu_setpage(4, address >> 10,
+                  &mmc.cart->vrom[(bank % MMC_4KVROM) << 12] - address);
       break;
 
     case 8:
-      if (bank == MMC_LASTBANK)
-        bank = MMC_LAST8KVROM;
+      if (bank == MMC_LASTBANK) bank = MMC_LAST8KVROM;
       ppu_setpage(8, 0, &mmc.cart->vrom[(bank % MMC_8KVROM) << 13]);
       break;
 
     default:
       true;
-      ///nes_log_printf("invalid VROM bank size %d\n", size);
+      /// nes_log_printf("invalid VROM bank size %d\n", size);
   }
 }
 
 // ROM bankswitching
-void mmc_bankrom(int size, uint32_t address, int bank)
-{
+void mmc_bankrom(int size, uint32_t address, int bank) {
   nes6502_context mmc_cpu;
   nes6502_getcontext(&mmc_cpu);
 
   switch (size) {
     case 8:
-      if (bank == MMC_LASTBANK)
-        bank = MMC_LAST8KROM;
+      if (bank == MMC_LASTBANK) bank = MMC_LAST8KROM;
       {
         int page = address >> NES6502_BANKSHIFT;
         mmc_cpu.mem_page[page] = &mmc.cart->rom[(bank % MMC_8KROM) << 13];
@@ -4444,8 +5064,7 @@ void mmc_bankrom(int size, uint32_t address, int bank)
       break;
 
     case 16:
-      if (bank == MMC_LASTBANK)
-        bank = MMC_LAST16KROM;
+      if (bank == MMC_LASTBANK) bank = MMC_LAST16KROM;
       {
         int page = address >> NES6502_BANKSHIFT;
         mmc_cpu.mem_page[page] = &mmc.cart->rom[(bank % MMC_16KROM) << 14];
@@ -4456,8 +5075,7 @@ void mmc_bankrom(int size, uint32_t address, int bank)
       break;
 
     case 32:
-      if (bank == MMC_LASTBANK)
-        bank = MMC_LAST32KROM;
+      if (bank == MMC_LASTBANK) bank = MMC_LAST32KROM;
 
       mmc_cpu.mem_page[8] = &mmc.cart->rom[(bank % MMC_32KROM) << 15];
       mmc_cpu.mem_page[9] = mmc_cpu.mem_page[8] + 0x1000;
@@ -4470,7 +5088,7 @@ void mmc_bankrom(int size, uint32_t address, int bank)
       break;
 
     default:
-      ///nes_log_printf("invalid ROM bank size %d\n", size);
+      /// nes_log_printf("invalid ROM bank size %d\n", size);
       break;
   }
 
