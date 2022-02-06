@@ -10,26 +10,33 @@ double vImag[SAMPLES];
 //***************************************************************************************
 uint16_t COLORIX;
 uint16_t max_bar_height = 140;
-uint16_t bar_height = 196; //32
+uint16_t bar_height = 196;  // 32
 uint16_t bar_width = 24;
 uint16_t bar_spacing = 10;
 uint16_t bars_xoffset = 8;
 uint16_t amp[7];
 //***************************************************************************************
 void displayBand(int band, int dsize) {
-  int dmax = max_bar_height; //max bar height
+  int dmax = max_bar_height;  // max bar height
   if (dsize > dmax) dsize = dmax;
   for (int s = dsize - 1; s <= dmax; s = s + 1) {
     for (uint16_t bar_tmp = 0; bar_tmp < bar_width; bar_tmp++)
-      screenmemory_drawpixel((bar_width + bar_spacing)*band + bar_tmp + 1 + bars_xoffset, bar_height - s, 0x3F);
+      screenmemory_drawpixel(
+          (bar_width + bar_spacing) * band + bar_tmp + 1 + bars_xoffset,
+          bar_height - s, 0x3F);
   }
-  for (int s = dsize; s > 0 ; s = s - 1) {
-    if (s > 120 ) COLORIX = 6; //RED
-    else if (s > 100 && s <= 120) COLORIX = 24; //YELLOW
-    else COLORIX = 26; //GREEN
+  for (int s = dsize; s > 0; s = s - 1) {
+    if (s > 120)
+      COLORIX = 6;  // RED
+    else if (s > 100 && s <= 120)
+      COLORIX = 24;  // YELLOW
+    else
+      COLORIX = 26;  // GREEN
 
     for (uint16_t bar_tmp = 0; bar_tmp < bar_width; bar_tmp++) {
-      screenmemory_drawpixel((bar_width + bar_spacing)*band + bar_tmp + 1 + bars_xoffset, bar_height - s, COLORIX);
+      screenmemory_drawpixel(
+          (bar_width + bar_spacing) * band + bar_tmp + 1 + bars_xoffset,
+          bar_height - s, COLORIX);
     }
   }
   if (dsize > peak[band]) {
@@ -39,13 +46,13 @@ void displayBand(int band, int dsize) {
 //**************************************************************************************
 
 void visualyze() {
-  for (int i = 0; i < 0+SAMPLES; i++) {
+  /*for (int i = 0; i < 0+SAMPLES; i++) {
 
   if (audio.m_curSample<1152-SAMPLES)
     value = ((int16_t*)audio.m_outBuff)[2 * i + audio.m_curSample * 2];
-  else 
+  else
     value = ((int16_t*)audio.m_outBuff)[2 * i + (1152-audio.m_curSample) *2  ];
-   
+
     vReal[i] = value / 512 * audio.m_vol/100;
     vImag[i] = 0;
   }
@@ -58,15 +65,18 @@ void visualyze() {
     amp[i] = 0;  //reset amp bar values
   }
 
-  for (int i = 1; i < (SAMPLES/2); i++) { // Don't use sample 0 and only first SAMPLES/2 are usable. Each array eleement represents a frequency and its value the amplitude.
-    if (i > 2 && i <= 3 & (uint16_t)vReal[i] > amp[0] )  amp[0] = (uint16_t)vReal[i]; //125Hz
-    if (i > 3 && i <= 7 & (uint16_t)vReal[i] > amp[1] )  amp[1] = (uint16_t)vReal[i]; //250Hz
-    if (i > 7 && i <= 12 & (uint16_t)vReal[i] > amp[2] )  amp[2] = (uint16_t)vReal[i]; //500Hz
-    if (i > 12 && i <= 24 & (uint16_t)vReal[i] > amp[3] )  amp[3] = (uint16_t)vReal[i]; //1kHz
-    if (i > 24 && i <= 30 & (uint16_t)vReal[i] > amp[4] )  amp[4] = (uint16_t)vReal[i]; //2kHz
-    if (i > 30 && i <= 45 & (uint16_t)vReal[i] > amp[5] )  amp[5] = (uint16_t)vReal[i]; //4kHz
-    if (i > 45 && i <= 64 & (uint16_t)vReal[i] > amp[6] )  amp[6] = (uint16_t)vReal[i]; //8kHz
-    
+  for (int i = 1; i < (SAMPLES/2); i++) { // Don't use sample 0 and only first
+  SAMPLES/2 are usable. Each array eleement represents a frequency and its value
+  the amplitude. if (i > 2 && i <= 3 & (uint16_t)vReal[i] > amp[0] )  amp[0] =
+  (uint16_t)vReal[i]; //125Hz if (i > 3 && i <= 7 & (uint16_t)vReal[i] > amp[1]
+  )  amp[1] = (uint16_t)vReal[i]; //250Hz if (i > 7 && i <= 12 &
+  (uint16_t)vReal[i] > amp[2] )  amp[2] = (uint16_t)vReal[i]; //500Hz if (i > 12
+  && i <= 24 & (uint16_t)vReal[i] > amp[3] )  amp[3] = (uint16_t)vReal[i];
+  //1kHz if (i > 24 && i <= 30 & (uint16_t)vReal[i] > amp[4] )  amp[4] =
+  (uint16_t)vReal[i]; //2kHz if (i > 30 && i <= 45 & (uint16_t)vReal[i] > amp[5]
+  )  amp[5] = (uint16_t)vReal[i]; //4kHz if (i > 45 && i <= 64 &
+  (uint16_t)vReal[i] > amp[6] )  amp[6] = (uint16_t)vReal[i]; //8kHz
+
   }
 
    //correct bar ratio
@@ -77,21 +87,22 @@ void visualyze() {
    amp[2]*=0.50;
    amp[1] *= 0.25;
    amp[0] *= 0.25;
-   
+
   ///DRAW BARS
   for (uint16_t tmp = 0; tmp < 7; tmp++) displayBand(tmp, amp[tmp]);
 
   //DRAW PEAKS
   for (byte band = 0; band <= 6; band++) {
     for (uint16_t bar_tmp = 0; bar_tmp < bar_width; bar_tmp++)
-      screenmemory_drawpixel((bar_width + bar_spacing)*band + bar_tmp + 1 + bars_xoffset, bar_height - peak[band], 0x3d);
+      screenmemory_drawpixel((bar_width + bar_spacing)*band + bar_tmp + 1 +
+  bars_xoffset, bar_height - peak[band], 0x3d);
   }
 
   for (byte band = 0; band <= 6; band++) {
     if (peak[band] > 0) peak[band] -= 1; // Decay the peak
-  }
+  }*/
 
-  ///xQueueSend(vidQueue, &SCREENMEMORY, 0); //refresh LCD
+  /// xQueueSend(vidQueue, &SCREENMEMORY, 0); //refresh LCD
 }
 //********************************************************************************
 uint16_t PLAYINGFILE = 0;
@@ -105,8 +116,9 @@ char* EXPLORE(char* PATH) {
   uint8_t num = 0;
   uint8_t loadedFileNames = 0;
 
-  //clear memory variables
-  for (uint16_t tmp = 0; tmp < MAXFILES; tmp++) memset (filename[tmp], 0, sizeof(filename[tmp]));
+  // clear memory variables
+  for (uint16_t tmp = 0; tmp < MAXFILES; tmp++)
+    memset(filename[tmp], 0, sizeof(filename[tmp]));
   fileext[0] = 0;
   fileext[1] = 0;
   fileext[2] = 0;
@@ -115,13 +127,13 @@ char* EXPLORE(char* PATH) {
   num = 0;
   loadedFileNames = 0;
 
-  //Load List files in root directory.
-  ///if (!dirFile.open("/", O_READ)) {
+  // Load List files in root directory.
+  /// if (!dirFile.open("/", O_READ)) {
   if (!dirFile.open(PATH, O_READ)) {
-    while (1) {};
+    while (1) {
+    };
   }
   while (num < MAXFILES && file.openNext(&dirFile, O_READ)) {
-
     // Skip hidden files.
     if (!file.isHidden()) {
       for (uint8_t i = sizeof(filename[num]); i > 3; i--) filename[num][i] = 0;
@@ -142,19 +154,19 @@ char* EXPLORE(char* PATH) {
       }
 
       if (DEBUG) {
-        ///Serial.println(fileext[num]);
-        ///Serial.println(strlen(filename[num]));
+        /// Serial.println(fileext[num]);
+        /// Serial.println(strlen(filename[num]));
       }
 
-      //check MP3 File extension, then increase index
-      if ((fileext[0] == 'M' || fileext[0] == 'm')
-          && (fileext[1] == 'P' || fileext[1] == 'p')
-          && (fileext[2] == '3' || fileext[2] == '3')) {
+      // check MP3 File extension, then increase index
+      if ((fileext[0] == 'M' || fileext[0] == 'm') &&
+          (fileext[1] == 'P' || fileext[1] == 'p') &&
+          (fileext[2] == '3' || fileext[2] == '3')) {
         num++;
       }
-      if ((fileext[0] == 'W' || fileext[0] == 'w')
-          && (fileext[1] == 'A' || fileext[1] == 'a')
-          && (fileext[2] == 'V' || fileext[2] == 'v')) {
+      if ((fileext[0] == 'W' || fileext[0] == 'w') &&
+          (fileext[1] == 'A' || fileext[1] == 'a') &&
+          (fileext[2] == 'V' || fileext[2] == 'v')) {
         num++;
       }
     }
@@ -172,7 +184,7 @@ char* EXPLORE(char* PATH) {
 
   sortStrings(filename, loadedFileNames);
 
-  //DRAW FILENAMES INTO BUFFER
+  // DRAW FILENAMES INTO BUFFER
   uint8_t CURSOR = 0;
   uint8_t PAGE = 0;
   bool NamesDisplayed = false;
@@ -180,44 +192,48 @@ char* EXPLORE(char* PATH) {
   while (1) {
     PAGE = CURSOR / FILESPERPAGE;
     if (!NamesDisplayed) {
-      screenmemory_fillscreen(63); //black color
-      set_font_XY(16, 24 );
+      screenmemory_fillscreen(63);  // black color
+      set_font_XY(16, 24);
       draw_string(PATH, 48);
 
-
-      for (num = PAGE * FILESPERPAGE; num < ((PAGE + 1)*FILESPERPAGE) && num < loadedFileNames; num++) {
+      for (num = PAGE * FILESPERPAGE;
+           num < ((PAGE + 1) * FILESPERPAGE) && num < loadedFileNames; num++) {
         set_font_XY(40, 48 + 20 * (num % FILESPERPAGE));
-        ///draw_string(filename[num],48);
+        /// draw_string(filename[num],48);
 
-        if (filename[num][strlen(filename[num]) - 1] == '/') draw_string(filename[num], 23);
-        else draw_string(filename[num], 48);
+        if (filename[num][strlen(filename[num]) - 1] == '/')
+          draw_string(filename[num], 23);
+        else
+          draw_string(filename[num], 48);
 
         delay(1);
       }
       NamesDisplayed = true;
     }
 
-    //Draw Cursor
+    // Draw Cursor
     set_font_XY(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
     draw_string("->", 48);
     delay(200);
 
-    //PROCESS CURSOR SELECTION
-    while (JOY_CROSS == 0 && JOY_SQUARE == 0 && JOY_OPTIONS == 0 && JOY_SHARE == 0 && JOY_UP == 0 && JOY_DOWN == 0 && JOY_LEFT == 0 && JOY_RIGHT == 0) {
+    // PROCESS CURSOR SELECTION
+    while (JOY_CROSS == 0 && JOY_SQUARE == 0 && JOY_OPTIONS == 0 &&
+           JOY_SHARE == 0 && JOY_UP == 0 && JOY_DOWN == 0 && JOY_LEFT == 0 &&
+           JOY_RIGHT == 0) {
       if (digitalRead(PIN_A) == 1) {
-        JOY_CROSS = 1;  //A
+        JOY_CROSS = 1;  // A
         delay(25);
       }
       if (digitalRead(PIN_B) == 1) {
-        JOY_SQUARE = 1;   //B
+        JOY_SQUARE = 1;  // B
         delay(25);
       }
       if (digitalRead(PIN_SELECT) == 1) {
-        JOY_OPTIONS = 1;   //SELECT
+        JOY_OPTIONS = 1;  // SELECT
         delay(25);
       }
       if (digitalRead(PIN_START) == 1) {
-        JOY_SHARE = 1;   //START
+        JOY_SHARE = 1;  // START
         delay(25);
       }
       if (digitalRead(PIN_UP) == 1) {
@@ -225,20 +241,20 @@ char* EXPLORE(char* PATH) {
         delay(25);
       }
       if (digitalRead(PIN_DOWN) == 1) {
-        JOY_DOWN = 1;   //DOWN
+        JOY_DOWN = 1;  // DOWN
         delay(25);
       }
       if (digitalRead(PIN_LEFT) == 1) {
-        JOY_LEFT = 1;   //LEFT
+        JOY_LEFT = 1;  // LEFT
         delay(25);
       }
       if (digitalRead(PIN_RIGHT) == 1) {
-        JOY_RIGHT = 1;   //RIGHT
+        JOY_RIGHT = 1;  // RIGHT
         delay(25);
       }
     }
 
-    //Empty Cursor
+    // Empty Cursor
     set_font_XY(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
     draw_string("  ", 48);
 
@@ -250,16 +266,22 @@ char* EXPLORE(char* PATH) {
       return MAINPATH;
     }
 
-    if (JOY_UP == 1 ) {
-      if (CURSOR % FILESPERPAGE == 0) NamesDisplayed = false; //changed page
-      if (CURSOR == 0 && loadedFileNames > 0) CURSOR = loadedFileNames - 1;
-      else if (CURSOR > 0 && loadedFileNames > 0) CURSOR--;
+    if (JOY_UP == 1) {
+      if (CURSOR % FILESPERPAGE == 0) NamesDisplayed = false;  // changed page
+      if (CURSOR == 0 && loadedFileNames > 0)
+        CURSOR = loadedFileNames - 1;
+      else if (CURSOR > 0 && loadedFileNames > 0)
+        CURSOR--;
       JOY_UP = 0;
     }
-    if (JOY_DOWN == 1 ) {
-      if (CURSOR % FILESPERPAGE == FILESPERPAGE - 1 || CURSOR == loadedFileNames - 1) NamesDisplayed = false; //changed page
-      if (CURSOR == loadedFileNames - 1 && loadedFileNames > 0) CURSOR = 0;
-      else if (CURSOR < loadedFileNames - 1 && loadedFileNames > 0) CURSOR++;
+    if (JOY_DOWN == 1) {
+      if (CURSOR % FILESPERPAGE == FILESPERPAGE - 1 ||
+          CURSOR == loadedFileNames - 1)
+        NamesDisplayed = false;  // changed page
+      if (CURSOR == loadedFileNames - 1 && loadedFileNames > 0)
+        CURSOR = 0;
+      else if (CURSOR < loadedFileNames - 1 && loadedFileNames > 0)
+        CURSOR++;
       JOY_DOWN = 0;
     }
     if (JOY_LEFT == 1) {
@@ -268,13 +290,14 @@ char* EXPLORE(char* PATH) {
       JOY_LEFT = 0;
     }
     if (JOY_RIGHT == 1) {
-      if (CURSOR / FILESPERPAGE < loadedFileNames / FILESPERPAGE) CURSOR += FILESPERPAGE;
+      if (CURSOR / FILESPERPAGE < loadedFileNames / FILESPERPAGE)
+        CURSOR += FILESPERPAGE;
       if (CURSOR > loadedFileNames - 1) CURSOR = loadedFileNames - 1;
       NamesDisplayed = false;
       JOY_RIGHT = 0;
     }
     if (JOY_OPTIONS == 1) {
-      //do nothing  = unused
+      // do nothing  = unused
       JOY_OPTIONS = 0;
     }
     if ((JOY_CROSS == 1 || JOY_SHARE == 1) && JOY_OPTIONS == 0) {
@@ -292,10 +315,9 @@ char* EXPLORE(char* PATH) {
 
       sprintf(TRACKNAME, "%s", filename[CURSOR]);
 
-      return MAINPATH ; //START //A
+      return MAINPATH;  // START //A
     }
-    if ((JOY_SQUARE == 1 ) && JOY_OPTIONS == 0) {
-
+    if ((JOY_SQUARE == 1) && JOY_OPTIONS == 0) {
       dirFile.close();
       JOY_SQUARE = 0;
       JOY_SHARE = 0;
@@ -317,7 +339,7 @@ char* EXPLORE(char* PATH) {
 
       if (DEBUG) Serial.println(MAINPATH);
       if (DEBUG) Serial.println(strlen(MAINPATH));
-      return MAINPATH ;
+      return MAINPATH;
     }
   };
 }
@@ -336,8 +358,8 @@ char* Browse(char* PATH) {
   Serial.print("EXPLORE: ");
   Serial.println(PATH);
   //................................................................................
-  while (PATH[strlen(PATH) - 1] == '/')  {
-    PATH =  EXPLORE(PATH);
+  while (PATH[strlen(PATH) - 1] == '/') {
+    PATH = EXPLORE(PATH);
     if (EXIT) break;
   }
   //................................................................................
@@ -347,7 +369,6 @@ char* Browse(char* PATH) {
 //________________________________________________________________________________
 
 char* PREVNEXT(char* PATH, uint8_t POSITION) {
-
   if (PATH[strlen(PATH) - 1] != '/')
     if (strlen(PATH) > 1) {
       PATH[strlen(PATH) - 1] = '\0';
@@ -360,24 +381,23 @@ char* PREVNEXT(char* PATH, uint8_t POSITION) {
   uint8_t num = 0;
   uint8_t loadedFileNames = 0;
 
-  //LOAD FILENAMES INTO MEMORY...
+  // LOAD FILENAMES INTO MEMORY...
 
   num = 0;
   if (!dirFile.open(PATH, O_READ)) {
-    while (1) {};
+    while (1) {
+    };
   }
   while (num < MAXFILES && file.openNext(&dirFile, O_READ)) {
-
     // Skip directories and hidden files.
     if (!file.isSubDir() && !file.isHidden()) {
-
       for (uint8_t i = sizeof(filename[num]); i > 3; i--) filename[num][i] = 0;
 
       file.getName(filename[num], MAXFILENAME_LENGTH);
 
       if (file.isSubDir()) {
-        ///sprintf(filename[num], "%s/", filename[num]);
-        ///num++;
+        /// sprintf(filename[num], "%s/", filename[num]);
+        /// num++;
       } else {
         for (uint8_t i = strlen(filename[num]); i > 3; i--) {
           if (filename[num][i] != 0) {
@@ -390,15 +410,15 @@ char* PREVNEXT(char* PATH, uint8_t POSITION) {
         }
       }
 
-      //check MP3 File extension, then increase index
-      if ((fileext[0] == 'M' || fileext[0] == 'm')
-          && (fileext[1] == 'P' || fileext[1] == 'p')
-          && (fileext[2] == '3' || fileext[2] == '3')) {
+      // check MP3 File extension, then increase index
+      if ((fileext[0] == 'M' || fileext[0] == 'm') &&
+          (fileext[1] == 'P' || fileext[1] == 'p') &&
+          (fileext[2] == '3' || fileext[2] == '3')) {
         num++;
       }
-      if ((fileext[0] == 'W' || fileext[0] == 'w')
-          && (fileext[1] == 'A' || fileext[1] == 'a')
-          && (fileext[2] == 'V' || fileext[2] == 'v')) {
+      if ((fileext[0] == 'W' || fileext[0] == 'w') &&
+          (fileext[1] == 'A' || fileext[1] == 'a') &&
+          (fileext[2] == 'V' || fileext[2] == 'v')) {
         num++;
       }
     }
@@ -419,6 +439,6 @@ char* PREVNEXT(char* PATH, uint8_t POSITION) {
 
   sprintf(TRACKNAME, "%s", filename[POSITION]);
 
-  return MAINPATH ; //START //A
+  return MAINPATH;  // START //A
 }
 //________________________________________________________________________________
