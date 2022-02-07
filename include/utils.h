@@ -10,13 +10,14 @@ const uint8_t buffMaxLen = 30;
 char debugBuff[buffMaxLen];
 
 void debug(const char *message) {
-  #ifdef DEBUG
-    Serial.println(message);
-  #endif
+#ifdef DEBUG
+  Serial.println(message);
+#endif
 }
 
-void debug(const char *templateString, int strlength, int value) {
-  if(strlength >= buffMaxLen) {
+void debug(const char *templateString, uint32_t value) {
+  int strlength = strlen(templateString);
+  if (strlength >= buffMaxLen) {
     sprintf(debugBuff, "value: %d", value);
   } else {
     sprintf(debugBuff, templateString, value);
@@ -24,9 +25,9 @@ void debug(const char *templateString, int strlength, int value) {
   debug(debugBuff);
 }
 
-//untested part
+// untested part
 
-void sortStrings(char* arr[], int n) {
+void sortStrings(char *arr[], int n) {
   char temp[MAXFILENAME_LENGTH];
 
   // Sorting strings using bubble sort
@@ -41,4 +42,4 @@ void sortStrings(char* arr[], int n) {
   }
 }
 
-#endif //UTILS_H
+#endif  // UTILS_H

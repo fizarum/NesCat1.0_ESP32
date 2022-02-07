@@ -1048,7 +1048,7 @@ typedef struct {
 
 typedef struct mapintf_s {
   int number;
-  char *name;
+  const char *name;
   void (*init)(void);
   void (*vblank)(void);
   void (*hblank)(int vblank);
@@ -1169,7 +1169,6 @@ int rom_loadrom(unsigned char **rom, rominfo_t *rominfo) {
 
 #define RESERVED_LENGTH 8
 
-int rom_getheader(unsigned char **rom, rominfo_t *rominfo);
 int rom_getheader(unsigned char **rom, rominfo_t *rominfo) {
   inesheader_t head;
   uint8_t reserved[RESERVED_LENGTH];
@@ -1191,8 +1190,6 @@ int rom_getheader(unsigned char **rom, rominfo_t *rominfo) {
   *rom += sizeof(head);
 
   if (memcmp(head.ines_magic, ROM_INES_MAGIC, 4)) {
-    if (DEBUG) Serial.println("ROM is not a valid NES image");
-    if (DEBUG) tft.println("ROM is not a valid NES image");
     return -1;
   }
 

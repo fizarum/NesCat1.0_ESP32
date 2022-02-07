@@ -80,13 +80,8 @@
 #define I2S_DO_IO (GPIO_NUM_25)   // DIN
 #define I2S_DI_IO (-1)
 
-// display part, VSPI pins on NodeMCU ESP32S
-#define TFT_CLK 18
-#define TFT_MOSI 23
-#define TFT_MISO 19
-#define TFT_CS 5
-#define TFT_DC 21
-#define TFT_RST 17
+// display part
+#include <display.h>
 
 // SD card part
 // todo: change after display testing
@@ -138,11 +133,6 @@
 // LIBRARIES:
 #include <Arduino.h>
 
-// display
-#include <Adafruit_GFX.h>
-#include <Adafruit_ILI9341.h>
-#include <SPI.h>
-
 // micro_SD_Card
 // #include <Audio.h>
 #include <SdFat.h>
@@ -157,18 +147,14 @@ SdFat sd;
 File fp;
 
 static void videoTask(void *arg);
-IRAM_ATTR void MEMORY_STATUS();
+void MEMORY_STATUS();
 
-#define TFT_WIDTH 320
-#define TFT_HEIGHT 240
 #define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes
                     // in FLASH
 #define LOAD_FONT2  // Font 2. Small 16 pixel high font, needs ~3534 bytes in
                     // FLASH, 96 characters
 #define LOAD_FONT4  // Font 4. Medium 26 pixel high font, needs ~5848 bytes in
                     // FLASH, 96 characters
-
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
 //********************************************************************************
 // VARIABLES:
@@ -380,10 +366,10 @@ QueueHandle_t vidQueue;
 //--------------------------------------------------------------------------------
 // BUFFER TEXT DRAW FUNCTIONS
 //--------------------------------------------------------------------------------
-void screenmemory_fillscreen(uint8_t COLOR) {
+void screenmemory_fillscreen(uint8_t colorIndex = UNIVERSAL_BKG_COLOR) {
   for (uint16_t Ypos = 0; Ypos < DEFAULT_HEIGHT; Ypos++)
     for (uint16_t Xpos = 0; Xpos < DEFAULT_WIDTH; Xpos++) {
-      SCREENMEMORY[Ypos][Xpos] = COLOR;
+      SCREENMEMORY[Ypos][Xpos] = colorIndex;
     }
   if (LCD_ENABLED) xQueueSend(vidQueue, &SCREENMEMORY, 0);  // refresh LCD
 }
@@ -475,40 +461,48 @@ uint8_t draw_char_xy(uint16_t Main_x, uint16_t Main_y, char Main_char,
         if ((Xpos + 0 < XcharSize) && (CHARLINE & 0b10000000) != 0)
           screenmemory_drawpixel(Main_x + Xpos + 0, Main_y + Ypos, color);
         else
-          screenmemory_drawpixel(Main_x + Xpos + 0, Main_y + Ypos, 63);
+          screenmemory_drawpixel(Main_x + Xpos + 0, Main_y + Ypos,
+                                 UNIVERSAL_BKG_COLOR);
         if ((Xpos + 1 < XcharSize) && (CHARLINE & 0b01000000) != 0)
           screenmemory_drawpixel(Main_x + Xpos + 1, Main_y + Ypos, color);
         else
-          screenmemory_drawpixel(Main_x + Xpos + 1, Main_y + Ypos, 63);
+          screenmemory_drawpixel(Main_x + Xpos + 1, Main_y + Ypos,
+                                 UNIVERSAL_BKG_COLOR);
         if ((Xpos + 2 < XcharSize) && (CHARLINE & 0b00100000) != 0)
           screenmemory_drawpixel(Main_x + Xpos + 2, Main_y + Ypos, color);
         else
-          screenmemory_drawpixel(Main_x + Xpos + 2, Main_y + Ypos, 63);
+          screenmemory_drawpixel(Main_x + Xpos + 2, Main_y + Ypos,
+                                 UNIVERSAL_BKG_COLOR);
         if ((Xpos + 3 < XcharSize) && (CHARLINE & 0b00010000) != 0)
           screenmemory_drawpixel(Main_x + Xpos + 3, Main_y + Ypos, color);
         else
-          screenmemory_drawpixel(Main_x + Xpos + 3, Main_y + Ypos, 63);
+          screenmemory_drawpixel(Main_x + Xpos + 3, Main_y + Ypos,
+                                 UNIVERSAL_BKG_COLOR);
         if ((Xpos + 4 < XcharSize) && (CHARLINE & 0b00001000) != 0)
           screenmemory_drawpixel(Main_x + Xpos + 4, Main_y + Ypos, color);
         else
-          screenmemory_drawpixel(Main_x + Xpos + 4, Main_y + Ypos, 63);
+          screenmemory_drawpixel(Main_x + Xpos + 4, Main_y + Ypos,
+                                 UNIVERSAL_BKG_COLOR);
         if ((Xpos + 5 < XcharSize) && (CHARLINE & 0b00000100) != 0)
           screenmemory_drawpixel(Main_x + Xpos + 5, Main_y + Ypos, color);
         else
-          screenmemory_drawpixel(Main_x + Xpos + 5, Main_y + Ypos, 63);
+          screenmemory_drawpixel(Main_x + Xpos + 5, Main_y + Ypos,
+                                 UNIVERSAL_BKG_COLOR);
         if ((Xpos + 6 < XcharSize) && (CHARLINE & 0b00000010) != 0)
           screenmemory_drawpixel(Main_x + Xpos + 6, Main_y + Ypos, color);
         else
-          screenmemory_drawpixel(Main_x + Xpos + 6, Main_y + Ypos, 63);
+          screenmemory_drawpixel(Main_x + Xpos + 6, Main_y + Ypos,
+                                 UNIVERSAL_BKG_COLOR);
         if ((Xpos + 7 < XcharSize) && (CHARLINE & 0b00000001) != 0)
           screenmemory_drawpixel(Main_x + Xpos + 7, Main_y + Ypos, color);
         else
-          screenmemory_drawpixel(Main_x + Xpos + 7, Main_y + Ypos, 63);
+          screenmemory_drawpixel(Main_x + Xpos + 7, Main_y + Ypos,
+                                 UNIVERSAL_BKG_COLOR);
       }
   return XcharSize;
 }
 //--------------------------------------------------------------------------------
-uint16_t draw_string_xy(uint16_t x, uint16_t y, char *c, const char *font,
+uint16_t draw_string_xy(uint16_t x, uint16_t y, const char *c, const char *font,
                         uint8_t color = 48) {
   uint8_t width;
   uint16_t textwidth = 0;
@@ -533,7 +527,7 @@ void set_font_XY(uint16_t x, uint16_t y) {
   YPOS_CHAR = y;
 }
 //--------------------------------------------------------------------------------
-void draw_string(char *c, uint8_t color = 48) {
+void draw_string(const char *c, uint8_t color = 48) {
   if (c[strlen(c) - 1] == '\n') {
     draw_string_xy(XPOS_CHAR, YPOS_CHAR, c, DisplayFontSet, color);
     YPOS_CHAR += (uint8_t)(DisplayFontSet[1]);
@@ -545,20 +539,22 @@ void draw_string(char *c, uint8_t color = 48) {
 //--------------------------------------------------------------------------------
 static void lcd_write_frame(const uint16_t x, const uint16_t y,
                             const uint16_t width, const uint16_t height) {
-  uint16_t X_ = 0;
-  uint16_t i;
+  uint8_t index;
+  int16_t absYPos;
 
-  for (i = 0; i < height; i++) {
-    for (X_ = 8; X_ < 248; X_++) {  // not 256 the 240
-      SCREENBUFFER[X_] = nes_16bit[(0x3F & ((uint8_t *)SCREENMEMORY[i])[X_])];
+  for (uint16_t i = 0; i < height; i++) {
+    for (uint16_t X_ = 8; X_ < 248; X_++) {  // not 256 the 240
+      index = (UNIVERSAL_BKG_COLOR & (SCREENMEMORY[i])[X_]);
+      SCREENBUFFER[X_] = nes_16bit[index];
     }
 
     /// PAL optimalisation in this case:
-    tft.drawRGBBitmap(0, i, (uint16_t *)(SCREENBUFFER), 48, 1);
-    tft.drawRGBBitmap(48, i, (uint16_t *)(SCREENBUFFER + 48), 48, 1);
-    tft.drawRGBBitmap(96, i, (uint16_t *)(SCREENBUFFER + 96), 48, 1);
-    tft.drawRGBBitmap(144, i, (uint16_t *)(SCREENBUFFER + 144), 48, 1);
-    tft.drawRGBBitmap(192, i, (uint16_t *)(SCREENBUFFER + 192), 48, 1);
+    absYPos = y + i;
+    displayDrawRGBBitmap(x + 0, absYPos, SCREENBUFFER, 48, 1);
+    displayDrawRGBBitmap(x + 48, absYPos, SCREENBUFFER + 48, 48, 1);
+    displayDrawRGBBitmap(x + 96, absYPos, SCREENBUFFER + 96, 48, 1);
+    displayDrawRGBBitmap(x + 144, absYPos, SCREENBUFFER + 144, 48, 1);
+    displayDrawRGBBitmap(x + 192, absYPos, SCREENBUFFER + 192, 48, 1);
   }
 }
 //--------------------------------------------------------------------------------
@@ -803,16 +799,21 @@ void secondsToHMS(const uint32_t seconds, uint16_t &h, uint8_t &m, uint8_t &s) {
 #include "oscilloscope.h"
 
 //********************************************************************************
+/**
+ * @brief position of virtual screen (nes) on real screen size
+ * x & y should be 0 in ideal case, but aspect ratio of screen is bigger (wider)
+ * than emulator one, then: x > 0
+ */
+int xPosOfVirtualScreen = (TFT_WIDTH - DEFAULT_WIDTH) / 2;
+int yPosOfVirtualScreen = (TFT_HEIGHT - DEFAULT_HEIGHT) / 2;
 
 //--------------------------------------------------------------------------------
 static void videoTask(void *arg) {
-  int x = (320 - DEFAULT_WIDTH) / 2;
-  int y = ((240 - DEFAULT_HEIGHT) / 2);
-
   while (1) {
     if (LCD_ENABLED) {
       xQueueReceive(vidQueue, &SCREENMEMORY, portMAX_DELAY);
-      lcd_write_frame(x, y, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+      lcd_write_frame(xPosOfVirtualScreen, yPosOfVirtualScreen, DEFAULT_WIDTH,
+                      DEFAULT_HEIGHT);
     }
     if (PLAYING) visualyze();  // visualyze when playing...
   }
@@ -833,7 +834,7 @@ void install_oscilloscope() {
 #endif
 }
 //********************************************************************************
-IRAM_ATTR void MEMORY_STATUS() {
+void MEMORY_STATUS() {
   if (DEBUG) {
     Serial.println();
     Serial.println("--------------------------------");
@@ -849,12 +850,12 @@ IRAM_ATTR void MEMORY_STATUS() {
   }
 }
 //********************************************************************************
-// theese varaiables cannot be in while loop!
 rominfo_t *rominfo;
 unsigned char *romdata = 0;
 char *PATH;
 //================================================================================
 char loadmessage[64];
+
 unsigned char *getromdata(char *ROMFILENAME_) {
   fp = sd.open(ROMFILENAME_);
   if (DEBUG) Serial.print("FILE SIZE: ");
@@ -914,8 +915,7 @@ unsigned char *getromdata(char *ROMFILENAME_) {
 
     FLASH_ROM_SIZE = i;  // Size of File and Offset Align
 
-    if (DEBUG) Serial.print("FLASH SIZE: ");
-    if (DEBUG) Serial.println(FLASH_ROM_SIZE);
+    debug("FLASH SIZE: %d", FLASH_ROM_SIZE);
 
     ROM = 0;
     /// if (handle1) spi_flash_munmap(handle1);
@@ -923,7 +923,7 @@ unsigned char *getromdata(char *ROMFILENAME_) {
     ESP_ERROR_CHECK(spi_flash_mmap(SPI_FLASH_ADDRESS, FLASH_ROM_SIZE,
                                    SPI_FLASH_MMAP_DATA, &ROM, &handle1));
     printf("mmap_res: handle=%d ptr=%p\n", handle1, ROM);
-    Serial.println("[NES ROM MAPPED ON FLASH!]");
+    debug("[NES ROM MAPPED ON FLASH!]");
     return (unsigned char *)ROM;
   }
 }
@@ -939,15 +939,13 @@ void setup() {
   if (ESP.getPsramSize() > 0) {
     PSRAMSIZE = ESP.getPsramSize();
     PSRAM = (uint8_t *)ps_malloc(2097152);  // PSRAM malloc 2MB
+
+    debug("Total PSRAM: %d", ESP.getPsramSize());
+    debug("Free PSRAM: %d", ESP.getFreePsram());
+  } else {
+    PSRAMSIZE = 0;
+    debug("NO PSRAM DETECTED.");
   }
-
-  debug("NO PSRAM DETECTED.");
-  PSRAMSIZE = 0;
-
-  Serial.print("Total PSRAM: ");
-  Serial.println(ESP.getPsramSize());
-  Serial.print("Free PSRAM: ");
-  Serial.println(ESP.getFreePsram());
 
   //--------------------------------------------------------------------------------
   // VIDEO MEMORY ALLOCATION (force)
@@ -967,17 +965,14 @@ void setup() {
   pinMode(PIN_RIGHT, INPUT_PULLDOWN);  // RIGHT
   //--------------------------------------------------------------------------------
 #if LCD_ENABLED
-  tft.begin();
-  tft.setRotation(1);
-  tft.setSPISpeed(40000000);
-  tft.fillScreen(ILI9341_BLACK);
+  displayInit();
 #endif
   //--------------------------------------------------------------------------------
 
   //--------------------------------------------------------------------------------
   // DAC COMPOSITE VIDEO & ADC has setup here:
 #if COMPOSITE_VIDEO_ENABLED
-  video_init(4, 2, nes_32bit, 1);  // start the A/V pump on app core
+  initCompositeVideo(4, 2, nes_32bit, 1);  // start the A/V pump on app core
 #endif
   //--------------------------------------------------------------------------------
   // SCREENMEMORY LCD DRAW INIT
@@ -988,12 +983,10 @@ void setup() {
   kb_begin();
 #endif
   //--------------------------------------------------------------------------------
-  // INTRO TEXT
-  screenmemory_fillscreen(63);  // black color
-  set_font(Retro8x16);          // Very important
-  set_font_XY(32, 240 / 2 - 8);
-  draw_string("NCat SYSTEM by Nathalis", 48);
-  delay(500);
+  set_font(Retro8x16);  // Very important
+  // set_font_XY(32, 240 / 2 - 8);
+  // draw_string("NCat SYSTEM by Nathalis", 48);
+  // delay(300);
   //--------------------------------------------------------------------------------
   I2S0.conf.rx_start = 0;  /// stop DMA ADC
   I2S0.in_link.start = 0;
@@ -1024,14 +1017,15 @@ void setup() {
 int32_t tickcnt = 0;
 
 void loop() {
-  screenmemory_fillscreen(63);  // black color
+  Serial.println("loop");
+  screenmemory_fillscreen(0x3c);
 
   EXIT = false;
   uint8_t menuItem = MENU();
+  Serial.print("menu item ");
+  Serial.println(menuItem);
 
-  const char *str = "menu: %d";
-  int len = strlen(str);
-  debug("loop::menu: %d", len, menuItem);
+  // debug("loop::menu: %d", menuItem);
 
   switch (menuItem) {
     case 1:
@@ -1039,7 +1033,7 @@ void loop() {
       MEMORY_STATUS();
       //--------------------------------------------------------------------------------
       debug("Starting NES EMULATOR appliication.");
-      screenmemory_fillscreen(63);  // black color
+      screenmemory_fillscreen();
 
       init_sound();  // START AUDIO
 
@@ -1069,16 +1063,13 @@ void loop() {
         return;  // return from NESBrowse();
       }
 
-      screenmemory_fillscreen(63);  // black color
+      screenmemory_fillscreen();
 
-      if (DEBUG) Serial.print("SELECTED NES: ");
-      if (DEBUG) Serial.println(MAINPATH);
+      debug("SELECTED NES: ");
+      debug(MAINPATH);
+      debug("Inserting cartridge.");
 
       romdata = (unsigned char *)getromdata(MAINPATH);
-
-      if (DEBUG) Serial.println("Inserting cartridge.");
-      if (DEBUG) tft.println("Inserting cartridge.");
-
       //--------------------------------------------------------------------------------
 
       if (NULL == rominfo) rominfo = (rominfo_t *)malloc(sizeof(rominfo_t));
@@ -1091,12 +1082,7 @@ void loop() {
 
       // Make sure we really support the mapper
       if (false == mmc_peek(rominfo->mapper_number)) {
-        if (DEBUG) {
-          Serial.print("Mapper not yet implemented:");
-          Serial.println(rominfo->mapper_number);
-          tft.print("Mapper not yet implemented:");
-          tft.println(rominfo->mapper_number);
-        }
+        debug("Mapper not yet implemented: %d", rominfo->mapper_number);
         goto rom_load_fail;
       }
 
@@ -1112,10 +1098,9 @@ void loop() {
       goto rom_load_success;
 
     rom_load_fail:
-      if (DEBUG) {
-        Serial.println("ROMLOAD FAIL.");
-        tft.println("ROMLOAD FAIL.");
-      }
+      debug("ROMLOAD FAIL.");
+      debug("ROM is not a valid NES image");
+
       while (1) {
       }  // FREEZE
 
@@ -1123,12 +1108,8 @@ void loop() {
 
       //................................................................................
 
-      if (DEBUG) {
-        Serial.println("ROMLOAD SUCCESS.");
-        tft.println("ROMLOAD SUCCESS.");
-        Serial.println("Inserting Cartridge...");
-        tft.println("Inserting Cartridge...");
-      }
+      debug("ROMLOAD SUCCESS.");
+      debug("Inserting Cartridge...");
 
       // map cart's SRAM to CPU $6000-$7FFF
       if (NESmachine->rominfo->sram) {
@@ -1153,18 +1134,12 @@ void loop() {
       goto inscart_success;
 
     inscart_fail:
-      if (DEBUG) {
-        Serial.println("Insert Cartridge Fail!");
-        tft.println("Insert Cartridge Fail!");
-      }
+      debug("Insert Cartridge Fail!");
       while (1) {
       }  // FREEZE
 
     inscart_success:
-      if (DEBUG) {
-        Serial.println("Insert Cartridge OK.");
-        tft.println("Insert Cartridge OK.");
-      }
+      debug("Insert Cartridge OK.");
 
       MEMORY_STATUS();
 
@@ -1189,7 +1164,7 @@ void loop() {
       MEMORY_STATUS();
       Serial.println("Starting Player application.");
 
-      screenmemory_fillscreen(63);  // black color
+      screenmemory_fillscreen();
 
       sprintf(MAINPATH, "/AUDIO/");
 
@@ -1219,7 +1194,7 @@ void loop() {
         Serial.println(MAINPATH);
 
         // audio.connecttoFS(SD, MAINPATH);
-        // screenmemory_fillscreen(63);  // black color
+        // screenmemory_fillscreen();
         // set_font_XY(16, 12);
         // sprintf(textbuf, "%d/%d", PLAYINGFILE + 1, TOTALFILES);
         // draw_string(textbuf, 48);
@@ -1312,7 +1287,7 @@ void loop() {
 
           //   audio.stopSong();
           //   audio.connecttoFS(SD, MAINPATH);
-          //   screenmemory_fillscreen(63);  // black color
+          //   screenmemory_fillscreen();
           //   set_font_XY(16, 12);
           //   sprintf(textbuf, "%d/%d", PLAYINGFILE + 1, TOTALFILES);
           //   draw_string(textbuf, 48);
@@ -1341,7 +1316,7 @@ void loop() {
 
             // // audio.stopSong();
             // // audio.connecttoFS(SD, MAINPATH);
-            // screenmemory_fillscreen(63);  // black color
+            // screenmemory_fillscreen();
             // set_font_XY(16, 12);
             // sprintf(textbuf, "%d/%d", PLAYINGFILE + 1, TOTALFILES);
             // draw_string(textbuf, 48);
@@ -1374,7 +1349,7 @@ void loop() {
             // audio.stopSong();
             // audio.connecttoFS(SD, MAINPATH);
             // delay(200);
-            // screenmemory_fillscreen(63);  // black color
+            // screenmemory_fillscreen();
             // set_font_XY(16, 12);
             // sprintf(textbuf, "%d/%d", PLAYINGFILE + 1, TOTALFILES);
             // draw_string(textbuf, 48);
@@ -1493,7 +1468,7 @@ void loop() {
       // free DMA buffer 50*1000*2 bytes
       for (uint32_t tmp = 0; tmp < 50; tmp++) heap_caps_free(dma_buff[tmp]);
 
-      screenmemory_fillscreen(63);  // black color
+      screenmemory_fillscreen();
 
       rtc_clk_apll_enable(1, 70, 151, 4, 1);  // 14.3181818182Mhz
       I2S0.sample_rate_conf.tx_bck_div_num = 1;
