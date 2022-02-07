@@ -75,8 +75,6 @@ void IRAM_ATTR blit_pal(uint8_t* src, uint16_t* dst) {
   int left = 0;
   int right = 256;
   uint8_t mask = 0xFF;
-  uint8_t c0, c1, c2, c3, c4;
-  uint8_t y1, y2, y3;
 
   // 192 of 288 color clocks wide: roughly correct aspect ratio
   mask = 0x3F;
@@ -509,8 +507,8 @@ static esp_err_t start_dma(int line_width, int samples_per_cc, int ch = 1) {
   ///	  rtc_clk_apll_enable(1, 93, 116, 7,0);   //28,636363636 MHz (doubled)
   ///	  rtc_clk_apll_enable(1, 44, 116, 7,0);   //28,636363636 MHz (doubled)
   ///	  rtc_clk_apll_enable(1, 44, 116, 7,0);   //28,636363636 MHz (doubled)
-  ///tunned 	  rtc_clk_apll_enable(1, 52, 116, 7,0);   //28,636363636 MHz (doubled)
-  ///tunned
+  /// tunned 	  rtc_clk_apll_enable(1, 52, 116, 7,0);   //28,636363636 MHz
+  /// (doubled) tunned
 
   ///	  rtc_clk_apll_enable(1, 222, 115, 7,0);   //28,636363636 MHz (doubled)
   //////tunned maybe ok
@@ -597,8 +595,8 @@ void pal_init() {
     phase += 2 * M_PI / cc_width;
   }
 }
-void video_init(int samples_per_cc, int machine, const uint32_t* palette,
-                int ntsc) {
+void initCompositeVideo(int samples_per_cc, int machine,
+                        const uint32_t* palette, int ntsc) {
   _samples_per_cc = samples_per_cc;
   ///_machine = machine;
   _palette = palette;
