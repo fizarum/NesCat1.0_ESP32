@@ -4057,7 +4057,7 @@ void ppu_fakeoam(int scanline) {
 bool ppu_enabled(void) { return (ppu.bg_on || ppu.obj_on); }
 
 void ppu_renderscanline(int scanline, bool draw_flag) {
-  uint8_t *buf = SCREENMEMORY[scanline];
+  uint8_t *buf = screenMemory[scanline];
   // start scanline - transfer ppu latch into vaddr
   if (ppu.bg_on || ppu.obj_on) {
     if (0 == scanline) {
@@ -4120,7 +4120,7 @@ void ppu_scanline(int scanline, bool draw_flag) {
     ppu.vram_accessible = false;
   }
 
-  if (LCD_ENABLED) xQueueSend(vidQueue, &SCREENMEMORY, 0);  // refresh LCD
+  if (LCD_ENABLED) xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
 }
 
 void ppu_destroy(ppu_t **src_ppu);
