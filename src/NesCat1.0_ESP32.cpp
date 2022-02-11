@@ -117,7 +117,6 @@
 #include "esp_heap_caps.h"
 #include "esp_intr_alloc.h"
 #include "esp_types.h"
-#include "nes_palettes.h"
 #include "rom/gpio.h"
 #include "rom/lldesc.h"
 #include "soc/gpio_reg.h"
@@ -158,10 +157,6 @@ void MEMORY_STATUS();
 
 //********************************************************************************
 // VARIABLES:
-
-// Allocated MEMORY variables:
-uint8_t *SCREENMEMORY[256 + 1];  // 256*256 bytes + 256 offset
-uint16_t SCREENBUFFER[256];      // 512 bytes
 
 uint32_t PSRAMSIZE = 0;
 uint8_t *PSRAM;
@@ -359,8 +354,6 @@ QueueHandle_t vidQueue;
 // VIDEO_SETUP
 //  Visible (NTSC) screen height
 #define NES_VISIBLE_HEIGHT 240
-#define NES_SCREEN_WIDTH 256
-#define NES_SCREEN_HEIGHT 240
 #define DEFAULT_WIDTH NES_SCREEN_WIDTH
 #define DEFAULT_HEIGHT NES_VISIBLE_HEIGHT
 //--------------------------------------------------------------------------------
@@ -369,13 +362,13 @@ QueueHandle_t vidQueue;
 void screenmemory_fillscreen(uint8_t colorIndex = UNIVERSAL_BKG_COLOR) {
   for (uint16_t Ypos = 0; Ypos < DEFAULT_HEIGHT; Ypos++)
     for (uint16_t Xpos = 0; Xpos < DEFAULT_WIDTH; Xpos++) {
-      SCREENMEMORY[Ypos][Xpos] = colorIndex;
+      screenMemory[Ypos][Xpos] = colorIndex;
     }
-  if (LCD_ENABLED) xQueueSend(vidQueue, &SCREENMEMORY, 0);  // refresh LCD
+  if (LCD_ENABLED) xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
 }
 //--------------------------------------------------------------------------------
 void screenmemory_drawpixel(uint16_t X, uint16_t Y, uint8_t COLOR) {
-  if (Y < DEFAULT_HEIGHT && X < DEFAULT_WIDTH) SCREENMEMORY[Y][X] = COLOR;
+  if (Y < DEFAULT_HEIGHT && X < DEFAULT_WIDTH) screenMemory[Y][X] = COLOR;
 }
 //--------------------------------------------------------------------------------
 void screenmemory_line(int startx, int starty, int endx, int endy,
@@ -442,7 +435,7 @@ void screenmemory_drawfillrectangle(int16_t X, int16_t Y, int16_t Width,
     for (uint16_t Xpos = X; Xpos < X + Width; Xpos++) {
       screenmemory_drawpixel(Xpos, Ypos, COLOR);
     }
-  if (LCD_ENABLED) xQueueSend(vidQueue, &SCREENMEMORY, 0);  // refresh LCD
+  if (LCD_ENABLED) xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
 }
 //--------------------------------------------------------------------------------
 uint8_t draw_char_xy(uint16_t Main_x, uint16_t Main_y, char Main_char,
@@ -512,7 +505,7 @@ uint16_t draw_string_xy(uint16_t x, uint16_t y, const char *c, const char *font,
     x += (width);
     c++;
   }
-  if (LCD_ENABLED) xQueueSend(vidQueue, &SCREENMEMORY, 0);
+  if (LCD_ENABLED) xQueueSend(vidQueue, &screenMemory, 0);
   return textwidth;
 }
 //--------------------------------------------------------------------------------
@@ -544,17 +537,17 @@ static void lcd_write_frame(const uint16_t x, const uint16_t y,
 
   for (uint16_t i = 0; i < height; i++) {
     for (uint16_t X_ = 8; X_ < 248; X_++) {  // not 256 the 240
-      index = (UNIVERSAL_BKG_COLOR & (SCREENMEMORY[i])[X_]);
-      SCREENBUFFER[X_] = nes_16bit[index];
+      index = (UNIVERSAL_BKG_COLOR & (screenMemory[i])[X_]);
+      screenBuffer[X_] = nes_16bit[index];
     }
 
     /// PAL optimalisation in this case:
     absYPos = y + i;
-    displayDrawRGBBitmap(x + 0, absYPos, SCREENBUFFER, 48, 1);
-    displayDrawRGBBitmap(x + 48, absYPos, SCREENBUFFER + 48, 48, 1);
-    displayDrawRGBBitmap(x + 96, absYPos, SCREENBUFFER + 96, 48, 1);
-    displayDrawRGBBitmap(x + 144, absYPos, SCREENBUFFER + 144, 48, 1);
-    displayDrawRGBBitmap(x + 192, absYPos, SCREENBUFFER + 192, 48, 1);
+    displayDrawRGBBitmap(x + 0, absYPos, screenBuffer, 48, 1);
+    displayDrawRGBBitmap(x + 48, absYPos, screenBuffer + 48, 48, 1);
+    displayDrawRGBBitmap(x + 96, absYPos, screenBuffer + 96, 48, 1);
+    displayDrawRGBBitmap(x + 144, absYPos, screenBuffer + 144, 48, 1);
+    displayDrawRGBBitmap(x + 192, absYPos, screenBuffer + 192, 48, 1);
   }
 }
 //--------------------------------------------------------------------------------
@@ -604,6 +597,7 @@ uint8_t MENU() {
     }
     //--------------------------------------------------------------------------------
     if (JOY_RIGHT == 1) {
+      Serial.println("moved joy right");
       for (int16_t animate = 0; animate < 240; animate += 1) {
         delay(3);
         for (int16_t Ypos = 0; Ypos < 240; Ypos++)
@@ -629,7 +623,7 @@ uint8_t MENU() {
 
           draw_string(" Oscilloscope ", 48);
         }
-        if (LCD_ENABLED) xQueueSend(vidQueue, &SCREENMEMORY, 0);  // refresh LCD
+        if (LCD_ENABLED) xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
       }
       /// for (int16_t animate = 240; animate > 0; animate -= 4) {
       for (int16_t animate = 240; animate > 0; animate -= 1) {
@@ -657,7 +651,7 @@ uint8_t MENU() {
 
           draw_string(" Audio Player ", 48);
         }
-        if (LCD_ENABLED) xQueueSend(vidQueue, &SCREENMEMORY, 0);  // refresh LCD
+        if (LCD_ENABLED) xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
       }
       JOY_RIGHT = 0;
       if (MenuItem < 2)
@@ -693,7 +687,7 @@ uint8_t MENU() {
 
           draw_string(" Oscilloscope ", 48);
         }
-        if (LCD_ENABLED) xQueueSend(vidQueue, &SCREENMEMORY, 0);  // refresh LCD
+        if (LCD_ENABLED) xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
       }
       /// for (int16_t animate = -240; animate < 0; animate += 4) {
       for (int16_t animate = -240; animate < 0; animate += 1) {
@@ -721,7 +715,7 @@ uint8_t MENU() {
 
           draw_string(" Oscilloscope ", 48);
         }
-        if (LCD_ENABLED) xQueueSend(vidQueue, &SCREENMEMORY, 0);  // refresh LCD
+        if (LCD_ENABLED) xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
       }
       JOY_LEFT = 0;
       if (MenuItem > 0)
@@ -811,7 +805,7 @@ int yPosOfVirtualScreen = (TFT_HEIGHT - DEFAULT_HEIGHT) / 2;
 static void videoTask(void *arg) {
   while (1) {
     if (LCD_ENABLED) {
-      xQueueReceive(vidQueue, &SCREENMEMORY, portMAX_DELAY);
+      xQueueReceive(vidQueue, &screenMemory, portMAX_DELAY);
       lcd_write_frame(xPosOfVirtualScreen, yPosOfVirtualScreen, DEFAULT_WIDTH,
                       DEFAULT_HEIGHT);
     }
@@ -950,8 +944,8 @@ void setup() {
   //--------------------------------------------------------------------------------
   // VIDEO MEMORY ALLOCATION (force)
   for (uint32_t tmp = 0; tmp < 240; tmp++) {
-    SCREENMEMORY[tmp] = (uint8_t *)malloc(256 + 1);
-    memset(SCREENMEMORY[tmp], 0, 256);
+    screenMemory[tmp] = (uint8_t *)malloc(256 + 1);
+    memset(screenMemory[tmp], 0, 256);
   }
   //--------------------------------------------------------------------------------
   // Buttons Pins Input Init
@@ -968,7 +962,6 @@ void setup() {
   displayInit();
 #endif
   //--------------------------------------------------------------------------------
-
   //--------------------------------------------------------------------------------
   // DAC COMPOSITE VIDEO & ADC has setup here:
 #if COMPOSITE_VIDEO_ENABLED
@@ -1018,14 +1011,12 @@ int32_t tickcnt = 0;
 
 void loop() {
   Serial.println("loop");
-  screenmemory_fillscreen(0x3c);
+  screenmemory_fillscreen(0x0c);
 
   EXIT = false;
   uint8_t menuItem = MENU();
   Serial.print("menu item ");
   Serial.println(menuItem);
-
-  // debug("loop::menu: %d", menuItem);
 
   switch (menuItem) {
     case 1:
@@ -1217,7 +1208,7 @@ void loop() {
           // audio.loop();
 
           /// if (PLAYING) visualyze(); //visualyze when playing...
-          xQueueSend(vidQueue, &SCREENMEMORY, 0);  // refresh LCD
+          xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
           vPortYield();                            ///
 
           uint16_t h = 0;

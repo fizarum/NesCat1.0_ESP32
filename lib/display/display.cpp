@@ -5,6 +5,9 @@
 
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
+uint16_t screenBuffer[256];
+uint8_t *screenMemory[256 + 1];
+
 void displayInit() {
   tft.begin();
   tft.setRotation(1);

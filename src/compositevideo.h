@@ -220,7 +220,7 @@ void IRAM_ATTR pal_sync(uint16_t* line, int i) {
 //--------------------------------------------------------------------------------
 // ISR handles audio and video updates
 static inline void IRAM_ATTR video_isr(volatile void* vbuf) {
-  if (!SCREENMEMORY) return;
+  if (!screenMemory) return;
 
   int i = _line_counter++;
   uint16_t* buf = (uint16_t*)vbuf;
@@ -233,7 +233,7 @@ static inline void IRAM_ATTR video_isr(volatile void* vbuf) {
       sync(buf, _hsync);
       burst(buf);
       ///            blit(_lines[i-32],buf + _active_start);
-      blit(SCREENMEMORY[i - 32], buf + _active_start);
+      blit(screenMemory[i - 32], buf + _active_start);
 
     } else if (i < 304) {  // post render/black 272-304
       if (i <
@@ -248,7 +248,7 @@ static inline void IRAM_ATTR video_isr(volatile void* vbuf) {
       sync(buf, _hsync);
       burst(buf);
       ///            blit(_lines[i],buf + _active_start);
-      blit(SCREENMEMORY[i], buf + _active_start);
+      blit(screenMemory[i], buf + _active_start);
 
     } else if (i < (_active_lines + 5)) {  // post render/black
       blanking(buf, false);
