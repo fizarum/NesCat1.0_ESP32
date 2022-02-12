@@ -20,10 +20,10 @@ void displayBand(int band, int dsize) {
   int dmax = max_bar_height;  // max bar height
   if (dsize > dmax) dsize = dmax;
   for (int s = dsize - 1; s <= dmax; s = s + 1) {
-    for (uint16_t bar_tmp = 0; bar_tmp < bar_width; bar_tmp++)
-      screenmemory_drawpixel(
-          (bar_width + bar_spacing) * band + bar_tmp + 1 + bars_xoffset,
-          bar_height - s, 0x3F);
+    // for (uint16_t bar_tmp = 0; bar_tmp < bar_width; bar_tmp++)
+    // screenmemory_drawpixel(
+    //     (bar_width + bar_spacing) * band + bar_tmp + 1 + bars_xoffset,
+    //     bar_height - s, 0x3F);
   }
   for (int s = dsize; s > 0; s = s - 1) {
     if (s > 120)
@@ -34,9 +34,9 @@ void displayBand(int band, int dsize) {
       COLORIX = 26;  // GREEN
 
     for (uint16_t bar_tmp = 0; bar_tmp < bar_width; bar_tmp++) {
-      screenmemory_drawpixel(
-          (bar_width + bar_spacing) * band + bar_tmp + 1 + bars_xoffset,
-          bar_height - s, COLORIX);
+      // screenmemory_drawpixel(
+      //     (bar_width + bar_spacing) * band + bar_tmp + 1 + bars_xoffset,
+      //     bar_height - s, COLORIX);
     }
   }
   if (dsize > peak[band]) {

@@ -76,16 +76,16 @@ void draw_grid() {
       // horizontal lines
       if (x < 8)
         for (int i = 0; i < px_h_per_div; i++) {
-          if (i % 8 == 0)
-            screenmemory_drawpixel(x * px_h_per_div + i + px_v_offset,
-                                   y * px_v_per_div + px_h_offset, 0x30);
+          // if (i % 8 == 0)
+          // screenmemory_drawpixel(x * px_h_per_div + i + px_v_offset,
+          //                        y * px_v_per_div + px_h_offset, 0x30);
         }
       if (y < 8)
         // vertical lines
         for (int j = 0; j < px_v_per_div; j++) {
-          if (j % 8 == 0)
-            screenmemory_drawpixel(x * px_h_per_div + px_v_offset,
-                                   y * px_v_per_div + j + px_h_offset, 0x30);
+          // if (j % 8 == 0)
+          // screenmemory_drawpixel(x * px_h_per_div + px_v_offset,
+          //                        y * px_v_per_div + j + px_h_offset, 0x30);
         }
     }
   }

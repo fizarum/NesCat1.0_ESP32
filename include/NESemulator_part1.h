@@ -16,12 +16,8 @@
 #define DEFAULT_FRAGSIZE 60  // max.256, default 240
 
 // VIDEO_SETUP
-//  Visible (NTSC) screen height
-#ifndef NES_VISIBLE_HEIGHT
-#define NES_VISIBLE_HEIGHT 240
-#endif  // !NES_VISIBLE_HEIGHT
+// todo: remove from here
 #define NES_SCREEN_WIDTH 256
-#define NES_SCREEN_HEIGHT 240
 
 #define PAL
 
@@ -33,9 +29,6 @@
 #endif
 
 #define MAX_MEM_HANDLERS 32
-
-#define DEFAULT_WIDTH NES_SCREEN_WIDTH
-#define DEFAULT_HEIGHT NES_VISIBLE_HEIGHT
 
 #define NES_CLOCK_DIVIDER 12  // default: 12
 //#define  NES_MASTER_CLOCK     21477272.727272727272
