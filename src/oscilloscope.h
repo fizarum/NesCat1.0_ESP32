@@ -1,5 +1,9 @@
 #if COMPOSITE_VIDEO_ENABLED
 
+#define NUM_SAMPLES 1000  // number of samples
+#define BUFF_SIZE 50000
+#define B_MULT (BUFF_SIZE / NUM_SAMPLES)
+
 //------------------------
 /// uint16_t i2s_buff[BUFF_SIZE]; ///using DMA BUFFER 50*1000 samples
 // 0-auto | 1-analog | 2-digital data (SERIAL/SPI/I2C/etc)
@@ -441,35 +445,6 @@ void core1_task(void *pvParameters) {
       offsetmtime = 1000;  // 1000ms delay
     else
       offsetmtime = 250;  // 250ms delay
-
-    while (lastmtime + offsetmtime > millis()) {
-      vTaskDelay(pdMS_TO_TICKS(1));  /// 1ms delay
-
-      if (digitalRead(PIN_A) == 1) {
-        JOY_CROSS = 1;  // A
-      }
-      if (digitalRead(PIN_B) == 1) {
-        JOY_SQUARE = 1;  // B
-      }
-      if (digitalRead(PIN_SELECT) == 1) {
-        JOY_OPTIONS = 1;  // SELECT
-      }
-      if (digitalRead(PIN_START) == 1) {
-        JOY_SHARE = 1;  // START
-      }
-      if (digitalRead(PIN_UP) == 1) {
-        JOY_UP = 1;
-      }
-      if (digitalRead(PIN_DOWN) == 1) {
-        JOY_DOWN = 1;  // DOWN
-      }
-      if (digitalRead(PIN_LEFT) == 1) {
-        JOY_LEFT = 1;  // LEFT
-      }
-      if (digitalRead(PIN_RIGHT) == 1) {
-        JOY_RIGHT = 1;  // RIGHT
-      }
-    }
     //--------------------------------------------------------------------------------
 
     I2S0.conf.rx_start = 0;  /// stop DMA ADC

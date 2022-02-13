@@ -452,10 +452,6 @@ const char *const oscilloscope = " Oscilloscope ";
 
 const uint8_t yPosOfMenuItem = V_CENTER - 24;
 
-void displayText(const char *text, uint8_t x, uint8_t y) {
-  nescreen::drawString(x, y, text, 48);
-}
-
 /**
  * @brief used to draw menu item, like "Nes emulator", etc.
  * @param x horizontal position of menu item, may vary depends on slide
@@ -463,22 +459,17 @@ void displayText(const char *text, uint8_t x, uint8_t y) {
  *
  */
 void displayMenuItem(const char *text, uint8_t x) {
-  displayText(text, x, yPosOfMenuItem);
+  nescreen::drawString(x, yPosOfMenuItem, text, 48);
 }
 
 uint8_t updateActiveMenuIndex() {
-  if (isJoystickMoved() == 0) return MenuItem;
-
-  //--------------------------------------------------------------------------------
   if (JOY_RIGHT == 1) {
-    debug("moved joy right");
     JOY_RIGHT = 0;
     MenuItem++;
     if (MenuItem > 2) MenuItem = 0;
   }
 
   if (JOY_LEFT == 1) {
-    debug("moved joy left");
     JOY_LEFT = 0;
     MenuItem--;
     // since we have uint8_t it cant be < 0 but uint8_t.MAX (255)
@@ -509,15 +500,6 @@ char *MAINPATH;
 char textbuf[64] = {0};
 
 //--------------------------------------------------------------------------------
-void secondsToHMS(const uint32_t seconds, uint16_t &h, uint8_t &m, uint8_t &s) {
-  uint32_t t = seconds;
-  s = t % 60;
-  t = (t - s) / 60;
-  m = t % 60;
-  t = (t - m) / 60;
-  h = t;
-}
-//--------------------------------------------------------------------------------
 
 //________________________________________________________________________________
 //
@@ -536,29 +518,20 @@ void secondsToHMS(const uint32_t seconds, uint16_t &h, uint8_t &m, uint8_t &s) {
 //________________________________________________________________________________
 // Audio audio;
 
-#include "player.h"
-
 //________________________________________________________________________________
 //
 // OSCILLOSCOPE SECTION
 //________________________________________________________________________________
 
 //--------------------------------------------------------------------------------
-// OSC MAIN DEFINITIONS:
-#define NUM_SAMPLES 1000  // number of samples
-#define I2S_NUM (0)
-#define BUFF_SIZE 50000
-#define B_MULT (BUFF_SIZE / NUM_SAMPLES)
-
 #include "oscilloscope.h"
 
-// //--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
 static void videoTask(void *arg) {
 #ifdef LCD_ENABLED
   while (1) {
     xQueueReceive(vidQueue, &screenMemory, portMAX_DELAY);
     nescreen::writeFrame(X_POS_OF_VIRTUAL_SCREEN, Y_POS_OF_VIRTUAL_SCREEN);
-    if (PLAYING) visualyze();  // visualyze when playing...
   }
 #endif
 }
@@ -578,11 +551,10 @@ void install_oscilloscope() {
   oscilloscope_installed = true;
 #endif
 }
-//********************************************************************************
+
 rominfo_t *rominfo;
 unsigned char *romdata = 0;
 char *PATH;
-//================================================================================
 char loadmessage[64];
 
 unsigned char *getromdata(char *ROMFILENAME_) {
@@ -609,7 +581,6 @@ unsigned char *getromdata(char *ROMFILENAME_) {
     fp.close();
     return (unsigned char *)PSRAM;
   } else {
-    //********************************************************************************
     // Read NES rom to SPI FLASH!
     uint32_t i = 0;
     for (i = 0; i < fp.size() + SPI_FLASH_SECTOR_SIZE; i++) {
@@ -656,11 +627,7 @@ unsigned char *getromdata(char *ROMFILENAME_) {
     return (unsigned char *)ROM;
   }
 }
-//================================================================================
 
-//********************************************************************************
-//*  SETUP: *
-//********************************************************************************
 void setup() {
   Serial.begin(115200);
   getMemoryStatus();
@@ -676,70 +643,47 @@ void setup() {
     debug("NO PSRAM DETECTED.");
   }
 
-  //--------------------------------------------------------------------------------
   // VIDEO MEMORY ALLOCATION (force)
   for (uint8_t tmp = 0; tmp < 240; tmp++) {
     screenMemory[tmp] = (uint8_t *)malloc(256 + 1);
     memset(screenMemory[tmp], 0, 256);
   }
-  //--------------------------------------------------------------------------------
-  // Buttons Pins Input Init
-  pinMode(PIN_A, INPUT);               // A
-  pinMode(PIN_B, INPUT);               // B
-  pinMode(PIN_SELECT, INPUT);          // SELECT
-  pinMode(PIN_START, INPUT);           // START
-  pinMode(PIN_UP, INPUT);              // UP
-  pinMode(PIN_DOWN, INPUT);            // DOWN  //TCK
-  pinMode(PIN_LEFT, INPUT);            // LEFT
-  pinMode(PIN_RIGHT, INPUT_PULLDOWN);  // RIGHT
-  //--------------------------------------------------------------------------------
+
+  controlsInit();
+
 #if LCD_ENABLED
   displayInit();
+  nescreen::setFont(Retro8x16);
 #endif
-  //--------------------------------------------------------------------------------
-  //--------------------------------------------------------------------------------
   // DAC COMPOSITE VIDEO & ADC has setup here:
 #if COMPOSITE_VIDEO_ENABLED
-  initCompositeVideo(4, 2, nes_32bit, 1);  // start the A/V pump on app core
+  // start the A/V pump on app core
+  initCompositeVideo(4, 2, nes_32bit, 1);
 #endif
-  //--------------------------------------------------------------------------------
   // SCREENMEMORY LCD DRAW INIT
   audiovideo_init();
-  //--------------------------------------------------------------------------------
   // PS2/USB KEYBOARD SUPPORT
 #if KEYBOARD_ENABLED
   kb_begin();
 #endif
-  //--------------------------------------------------------------------------------
-  nescreen::setFont(Retro8x16);
-  //--------------------------------------------------------------------------------
   I2S0.conf.rx_start = 0;  /// stop DMA ADC
   I2S0.in_link.start = 0;
-  //--------------------------------------------------------------------------------
+
   // malloc MAINPATH for player browser
   MAINPATH = (char *)malloc(256);
-  //--------------------------------------------------------------------------------
+
   // microSD CARD INIT
   if (!sd.begin(SD_CONFIG)) {
     debug("SD error!");
   } else {
     debug("SD OK.");
   }
-  //--------------------------------------------------------------------------------
-  install_timer(60);  // 60Hz
-  //--------------------------------------------------------------------------------
-  ///... SETUP DONE
 
+  install_timer(60);  // 60Hz
   getMemoryStatus();
 
   debug("setup finished");
 }
-
-//********************************************************************************
-//*  LOOP: *
-//********************************************************************************
-
-int32_t tickcnt = 0;
 
 void drawActiveMenu() {
   switch (MenuItem) {
@@ -761,9 +705,10 @@ void drawActiveMenu() {
 
 void loop() {
   EXIT = false;
+  controlsUpdate();
   MenuItem = updateActiveMenuIndex();
   if (MenuItem != prevMenuIndex) {
-    screenmemory_fillscreen(0x0c);
+    nescreen::fillscreen(0x0c);
     debug("menu item: %d", MenuItem);
     drawActiveMenu();
     updateScreen();
@@ -783,7 +728,6 @@ void loop() {
     default:
       break;
   }
-  delay(100);
   JOY_SHARE = 0;
   JOY_OPTIONS = 0;
   EXIT = false;

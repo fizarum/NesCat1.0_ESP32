@@ -7,7 +7,7 @@
 #define PIN_UP 39      // SVN
 #define PIN_DOWN 35    // IO35
 #define PIN_LEFT 36    // SVP
-#define PIN_RIGHT 12   // TDI => Do not install 330R resistor!!!
+#define PIN_RIGHT 12   // TDI
 #define PIN_A 2        // IO2
 #define PIN_B 14       // TMS
 #define PIN_START 15   // TDO
@@ -32,6 +32,7 @@ extern uint8_t JOY_SHARE;
 //(SELECT)
 extern uint8_t JOY_OPTIONS;
 
-uint8_t isJoystickMoved();
+void controlsInit();
+void controlsUpdate();
 
 #endif  // CONTROLS_H
