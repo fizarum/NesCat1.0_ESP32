@@ -18,7 +18,7 @@ void debug(const char *message) {
 void debug(const char *templateString, uint32_t value) {
   int strlength = strlen(templateString);
   if (strlength >= buffMaxLen) {
-    sprintf(debugBuff, "value: %d", value);
+    sprintf(debugBuff, "value: %u", value);
   } else {
     sprintf(debugBuff, templateString, value);
   }
@@ -40,6 +40,15 @@ void sortStrings(char *arr[], int n) {
       }
     }
   }
+}
+
+void getMemoryStatus() {
+  debug("--------------------------------");
+  debug("TOTAL HEAP: %u", ESP.getHeapSize());
+  debug("FREE HEAP:: %u", ESP.getFreeHeap());
+  uint32_t heapCapsFreeSize = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+  debug("heap_caps_get_free_size: %u", heapCapsFreeSize);
+  debug("--------------------------------");
 }
 
 #endif  // UTILS_H

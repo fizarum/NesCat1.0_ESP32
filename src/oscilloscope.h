@@ -1,5 +1,9 @@
 #if COMPOSITE_VIDEO_ENABLED
 
+#define NUM_SAMPLES 1000  // number of samples
+#define BUFF_SIZE 50000
+#define B_MULT (BUFF_SIZE / NUM_SAMPLES)
+
 //------------------------
 /// uint16_t i2s_buff[BUFF_SIZE]; ///using DMA BUFFER 50*1000 samples
 // 0-auto | 1-analog | 2-digital data (SERIAL/SPI/I2C/etc)
@@ -76,16 +80,16 @@ void draw_grid() {
       // horizontal lines
       if (x < 8)
         for (int i = 0; i < px_h_per_div; i++) {
-          if (i % 8 == 0)
-            screenmemory_drawpixel(x * px_h_per_div + i + px_v_offset,
-                                   y * px_v_per_div + px_h_offset, 0x30);
+          // if (i % 8 == 0)
+          // screenmemory_drawpixel(x * px_h_per_div + i + px_v_offset,
+          //                        y * px_v_per_div + px_h_offset, 0x30);
         }
       if (y < 8)
         // vertical lines
         for (int j = 0; j < px_v_per_div; j++) {
-          if (j % 8 == 0)
-            screenmemory_drawpixel(x * px_h_per_div + px_v_offset,
-                                   y * px_v_per_div + j + px_h_offset, 0x30);
+          // if (j % 8 == 0)
+          // screenmemory_drawpixel(x * px_h_per_div + px_v_offset,
+          //                        y * px_v_per_div + j + px_h_offset, 0x30);
         }
     }
   }
@@ -433,45 +437,6 @@ void core1_task(void *pvParameters) {
     float sample_rate = 28636 / 2;  // 28.636/2 Mhz
 
     //--------------------------------------------------------------------------------
-    // buttons read
-    uint32_t lastmtime = millis();
-    uint32_t offsetmtime = 250;
-
-    if (TIMEBASE > 1000)
-      offsetmtime = 1000;  // 1000ms delay
-    else
-      offsetmtime = 250;  // 250ms delay
-
-    while (lastmtime + offsetmtime > millis()) {
-      vTaskDelay(pdMS_TO_TICKS(1));  /// 1ms delay
-
-      if (digitalRead(PIN_A) == 1) {
-        JOY_CROSS = 1;  // A
-      }
-      if (digitalRead(PIN_B) == 1) {
-        JOY_SQUARE = 1;  // B
-      }
-      if (digitalRead(PIN_SELECT) == 1) {
-        JOY_OPTIONS = 1;  // SELECT
-      }
-      if (digitalRead(PIN_START) == 1) {
-        JOY_SHARE = 1;  // START
-      }
-      if (digitalRead(PIN_UP) == 1) {
-        JOY_UP = 1;
-      }
-      if (digitalRead(PIN_DOWN) == 1) {
-        JOY_DOWN = 1;  // DOWN
-      }
-      if (digitalRead(PIN_LEFT) == 1) {
-        JOY_LEFT = 1;  // LEFT
-      }
-      if (digitalRead(PIN_RIGHT) == 1) {
-        JOY_RIGHT = 1;  // RIGHT
-      }
-    }
-    //--------------------------------------------------------------------------------
-
     I2S0.conf.rx_start = 0;  /// stop DMA ADC
 
     //--------------------------------------------------------------------------------
@@ -918,7 +883,7 @@ void core1_task(void *pvParameters) {
                           spritecolor);  // 26=green //6=red
         screenmemory_line(i, o_data + 1, i + 1, n_data - 1,
                           spritecolor);  // 26=green //6=red ///DOUBLE LINE...
-        if (LCD_ENABLED) xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
+        xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
         o_data = n_data;
       }
     }
