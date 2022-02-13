@@ -1,0 +1,4 @@
+D5 - CLK
+D6 - MISO
+D7 - MOSI
+D8 - CS

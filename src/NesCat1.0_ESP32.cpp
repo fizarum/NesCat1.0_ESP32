@@ -23,33 +23,31 @@
 //                          ▀▀▀▀▀▀▀▀                          
 
 //********************************************************************************
-//* *
-//*   NCAT SYSTEM 1.0 by Nathalis *
-//* *
-//*   Includes: 1. NES EMULATOR, 2. MP3 player, 3. Oscilloscope 1MHz *
-//* *
-//*   Requirements: NodeMCU ESP32S, ILI9341 LCD, MICROSD CARD slot, *
-//*   PCM5102 I2S AUDIO MODULE, OTHER PARTS... *
-//* *
-//*   Only for personal & educational use! *
-//*   (GPL-3.0 License) *
-//* *
+//*
+//*   NCAT SYSTEM 1.0 by Nathalis
+//*
+//*   Includes: 1. NES EMULATOR
+//*
+//*   Requirements: NodeMCU ESP32S, ILI9341 LCD, MICROSD CARD slot,
+//*   PCM5102 I2S AUDIO MODULE, OTHER PARTS...
+//*
+//*   Only for personal & educational use!
+//*   (GPL-3.0 License)
+//*
 //********************************************************************************
-//* *
-//*   features: *
-//*   - ESP32-WROVER PSRAM module support *
-//*   - MicroSD card support *
-//*   - 320*240 2.8" LCD ILI9341 display *
-//*   - Composite TV OUT Video PAL *
-//*   - I2S AUDIO support PCM5102 module *
-//*   - PS2 (USB) KEYBOARD support (wireless not work) *
-//*   - huge NES ROMs up to 512kB (read from FLASH) *
-//* *
+//*
+//*   features:
+//*   - ESP32-WROVER PSRAM module support
+//*   - MicroSD card support
+//*   - 320*240 2.8" LCD ILI9341 display
+//*   - Composite TV OUT Video PAL
+//*   - I2S AUDIO support PCM5102 module
+//*   - PS2 (USB) KEYBOARD support (wireless not work)
+//*   - huge NES ROMs up to 512kB (read from FLASH)
+//*
 //********************************************************************************
 
-#define LCD_ENABLED true
 #define COMPOSITE_VIDEO_ENABLED true  // Do not disable! it also disable ADC.
-#define KEYBOARD_ENABLED true
 #define SOUND_ENABLED true
 
 #define DEBUG true        // Serial debugging enable.
@@ -58,10 +56,6 @@
 //********************************************************************************
 
 #include <controls.h>
-
-///!!! do not forget 1KOHM resistors
-#define KEYBOARD_DATA 4  /// ---[ 1K ]--- // -D
-#define KEYBOARD_CLK 0   /// ---[ 1K ]--- // +D
 
 // COMPOSITE_VIDEO: - //DAC_GPIO25_CHANNEL or DAC_GPIO26_CHANNEL
 #define VIDEO_OUT (DAC_GPIO26_CHANNEL)
@@ -76,11 +70,10 @@
 #include <display.h>
 
 // SD card part
-// todo: change after display testing
 #define SOFTSD_MOSI_PIN TFT_MOSI
 #define SOFTSD_MISO_PIN TFT_MISO
 #define SOFTSD_SCK_PIN TFT_CLK
-#define SD_CS_PIN 16
+#define SD_CS_PIN 34
 
 // Oscilloscope INPUT:
 #define ADC_CHANNEL ADC1_CHANNEL_6  // GPIO34
@@ -130,12 +123,10 @@
 // #include <arduinoFFT.h>
 
 // arduinoFFT FFT = arduinoFFT();
-// SETUP:
-#define SPI_CLOCK SD_SCK_MHZ(30)
-#define SD_CONFIG SdSpiConfig(SD_CS_PIN, DEDICATED_SPI, SPI_CLOCK)
+#define SPI_SPEED_FOR_SD SD_SCK_MHZ(4)
 
 SdFat sd;
-File fp;
+FsFile fp;
 
 static void videoTask(void *arg);
 
@@ -182,136 +173,6 @@ unsigned char *rom = 0;  // Actual ROM pointer
 bool PLAYING = false;
 bool PAUSED = false;
 
-//--------------------------------------------------------------------------------
-uint8_t scancode = 0;
-boolean keyup = false;
-byte keymap[256];
-//--------------------------------------------------------------------------------
-IRAM_ATTR void USB_KEYBOARD() {
-#if KEYBOARD_ENABLED
-  if (keymap[0x75] == 0) {
-    JOY_UP = 1;
-  } else
-    JOY_UP = 0;
-  if (keymap[0x72] == 0) {
-    JOY_DOWN = 1;
-  } else
-    JOY_DOWN = 0;
-  if (keymap[0x6B] == 0) {
-    JOY_LEFT = 1;
-  } else
-    JOY_LEFT = 0;
-  if (keymap[0x74] == 0) {
-    JOY_RIGHT = 1;
-  } else
-    JOY_RIGHT = 0;
-
-  if (keymap[0x11] == 0 || keymap[0x1A] == 0)
-    JOY_CROSS = 1;  // ALT or X
-  else
-    JOY_CROSS = 0;
-  if (keymap[0x14] == 0 || keymap[0x22] == 0)
-    JOY_SQUARE = 1;  // CTRL or Z
-  else
-    JOY_SQUARE = 0;
-  if (keymap[0x5A] == 0)
-    JOY_SHARE = 1;
-  else
-    JOY_SHARE = 0;
-  if (keymap[0x66] == 0)
-    JOY_OPTIONS = 1;
-  else
-    JOY_OPTIONS = 0;
-
-  if (keymap[0x76] == 0) {
-    JOY_SHARE = 1;
-    JOY_OPTIONS = 1;
-  } else if (JOY_SHARE == 1 && JOY_OPTIONS == 1) {
-    JOY_SHARE = 0;
-    JOY_OPTIONS = 0;
-  }
-
-  if (DEBUGEXTRA) {
-    if (JOY_UP) Serial.print("UP.");
-    if (JOY_DOWN) Serial.print("DOWN.");
-    if (JOY_LEFT) Serial.print("LEFT.");
-    if (JOY_RIGHT) Serial.print("RIGHT.");
-    if (JOY_SHARE) Serial.print("START.");
-    if (JOY_OPTIONS) Serial.print("SELECT.");
-    if (JOY_CROSS) Serial.print("A.");
-    if (JOY_SQUARE) Serial.print("B.");
-    Serial.println();
-  }
-#endif
-}
-//--------------------------------------------------------------------------------
-#if KEYBOARD_ENABLED
-void IRAM_ATTR kb_interruptHandler(void) {
-  static uint8_t bitcount = 0;
-  uint8_t val;
-
-  int clock = digitalRead(KEYBOARD_CLK);
-  if (clock == 0) {
-    return;
-  }
-
-  val = digitalRead(KEYBOARD_DATA);
-  if (DEBUGEXTRA) Serial.print(".");
-  if (DEBUGEXTRA) Serial.print(val);
-
-  bitcount++;
-
-  if (bitcount > 1 && bitcount < 10) {  // 8bits
-    scancode |= ((val & 1) << (bitcount - 2));
-  }
-
-  if (bitcount > 10) {
-    if (keyup == true) {
-      keymap[scancode] = 1;
-
-      if (DEBUGEXTRA) {
-        Serial.print(" {");
-        Serial.print(scancode, HEX);
-        Serial.print("} ");
-      }
-      keyup = false;
-    } else {
-      keymap[scancode] = 0;
-    }
-
-    if (scancode == 0xF0) {
-      keyup = true;
-    } else {
-      keyup = false;
-    }
-
-    if (DEBUGEXTRA) {
-      Serial.print("[");
-      Serial.print(scancode, HEX);
-      Serial.println("]");
-    }
-
-    USB_KEYBOARD();
-
-    bitcount = 0;
-    scancode = 0;
-  }
-}
-#endif
-//--------------------------------------------------------------------------------
-#if KEYBOARD_ENABLED
-void kb_begin() {
-  pinMode(KEYBOARD_DATA, INPUT_PULLUP);
-  pinMode(KEYBOARD_CLK, INPUT_PULLUP);
-  digitalWrite(KEYBOARD_DATA, true);
-  digitalWrite(KEYBOARD_CLK, true);
-  attachInterrupt(digitalPinToInterrupt(KEYBOARD_CLK), kb_interruptHandler,
-                  RISING);
-  memset(keymap, 1, sizeof(keymap));
-}
-#endif
-//********************************************************************************
-
 //===============================================================================
 // INCLUDES:
 
@@ -331,11 +192,7 @@ QueueHandle_t vidQueue;
 //--------------------------------------------------------------------------------
 // BUFFER TEXT DRAW FUNCTIONS
 //--------------------------------------------------------------------------------
-inline void updateScreen() {
-#ifdef LCD_ENABLED
-  xQueueSend(vidQueue, &screenMemory, 0);
-#endif
-}
+inline void updateScreen() { xQueueSend(vidQueue, &screenMemory, 0); }
 //--------------------------------------------------------------------------------
 void screenmemory_fillscreen(uint8_t colorIndex = UNIVERSAL_BKG_COLOR) {
   nescreen::fillscreen(colorIndex);
@@ -400,14 +257,6 @@ void screenmemory_drawrectangle(int16_t X, int16_t Y, int16_t Width,
   screenmemory_line(X, Y + Height, X + Width, Y + Height, COLOR);
 }
 //--------------------------------------------------------------------------------
-void screenmemory_drawfillrectangle(int16_t X, int16_t Y, int16_t Width,
-                                    int16_t Height, uint8_t COLOR) {
-  for (uint16_t Ypos = Y; Ypos < Y + Height; Ypos++)
-    for (uint16_t Xpos = X; Xpos < X + Width; Xpos++) {
-      nescreen::drawPixel(Xpos, Ypos, COLOR);
-    }
-}
-//--------------------------------------------------------------------------------
 void set_font_XY(uint16_t x, uint16_t y) { nescreen::setTextPosition(x, y); }
 //--------------------------------------------------------------------------------
 void draw_string(const char *c, uint8_t color = 48) {
@@ -429,10 +278,8 @@ int audiovideo_init() {
   // todo: recheck various values of queue length
   vidQueue = xQueueCreate(64, sizeof(uint8_t *));
 
-#ifdef LCD_ENABLED
   xTaskCreatePinnedToCore(&videoTask, "videoTask", 2048, NULL, 0, NULL, 0);
   debug("videoTask Pinned To Core 0...");
-#endif  // LCD_ENABLED
   return 0;
 }
 //--------------------------------------------------------------------------------
@@ -528,12 +375,10 @@ char textbuf[64] = {0};
 
 //--------------------------------------------------------------------------------
 static void videoTask(void *arg) {
-#ifdef LCD_ENABLED
   while (1) {
     xQueueReceive(vidQueue, &screenMemory, portMAX_DELAY);
     nescreen::writeFrame(X_POS_OF_VIRTUAL_SCREEN, Y_POS_OF_VIRTUAL_SCREEN);
   }
-#endif
 }
 
 //--------------------------------------------------------------------------------
@@ -603,9 +448,8 @@ unsigned char *getromdata(char *ROMFILENAME_) {
         set_font_XY(8, 8);
         draw_string("Loaded:");
         draw_string(loadmessage);
-        screenmemory_drawfillrectangle(
-            ((i / SPI_FLASH_SECTOR_SIZE) - 1) * BLOCKSIZEPX, 24, BLOCKSIZEPX,
-            16, 57);
+        nescreen::fillRectangle(((i / SPI_FLASH_SECTOR_SIZE) - 1) * BLOCKSIZEPX,
+                                24, BLOCKSIZEPX, 16, 57);
       }
       delayMicroseconds(50);
       if (fp.available()) flashdata[i % SPI_FLASH_SECTOR_SIZE] = fp.read();
@@ -651,10 +495,9 @@ void setup() {
 
   controlsInit();
 
-#if LCD_ENABLED
   displayInit();
   nescreen::setFont(Retro8x16);
-#endif
+
   // DAC COMPOSITE VIDEO & ADC has setup here:
 #if COMPOSITE_VIDEO_ENABLED
   // start the A/V pump on app core
@@ -662,10 +505,7 @@ void setup() {
 #endif
   // SCREENMEMORY LCD DRAW INIT
   audiovideo_init();
-  // PS2/USB KEYBOARD SUPPORT
-#if KEYBOARD_ENABLED
-  kb_begin();
-#endif
+
   I2S0.conf.rx_start = 0;  /// stop DMA ADC
   I2S0.in_link.start = 0;
 
@@ -673,8 +513,8 @@ void setup() {
   MAINPATH = (char *)malloc(256);
 
   // microSD CARD INIT
-  if (!sd.begin(SD_CONFIG)) {
-    debug("SD error!");
+  if (!sd.begin(SD_CS_PIN, SPI_SPEED_FOR_SD)) {
+    debug("SD error!, code: %d", sd.card()->errorCode());
   } else {
     debug("SD OK.");
   }
@@ -716,16 +556,21 @@ void loop() {
   }
 
   switch (MenuItem) {
+    case 0:
+      debug("nes emulator init should be here");
+      //  nes emulator part. code has been removed to save your mental health
+      break;
     case 1:
-      // nes emulator part. code has been removed to save your mental health
+      debug("audio player init should be here");
+      //  audio player part. code has been removed to save your mental health
       break;
     case 2:
-      // audio player part. code has been removed to save your mental health
+      debug("oscilloscope init should be here");
+      //  oscilloscope part. code has been removed to save your mental health
       break;
-    case 3:
-      // oscilloscope part. code has been removed to save your mental health
-      break;
+
     default:
+      debug("menu[%d] not impl. yet", MenuItem);
       break;
   }
   JOY_SHARE = 0;

@@ -58,6 +58,9 @@ void writeFrame(const uint16_t x, const uint16_t y,
                 const uint16_t width = DEFAULT_WIDTH,
                 const uint16_t height = DEFAULT_HEIGHT);
 
+void fillRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
+                   uint8_t color);
+
 uint8_t drawChar(uint16_t Main_x, uint16_t Main_y, char Main_char,
                  const char *font, uint8_t color = 48);
 

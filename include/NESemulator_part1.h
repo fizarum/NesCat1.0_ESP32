@@ -4113,7 +4113,7 @@ void ppu_scanline(int scanline, bool draw_flag) {
     ppu.vram_accessible = false;
   }
 
-  if (LCD_ENABLED) xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
+  xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
 }
 
 void ppu_destroy(ppu_t **src_ppu);
@@ -5032,7 +5032,7 @@ void mmc_bankvrom(int size, uint32_t address, int bank) {
       break;
 
     default:
-      true;
+      break;
       /// nes_log_printf("invalid VROM bank size %d\n", size);
   }
 }

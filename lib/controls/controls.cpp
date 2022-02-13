@@ -34,7 +34,7 @@ uint8_t buttonC = 0;
 uint8_t buttonD = 0;
 
 // pull method section
-uint16_t delayBetweenRequests = 300;
+uint16_t delayBetweenRequests = 200;
 unsigned long lastRequestedTime = 0;
 uint32_t requestTime;
 // end section

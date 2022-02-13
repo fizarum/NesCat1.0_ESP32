@@ -220,8 +220,6 @@ void IRAM_ATTR pal_sync(uint16_t* line, int i) {
 //--------------------------------------------------------------------------------
 // ISR handles audio and video updates
 static inline void IRAM_ATTR video_isr(volatile void* vbuf) {
-  if (!screenMemory) return;
-
   int i = _line_counter++;
   uint16_t* buf = (uint16_t*)vbuf;
 
@@ -309,7 +307,7 @@ static esp_err_t start_dma(int line_width, int samples_per_cc, int ch = 1) {
   for (int i = 0; i < 2; i++) {
     int n = line_width * 2 * ch;
     if (n >= 4092) {
-      printf("DMA chunk too big:%s\n", n);
+      printf("DMA chunk too big:%d\n", n);
       return -1;
     }
     _dma_desc[i].buf = (uint8_t*)heap_caps_calloc(1, n, MALLOC_CAP_DMA);

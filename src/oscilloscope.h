@@ -437,16 +437,6 @@ void core1_task(void *pvParameters) {
     float sample_rate = 28636 / 2;  // 28.636/2 Mhz
 
     //--------------------------------------------------------------------------------
-    // buttons read
-    uint32_t lastmtime = millis();
-    uint32_t offsetmtime = 250;
-
-    if (TIMEBASE > 1000)
-      offsetmtime = 1000;  // 1000ms delay
-    else
-      offsetmtime = 250;  // 250ms delay
-    //--------------------------------------------------------------------------------
-
     I2S0.conf.rx_start = 0;  /// stop DMA ADC
 
     //--------------------------------------------------------------------------------
@@ -893,7 +883,7 @@ void core1_task(void *pvParameters) {
                           spritecolor);  // 26=green //6=red
         screenmemory_line(i, o_data + 1, i + 1, n_data - 1,
                           spritecolor);  // 26=green //6=red ///DOUBLE LINE...
-        if (LCD_ENABLED) xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
+        xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
         o_data = n_data;
       }
     }

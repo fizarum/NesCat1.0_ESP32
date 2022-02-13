@@ -215,7 +215,6 @@ static nes6502_memwrite default_writehandler[] = {
     {0x4014, 0x4017, ppu_writehigh}, LAST_MEMORY_HANDLER};
 
 // this big nasty boy sets up the address handlers that the CPU uses
-static void build_address_handlers(nes_t *machine);
 static void build_address_handlers(nes_t *machine) {
   int count, num_handlers = 0;
   mapintf_t *intf;
