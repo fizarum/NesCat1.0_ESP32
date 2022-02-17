@@ -122,8 +122,8 @@ TimerHandle_t timer_1;
 // frequency,
 IRAM_ATTR int osd_installtimer_1(int frequency, void *func, int funcsize,
                                  void *counter, int countersize) {
-  if (DEBUG) Serial.print("Timer install, freq=");
-  if (DEBUG) Serial.println(frequency);
+  debug("Timer install, freq=%d", frequency);
+
   delay(1000);
   timer_1 = xTimerCreate("nes_hid", configTICK_RATE_HZ / frequency, pdTRUE,
                          NULL, (TimerCallbackFunction_t)func);

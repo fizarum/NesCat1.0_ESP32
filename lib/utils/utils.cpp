@@ -1,9 +1,9 @@
-#ifndef UTILS_H
-#define UTILS_H
+#include "utils.h"
 
 #include <Arduino.h>
 
-#define MAXFILENAME_LENGTH 64
+// comment to disable logs
+#define DEBUG
 
 const uint8_t buffMaxLen = 30;
 
@@ -25,7 +25,15 @@ void debug(const char *templateString, uint32_t value) {
   debug(debugBuff);
 }
 
-// untested part
+void debug(const char *templateString, const char *value) {
+  int strlength = strlen(templateString);
+  if (strlength >= buffMaxLen) {
+    sprintf(debugBuff, "value: %s", value);
+  } else {
+    sprintf(debugBuff, templateString, value);
+  }
+  debug(debugBuff);
+}
 
 void sortStrings(char *arr[], int n) {
   char temp[MAXFILENAME_LENGTH];
@@ -51,4 +59,14 @@ void getMemoryStatus() {
   debug("--------------------------------");
 }
 
-#endif  // UTILS_H
+// uint32_t size = ESP.getPsramSize();
+void getPsRamStatus(uint32_t psramSize) {
+  debug("--------------------------------");
+  if (psramSize > 0) {
+    debug("Total PSRAM: %u", ESP.getPsramSize());
+    debug("Free PSRAM: %u", ESP.getFreePsram());
+  } else {
+    debug("NO PSRAM DETECTED.");
+  }
+  debug("--------------------------------");
+}
