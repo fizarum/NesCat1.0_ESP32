@@ -94,13 +94,13 @@ void draw_grid() {
     }
   }
 
-  // draw horizontal center line:
-  screenmemory_line(px_h_offset, TFT_HEIGHT / 2, TFT_WIDTH - px_h_offset,
-                    TFT_HEIGHT / 2, 0x30);
+  // // draw horizontal center line:
+  // screenmemory_line(px_h_offset, TFT_HEIGHT / 2, TFT_WIDTH - px_h_offset,
+  //                   TFT_HEIGHT / 2, 0x30);
 
-  // draw vertical center line:
-  screenmemory_line(TFT_WIDTH / 2, px_v_offset, TFT_WIDTH / 2,
-                    TFT_HEIGHT - px_v_offset, 0x30);
+  // // draw vertical center line:
+  // screenmemory_line(TFT_WIDTH / 2, px_v_offset, TFT_WIDTH / 2,
+  //                   TFT_HEIGHT - px_v_offset, 0x30);
 }
 //--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
@@ -878,20 +878,22 @@ void core1_task(void *pvParameters) {
       }
       //--------------------------------------------------------------------------------
       if (index < BUFF_SIZE - 240) {
-        n_data = to_scale(dma_buff[index / NUM_SAMPLES][index % NUM_SAMPLES]);
-        screenmemory_line(i - 1, o_data, i, n_data,
-                          spritecolor);  // 26=green //6=red
-        screenmemory_line(i, o_data + 1, i + 1, n_data - 1,
-                          spritecolor);  // 26=green //6=red ///DOUBLE LINE...
-        xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
-        o_data = n_data;
+        // n_data = to_scale(dma_buff[index / NUM_SAMPLES][index %
+        // NUM_SAMPLES]);
+        //  screenmemory_line(i - 1, o_data, i, n_data,
+        //                    spritecolor);  // 26=green //6=red
+        //  screenmemory_line(i, o_data + 1, i + 1, n_data - 1,
+        //                    spritecolor);  // 26=green //6=red ///DOUBLE
+        //                    LINE...
+        //  xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
+        // o_data = n_data;
       }
     }
     //--------------------------------------------------------------------------------
 
     //--------------------------------------------------------------------------------
     if (info) {
-      screenmemory_drawrectangle(shift + 12, 20, 240 - shift - 20, 36, 0x30);
+      // screenmemory_drawrectangle(shift + 12, 20, 240 - shift - 20, 36, 0x30);
 
       set_font_XY(shift + 15, 20 + 5);
       sprintf(textbuf, "P-P:%.3fV",

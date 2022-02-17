@@ -32,7 +32,7 @@ extern uint8_t JOY_SHARE;
 //(SELECT)
 extern uint8_t JOY_OPTIONS;
 
-void controlsInit();
+void controlsInit(void (*onKeysCallback)(uint8_t));
 void controlsUpdate();
 
 #endif  // CONTROLS_H

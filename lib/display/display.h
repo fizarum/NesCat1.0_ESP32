@@ -39,7 +39,7 @@
 
 #include <SPI.h>
 
-// Allocated MEMORY variables:
+// screen buffer variables:
 extern uint16_t screenBuffer[256];      // 512 bytes
 extern uint8_t *screenMemory[256 + 1];  // 256*256 bytes + 256 offset
 
@@ -59,6 +59,12 @@ void writeFrame(const uint16_t x, const uint16_t y,
                 const uint16_t height = DEFAULT_HEIGHT);
 
 void fillRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
+                   uint8_t color);
+
+void drawLine(int16_t startx, int16_t starty, int16_t endx, int16_t endy,
+              uint8_t color);
+
+void drawRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
                    uint8_t color);
 
 uint8_t drawChar(uint16_t Main_x, uint16_t Main_y, char Main_char,

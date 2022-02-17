@@ -68,6 +68,7 @@
 
 // display part
 #include <display.h>
+#include <menu.h>
 
 // SD card part
 #define SOFTSD_MOSI_PIN TFT_MOSI
@@ -118,10 +119,10 @@
 #include <Arduino.h>
 
 // micro_SD_Card
-// #include <Audio.h>
 #include <SdFat.h>
-// #include <arduinoFFT.h>
 
+// #include <Audio.h>
+// #include <arduinoFFT.h>
 // arduinoFFT FFT = arduinoFFT();
 #define SPI_SPEED_FOR_SD SD_SCK_MHZ(4)
 
@@ -130,17 +131,10 @@ FsFile fp;
 
 static void videoTask(void *arg);
 
-#define LOAD_GLCD   // Font 1. Original Adafruit 8 pixel font needs ~1820 bytes
-                    // in FLASH
-#define LOAD_FONT2  // Font 2. Small 16 pixel high font, needs ~3534 bytes in
-                    // FLASH, 96 characters
-#define LOAD_FONT4  // Font 4. Medium 26 pixel high font, needs ~5848 bytes in
-                    // FLASH, 96 characters
-
 //********************************************************************************
 // VARIABLES:
 
-uint32_t PSRAMSIZE = 0;
+uint32_t psRAMSize = 0;
 uint8_t *PSRAM;
 
 //--------------------------------------------------------------------------------
@@ -167,15 +161,6 @@ uint8_t flashdata[4096] = {0};  // 4kB buffer
 char *ROMFILENAME;       // NES load File name
 unsigned char *rom = 0;  // Actual ROM pointer
 
-//********************************************************************************
-
-// for player...
-bool PLAYING = false;
-bool PAUSED = false;
-
-//===============================================================================
-// INCLUDES:
-
 // COMPOSITE_VIDEO_OUT
 #if COMPOSITE_VIDEO_ENABLED
 #include "compositevideo.h"
@@ -185,80 +170,18 @@ bool PAUSED = false;
 #include "Retro8x16.c"  //used font...
 
 //===============================================================================
-//===============================================================================
-//===============================================================================
 // VIDEO SYSTEM:
 QueueHandle_t vidQueue;
-//--------------------------------------------------------------------------------
-// BUFFER TEXT DRAW FUNCTIONS
-//--------------------------------------------------------------------------------
+
 inline void updateScreen() { xQueueSend(vidQueue, &screenMemory, 0); }
-//--------------------------------------------------------------------------------
+
 void screenmemory_fillscreen(uint8_t colorIndex = UNIVERSAL_BKG_COLOR) {
   nescreen::fillscreen(colorIndex);
   updateScreen();
 }
-//--------------------------------------------------------------------------------
-void screenmemory_line(int startx, int starty, int endx, int endy,
-                       uint8_t color) {
-  int t, distance;
-  int xerr = 0, yerr = 0, delta_x, delta_y;
-  int incx, incy;
-  // compute the distances in both directions
-  delta_x = endx - startx;
-  delta_y = endy - starty;
-  // Compute the direction of the increment,
-  //   an increment of 0 means either a horizontal or vertical
-  //   line.
-  if (delta_x > 0)
-    incx = 1;
-  else if (delta_x == 0)
-    incx = 0;
-  else
-    incx = -1;
 
-  if (delta_y > 0)
-    incy = 1;
-  else if (delta_y == 0)
-    incy = 0;
-  else
-    incy = -1;
-
-  // determine which distance is greater
-  delta_x = abs(delta_x);
-  delta_y = abs(delta_y);
-  if (delta_x > delta_y)
-    distance = delta_x;
-  else
-    distance = delta_y;
-
-  // draw the line
-  for (t = 0; t <= distance + 1; t++) {
-    nescreen::drawPixel(startx, starty, color);
-
-    xerr += delta_x;
-    yerr += delta_y;
-    if (xerr > distance) {
-      xerr -= distance;
-      startx += incx;
-    }
-    if (yerr > distance) {
-      yerr -= distance;
-      starty += incy;
-    }
-  }
-}
-//--------------------------------------------------------------------------------
-void screenmemory_drawrectangle(int16_t X, int16_t Y, int16_t Width,
-                                int16_t Height, uint8_t COLOR) {
-  screenmemory_line(X, Y, X + Width, Y, COLOR);
-  screenmemory_line(X, Y, X, Y + Height, COLOR);
-  screenmemory_line(X + Width, Y, X + Width, Y + Height, COLOR);
-  screenmemory_line(X, Y + Height, X + Width, Y + Height, COLOR);
-}
-//--------------------------------------------------------------------------------
 void set_font_XY(uint16_t x, uint16_t y) { nescreen::setTextPosition(x, y); }
-//--------------------------------------------------------------------------------
+
 void draw_string(const char *c, uint8_t color = 48) {
   if (c[strlen(c) - 1] == '\n') {
     nescreen::drawString(c, color);
@@ -270,33 +193,21 @@ void draw_string(const char *c, uint8_t color = 48) {
 //--------------------------------------------------------------------------------
 
 int audiovideo_init() {
-  // rendererInit(&videoTask);
   //  disable Core 0 WDT
   TaskHandle_t idle_0 = xTaskGetIdleTaskHandleForCPU(0);
   esp_task_wdt_delete(idle_0);
 
   // todo: recheck various values of queue length
-  vidQueue = xQueueCreate(64, sizeof(uint8_t *));
+  vidQueue = xQueueCreate(64, sizeof(uint8_t));
 
   xTaskCreatePinnedToCore(&videoTask, "videoTask", 2048, NULL, 0, NULL, 0);
   debug("videoTask Pinned To Core 0...");
   return 0;
 }
-//--------------------------------------------------------------------------------
 
 //********************************************************************************
 //*  MAIN MENU: *
 //********************************************************************************
-uint8_t MenuItem = 0;
-uint8_t prevMenuIndex = 100;
-
-// 0 menu index
-const char *const emulator = " NES Emulator ";
-// 1 menu index
-const char *const audioPlayer = " Audio Player ";
-// 2 menu index
-const char *const oscilloscope = " Oscilloscope ";
-
 const uint8_t yPosOfMenuItem = V_CENTER - 24;
 
 /**
@@ -308,30 +219,6 @@ const uint8_t yPosOfMenuItem = V_CENTER - 24;
 void displayMenuItem(const char *text, uint8_t x) {
   nescreen::drawString(x, yPosOfMenuItem, text, 48);
 }
-
-uint8_t updateActiveMenuIndex() {
-  if (JOY_RIGHT == 1) {
-    JOY_RIGHT = 0;
-    MenuItem++;
-    if (MenuItem > 2) MenuItem = 0;
-  }
-
-  if (JOY_LEFT == 1) {
-    JOY_LEFT = 0;
-    MenuItem--;
-    // since we have uint8_t it cant be < 0 but uint8_t.MAX (255)
-    if (MenuItem > 2) MenuItem = 2;
-  }
-
-  if ((JOY_SQUARE == 1 || JOY_SHARE == 1) && JOY_OPTIONS == 0) {
-    JOY_SQUARE = 0;
-    JOY_SHARE = 0;
-    MenuItem++;
-    if (MenuItem > 2) MenuItem = 0;
-  }
-  return MenuItem;
-}
-//********************************************************************************
 
 bool EXIT = false;
 
@@ -346,34 +233,12 @@ SdFile file;
 char *MAINPATH;
 char textbuf[64] = {0};
 
-//--------------------------------------------------------------------------------
-
-//________________________________________________________________________________
-//
 // NES EMU SECTION
-//________________________________________________________________________________
-
 #include "NESemulator_part1.h"
-
-// MAPPERS !!!
 #include "NESemulator_part2.h"
 #include "mappers.h"
-
-//________________________________________________________________________________
-//
-// PLAYER SECTION
-//________________________________________________________________________________
-// Audio audio;
-
-//________________________________________________________________________________
-//
-// OSCILLOSCOPE SECTION
-//________________________________________________________________________________
-
-//--------------------------------------------------------------------------------
 #include "oscilloscope.h"
 
-//--------------------------------------------------------------------------------
 static void videoTask(void *arg) {
   while (1) {
     xQueueReceive(vidQueue, &screenMemory, portMAX_DELAY);
@@ -418,7 +283,7 @@ unsigned char *getromdata(char *ROMFILENAME_) {
   Serial.println();
   BLOCKSIZEPX++;
 
-  if (PSRAMSIZE > 0) {
+  if (psRAMSize > 0) {
     uint32_t i = 0;
     for (i = 0; i < fp.size(); i++) {
       PSRAM[i] = fp.read();
@@ -472,28 +337,24 @@ unsigned char *getromdata(char *ROMFILENAME_) {
   }
 }
 
+void onKeysCallback(uint8_t keyMap) { debug("on key press: %d\n", keyMap); }
+
+void preparePsRam() {
+  psRAMSize = ESP.getPsramSize();
+  getPsRamStatus(psRAMSize);
+
+  if (psRAMSize > 0) {
+    PSRAM = (uint8_t *)ps_malloc(2097152);  // PSRAM malloc 2MB
+  }
+}
+
 void setup() {
   Serial.begin(115200);
   getMemoryStatus();
 
-  if (ESP.getPsramSize() > 0) {
-    PSRAMSIZE = ESP.getPsramSize();
-    PSRAM = (uint8_t *)ps_malloc(2097152);  // PSRAM malloc 2MB
+  preparePsRam();
 
-    debug("Total PSRAM: %d", ESP.getPsramSize());
-    debug("Free PSRAM: %d", ESP.getFreePsram());
-  } else {
-    PSRAMSIZE = 0;
-    debug("NO PSRAM DETECTED.");
-  }
-
-  // VIDEO MEMORY ALLOCATION (force)
-  for (uint8_t tmp = 0; tmp < 240; tmp++) {
-    screenMemory[tmp] = (uint8_t *)malloc(256 + 1);
-    memset(screenMemory[tmp], 0, 256);
-  }
-
-  controlsInit();
+  controlsInit(&onKeysCallback);
 
   displayInit();
   nescreen::setFont(Retro8x16);
@@ -521,56 +382,49 @@ void setup() {
 
   install_timer(60);  // 60Hz
   getMemoryStatus();
-
-  debug("setup finished");
 }
 
-void drawActiveMenu() {
-  switch (MenuItem) {
-    case 0:
-      displayMenuItem(emulator, 64);
-      break;
-    case 1:
-      displayMenuItem(audioPlayer, 64);
-      break;
+uint8_t hJoyPos = 0;
 
-    case 2:
-      displayMenuItem(oscilloscope, 64);
-      break;
-
-    default:
-      break;
+void handleMenu() {
+  if (JOY_LEFT) {
+    hJoyPos = 1;
+    JOY_LEFT = 0;
+  } else if (JOY_RIGHT) {
+    hJoyPos = 2;
+    JOY_RIGHT = 0;
+  } else {
+    hJoyPos = 0;
+  }
+  updateActiveMenuIndex(hJoyPos);
+  if (hJoyPos != 0) {
+    const char *title = getCurrentMenuTitle();
+    nescreen::fillscreen(0x0c);
+    displayMenuItem(title, 64);
+    updateScreen();
+    debug("menu item: %s", title);
   }
 }
 
 void loop() {
   EXIT = false;
   controlsUpdate();
-  MenuItem = updateActiveMenuIndex();
-  if (MenuItem != prevMenuIndex) {
-    nescreen::fillscreen(0x0c);
-    debug("menu item: %d", MenuItem);
-    drawActiveMenu();
-    updateScreen();
-    prevMenuIndex = MenuItem;
-  }
-
-  switch (MenuItem) {
+  handleMenu();
+  switch (getCurrentMenuIndex()) {
     case 0:
-      debug("nes emulator init should be here");
-      //  nes emulator part. code has been removed to save your mental health
+      // debug("nes emulator init should be here");
+      //   nes emulator part. code has been removed to save your mental health
       break;
     case 1:
-      debug("audio player init should be here");
-      //  audio player part. code has been removed to save your mental health
+      // debug("audio player init should be here");
+      //   audio player part. code has been removed to save your mental health
       break;
     case 2:
-      debug("oscilloscope init should be here");
-      //  oscilloscope part. code has been removed to save your mental health
+      // debug("oscilloscope init should be here");
+      //   oscilloscope part. code has been removed to save your mental health
       break;
 
     default:
-      debug("menu[%d] not impl. yet", MenuItem);
       break;
   }
   JOY_SHARE = 0;
