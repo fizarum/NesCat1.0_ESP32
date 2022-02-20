@@ -1,3 +1,6 @@
+#ifndef NESEMULATOR_1_H
+#define NESEMULATOR_1_H
+
 #include "utils.h"
 
 //--------------------------------------------------------------------------------
@@ -251,7 +254,7 @@ IRAM_ATTR int install_timer(int hertz) {
 //--------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------
-char *NESEXPLORE(char *PATH) {
+char *NESEXPLORE(char *path) {
   uint8_t num = 0;
   uint8_t loadedFileNames = 0;
 
@@ -270,7 +273,7 @@ char *NESEXPLORE(char *PATH) {
 
   // Load List files in root directory.
   /// if (!dirFile.open("/", O_READ)) {
-  if (!dirFile.open(PATH, O_READ)) {
+  if (!dirFile.open(path, O_READ)) {
     while (1) {
     };
   }
@@ -330,7 +333,7 @@ char *NESEXPLORE(char *PATH) {
     if (!NamesDisplayed) {
       screenmemory_fillscreen(63);  // black color
       set_font_XY(16, 24);
-      draw_string(PATH);
+      draw_string(path);
 
       for (num = PAGE * FILESPERPAGE;
            num < ((PAGE + 1) * FILESPERPAGE) && num < loadedFileNames; num++) {
@@ -448,7 +451,7 @@ char *NESEXPLORE(char *PATH) {
       ///         PLAYINGFILE=CURSOR;
       ///         TOTALFILES=loadedFileNames;
 
-      sprintf(MAINPATH, "%s%s", PATH, filename[CURSOR]);
+      sprintf(MAINPATH, "%s%s", path, filename[CURSOR]);
       if (DEBUG) Serial.println(MAINPATH);
 
       ///         sprintf(TRACKNAME, "%s", filename[CURSOR]);
@@ -462,10 +465,10 @@ char *NESEXPLORE(char *PATH) {
       JOY_OPTIONS = 0;
       delay(25);
 
-      if (DEBUG) Serial.println(PATH);
-      if (DEBUG) Serial.println(strlen(PATH));
+      if (DEBUG) Serial.println(path);
+      if (DEBUG) Serial.println(strlen(path));
 
-      sprintf(MAINPATH, "%s", PATH);
+      sprintf(MAINPATH, "%s", path);
 
       if (strlen(MAINPATH) > 1) {
         MAINPATH[strlen(MAINPATH) - 1] = '\0';
@@ -483,13 +486,13 @@ char *NESEXPLORE(char *PATH) {
 }
 //################################################################################
 //********************************************************************************
-char *NESBrowse(char *PATH) {
-  if (PATH[strlen(PATH) - 1] != '/')
-    if (strlen(PATH) > 1) {
-      PATH[strlen(PATH) - 1] = '\0';
-      for (uint8_t strpos = strlen(PATH) - 1; strpos > 0; strpos--) {
-        if (PATH[strpos] == '/') break;
-        PATH[strpos] = '\0';
+char *NESBrowse(char *path) {
+  if (path[strlen(path) - 1] != '/')
+    if (strlen(path) > 1) {
+      path[strlen(path) - 1] = '\0';
+      for (uint8_t strpos = strlen(path) - 1; strpos > 0; strpos--) {
+        if (path[strpos] == '/') break;
+        path[strpos] = '\0';
       }
     }
 
@@ -500,9 +503,9 @@ char *NESBrowse(char *PATH) {
 
   EXIT = false;
   //................................................................................
-  while (EXIT == false && PATH[strlen(PATH) - 1] == '/') {
-    PATH = NESEXPLORE(PATH);
-    Serial.println(PATH);
+  while (EXIT == false && path[strlen(path) - 1] == '/') {
+    path = NESEXPLORE(path);
+    Serial.println(path);
   }
   //................................................................................
 
@@ -510,7 +513,7 @@ char *NESBrowse(char *PATH) {
     ///      free(filename[tmp]);
     ///      free(fileext[tmp]);
   }
-  return PATH;
+  return path;
 }
 //________________________________________________________________________________
 
@@ -5084,3 +5087,5 @@ void mmc_bankrom(int size, uint32_t address, int bank) {
 
   nes6502_setcontext(&mmc_cpu);
 }
+
+#endif  // NESEMULATOR_1_H
