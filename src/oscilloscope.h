@@ -64,46 +64,7 @@ float to_scale(float reading) {
 //--------------------------------------------------------------------------------
 float to_voltage(float reading) { return (reading - 24576.0) / 4095.0 * 3.3; }
 //--------------------------------------------------------------------------------
-//********************************************************************************
-void draw_grid() {
-  float px_v_per_div = (float)(TFT_HEIGHT * (float)(v_scale)) / 8;
-  float px_v_offset =
-      (float)(TFT_HEIGHT *
-              ((1 - v_scale) / 2));  // vertical offset from scale/2 %
-  float px_h_per_div = (float)(TFT_WIDTH * (float)(h_scale)) / 8;
-  float px_h_offset =
-      (float)(TFT_WIDTH *
-              ((1 - h_scale) / 2));  // vertical offset from scale/2 %
 
-  for (int y = 0; y <= 8; y++) {    // 8 divs
-    for (int x = 0; x <= 8; x++) {  // 8 divs
-      // horizontal lines
-      if (x < 8)
-        for (int i = 0; i < px_h_per_div; i++) {
-          // if (i % 8 == 0)
-          // screenmemory_drawpixel(x * px_h_per_div + i + px_v_offset,
-          //                        y * px_v_per_div + px_h_offset, 0x30);
-        }
-      if (y < 8)
-        // vertical lines
-        for (int j = 0; j < px_v_per_div; j++) {
-          // if (j % 8 == 0)
-          // screenmemory_drawpixel(x * px_h_per_div + px_v_offset,
-          //                        y * px_v_per_div + j + px_h_offset, 0x30);
-        }
-    }
-  }
-
-  // // draw horizontal center line:
-  // screenmemory_line(px_h_offset, TFT_HEIGHT / 2, TFT_WIDTH - px_h_offset,
-  //                   TFT_HEIGHT / 2, 0x30);
-
-  // // draw vertical center line:
-  // screenmemory_line(TFT_WIDTH / 2, px_v_offset, TFT_WIDTH / 2,
-  //                   TFT_HEIGHT - px_v_offset, 0x30);
-}
-//--------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------
 void peak_mean(uint32_t len, float *max_value, float *min_value,
                float *pt_mean) {
   max_value[0] = (uint16_t)dma_buff[0][0];
@@ -196,24 +157,6 @@ void trigger_freq_analog(float sample_rate, float mean, uint32_t max_v,
     // resolution)
     freq = freq * NUM_SAMPLES / 50;
     period = (float)(sample_rate * 1000.0) / freq;  // us
-
-    // from 2000 to 80 hz -> uses mean of the periods for precision
-    /*
-          if (freq < 2000 && freq > 80) {
-             period = 0;
-             for (uint32_t i = 1; i < trigger_count; i++) {
-                period += trigger_temp[i] - trigger_temp[i - 1];
-             }
-             period /= (trigger_count - 1);
-             freq = sample_rate * 1000 / period;
-          }
-
-          //under 80hz, single period for frequency calculation
-          else if (trigger_count > 1 && freq <= 80) {
-             period = trigger_temp[1] - trigger_temp[0];
-             freq = sample_rate * 1000 / period;
-          }
-    */
   }
 
   // setting triggers offset and getting second trigger for debug cursor on
@@ -413,13 +356,6 @@ void REINIT_ADC() {
 
   // I2S_IN_LINK_REG -> I2S_INLINK_START
   I2S0.in_link.start = 1;
-
-  // toto sposobuje skakanie obrazu:
-  /*  I2S0.int_clr.val   = I2S0.int_raw.val;
-    I2S0.int_ena.val   = 0;
-    I2S0.int_ena.in_done = 1;
-  */
-  //===============================================================================
 }
 //********************************************************************************
 //*  ADC TASK: *
@@ -600,34 +536,6 @@ void core1_task(void *pvParameters) {
       trigger_freq_digital(sample_rate, mean, max_v, min_v, &freq, &period,
                            &trigger0);
     }
-    //--------------------------------------------------------------------------------
-    // Clear Screen
-    screenmemory_fillscreen(0x3f);
-
-    // Draw Grid
-    draw_grid();
-    //--------------------------------------------------------------------------------
-    // DEBUG DATA
-
-    if (DEBUG) {
-      Serial.print("digital=1_analog=0: ");
-      Serial.println(digital_analog(max_v, min_v));
-
-      Serial.print("mean:");
-      Serial.println(mean);
-      Serial.print("max_v:");
-      Serial.println(max_v);
-      Serial.print("min_v:");
-      Serial.println(min_v);
-      Serial.print("freq:");
-      Serial.println(freq);
-      Serial.print("period:");
-      Serial.println(period);
-      Serial.print("trigger0:");
-      Serial.println(trigger0);
-    }
-
-    //--------------------------------------------------------------------------------
 
     /// adjust TIMEBASE:
     if (timebase_switched == true) {
@@ -706,9 +614,6 @@ void core1_task(void *pvParameters) {
           I2S0.sample_rate_conf.rx_bck_div_num = 2;  // 2x scale time base
       }
       timebase_switched = false;
-      if (DEBUG)
-        Serial.println(
-            "timebase_switched-------------------------------------");
       I2S0.in_link.start = 1;
     }
     //--------------------------------------------------------------------------------
@@ -876,77 +781,6 @@ void core1_task(void *pvParameters) {
                   (uint32_t)((i + 1) *
                              0.944);  /// waveform is triggered.... 2.0us/DIV
       }
-      //--------------------------------------------------------------------------------
-      if (index < BUFF_SIZE - 240) {
-        // n_data = to_scale(dma_buff[index / NUM_SAMPLES][index %
-        // NUM_SAMPLES]);
-        //  screenmemory_line(i - 1, o_data, i, n_data,
-        //                    spritecolor);  // 26=green //6=red
-        //  screenmemory_line(i, o_data + 1, i + 1, n_data - 1,
-        //                    spritecolor);  // 26=green //6=red ///DOUBLE
-        //                    LINE...
-        //  xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
-        // o_data = n_data;
-      }
-    }
-    //--------------------------------------------------------------------------------
-
-    //--------------------------------------------------------------------------------
-    if (info) {
-      // screenmemory_drawrectangle(shift + 12, 20, 240 - shift - 20, 36, 0x30);
-
-      set_font_XY(shift + 15, 20 + 5);
-      sprintf(textbuf, "P-P:%.3fV",
-              (float)((to_voltage(max_v) - to_voltage(min_v))));
-      draw_string(textbuf, 48);
-
-      if (freq < 1000)
-        sprintf(textbuf, "%.3fHz", (float)freq);
-      else if (freq < 1000000)
-        sprintf(textbuf, "%.1fkHz", (float)(freq / 1000));
-      else
-        sprintf(textbuf, "----");
-
-      // very high frequency on low time base
-      if ((TIMEBASE >= 5000 && digital_wave_option == 1 && freq > 200) ||
-          (TIMEBASE >= 5000 && digital_wave_option == 0 && digital_data == 0 &&
-           freq > 200))
-        sprintf(textbuf, "----");
-
-      // very low frequency on high time base
-      if ((TIMEBASE <= 10 && digital_wave_option == 1 && freq < 2000) ||
-          (TIMEBASE <= 10 && digital_wave_option == 0 && digital_data == 0 &&
-           freq < 2000))
-        sprintf(textbuf, "----");
-      set_font_XY(shift + 15, 20 + 20);
-      draw_string(textbuf, 48);
-
-      if (mean > 1.0)
-        sprintf(textbuf, "Avg:%.2fV", (float)mean);
-      else
-        sprintf(textbuf, "Avg:%.2fdmV", (float)(mean * 1000.0));
-
-      if (digital_wave_option == 0 && digital_data == 0)
-        sprintf(textbuf, "AUTO:AN.");  // AUTO:ANALOG
-      else if (digital_wave_option == 0 && digital_data == 1)
-        sprintf(textbuf, "AUTO:DIG.");  // AUTO:DIGITAL
-      else if (digital_wave_option == 1)
-        sprintf(textbuf, "ANALOG");  // ANALOG
-      else if (digital_wave_option == 2)
-        sprintf(textbuf, "DIGITAL");  // DIGITAL
-      else
-        sprintf(textbuf, "UNKNOWN");  // DIGITAL
-      set_font_XY(0 + 24, 24);
-      draw_string(textbuf, 48);
-
-      if (TIMEBASE < 1000)
-        sprintf(textbuf, "T:%.0fus", (float)(TIMEBASE));
-      else if (TIMEBASE < 1000000)
-        sprintf(textbuf, "T:%.0fms", (float)(TIMEBASE / 1000));
-      else
-        sprintf(textbuf, "T:----us");
-      set_font_XY(0 + 24, 256 - 24 - 32);
-      draw_string(textbuf, 48);
     }
     //--------------------------------------------------------------------------------
     I2S0.conf.rx_start = 1;  // start DMA ADC

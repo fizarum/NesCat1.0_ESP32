@@ -127,7 +127,6 @@
 #define SPI_SPEED_FOR_SD SD_SCK_MHZ(4)
 
 SdFat sd;
-FsFile fp;
 
 static void videoTask(void *arg);
 
@@ -140,19 +139,6 @@ uint8_t *PSRAM;
 //--------------------------------------------------------------------------------
 // SPI FLASH MEMORY ACCESS:
 #include "esp_spi_flash.h"
-
-#define SPI_FLASH_ADDRESS 0x00300000  // 0x00300000 working (empty flash area)
-#define SPI_FLASH_SECTOR_SIZE 0x1000  // 4kB = better not change
-
-uint32_t FILE_ROM_SIZE = 0;
-uint32_t FLASH_ROM_SIZE = 0;
-
-// constant data pointer for direct access
-const void *ROM;
-
-spi_flash_mmap_handle_t handle1;
-
-uint8_t flashdata[4096] = {0};  // 4kB buffer
 
 //--------------------------------------------------------------------------------
 // DRAM MEMORY ACCESS:
@@ -182,12 +168,13 @@ void screenmemory_fillscreen(uint8_t colorIndex = UNIVERSAL_BKG_COLOR) {
 
 void set_font_XY(uint16_t x, uint16_t y) { nescreen::setTextPosition(x, y); }
 
-void draw_string(const char *c, uint8_t color = 48) {
+void draw_string(const char *c, uint8_t color = MENU_TEXT_COLOR,
+                 uint8_t bkgColor = MENU_BACKGROUND_COLOR) {
   if (c[strlen(c) - 1] == '\n') {
-    nescreen::drawString(c, color);
+    nescreen::drawString(c, color, bkgColor);
     nescreen::setTextNewLine();
   } else {
-    nescreen::drawString(c, color);
+    nescreen::drawString(c, color, bkgColor);
   }
 }
 //--------------------------------------------------------------------------------
@@ -197,10 +184,9 @@ int audiovideo_init() {
   TaskHandle_t idle_0 = xTaskGetIdleTaskHandleForCPU(0);
   esp_task_wdt_delete(idle_0);
 
-  // todo: recheck various values of queue length
-  vidQueue = xQueueCreate(64, sizeof(uint8_t));
+  vidQueue = xQueueCreate(1, sizeof(uint8_t *));
 
-  xTaskCreatePinnedToCore(&videoTask, "videoTask", 2048, NULL, 0, NULL, 0);
+  xTaskCreatePinnedToCore(&videoTask, "videoTask", 2048, NULL, 5, NULL, 0);
   debug("videoTask Pinned To Core 0...");
   return 0;
 }
@@ -217,7 +203,8 @@ const uint8_t yPosOfMenuItem = V_CENTER - 24;
  *
  */
 void displayMenuItem(const char *text, uint8_t x) {
-  nescreen::drawString(x, yPosOfMenuItem, text, 48);
+  nescreen::drawString(x, yPosOfMenuItem, text, MENU_TEXT_COLOR,
+                       MENU_BACKGROUND_COLOR);
 }
 
 bool EXIT = false;
@@ -260,81 +247,6 @@ void install_oscilloscope() {
   );
   oscilloscope_installed = true;
 #endif
-}
-
-rominfo_t *rominfo;
-unsigned char *romdata = 0;
-char *PATH;
-char loadmessage[64];
-
-unsigned char *getromdata(char *ROMFILENAME_) {
-  fp = sd.open(ROMFILENAME_);
-  if (DEBUG) Serial.print("FILE SIZE: ");
-  if (DEBUG) Serial.println(fp.size());
-  FILE_ROM_SIZE = fp.size();
-
-  uint16_t BLOCKCOUNT =
-      (FILE_ROM_SIZE + SPI_FLASH_SECTOR_SIZE) / SPI_FLASH_SECTOR_SIZE;
-  uint16_t BLOCKSIZEPX = DEFAULT_WIDTH / BLOCKCOUNT;
-  Serial.print("BLOCKCOUNT: ");
-  Serial.print(BLOCKCOUNT);
-  Serial.print(" BLOCKSIZEPX: ");
-  Serial.print(BLOCKSIZEPX);
-  Serial.println();
-  BLOCKSIZEPX++;
-
-  if (psRAMSize > 0) {
-    uint32_t i = 0;
-    for (i = 0; i < fp.size(); i++) {
-      PSRAM[i] = fp.read();
-    }
-    fp.close();
-    return (unsigned char *)PSRAM;
-  } else {
-    // Read NES rom to SPI FLASH!
-    uint32_t i = 0;
-    for (i = 0; i < fp.size() + SPI_FLASH_SECTOR_SIZE; i++) {
-      if (DEBUGEXTRA && i % SPI_FLASH_SECTOR_SIZE == 0) {
-        Serial.print("ROM loaded 4kB:");
-        Serial.println(i / 0x1000);
-      }
-      if (i > 0 && i % SPI_FLASH_SECTOR_SIZE == 0) {
-        /// spi_flash_erase_sector(SPI_FLASH_ADDRESS/SPI_FLASH_SECTOR_SIZE +
-        /// (i/SPI_FLASH_SECTOR_SIZE)-SPI_FLASH_SECTOR_SIZE);
-        delayMicroseconds(300);
-        spi_flash_erase_range(SPI_FLASH_ADDRESS + i - SPI_FLASH_SECTOR_SIZE,
-                              sizeof(flashdata));
-        delayMicroseconds(300);
-        spi_flash_write(SPI_FLASH_ADDRESS + i - SPI_FLASH_SECTOR_SIZE,
-                        flashdata, sizeof(flashdata));
-        delayMicroseconds(300);
-
-        sprintf(loadmessage, " %d / %d", i, FILE_ROM_SIZE);
-        set_font_XY(8, 8);
-        draw_string("Loaded:");
-        draw_string(loadmessage);
-        nescreen::fillRectangle(((i / SPI_FLASH_SECTOR_SIZE) - 1) * BLOCKSIZEPX,
-                                24, BLOCKSIZEPX, 16, 57);
-      }
-      delayMicroseconds(50);
-      if (fp.available()) flashdata[i % SPI_FLASH_SECTOR_SIZE] = fp.read();
-      delayMicroseconds(50);
-    }
-    fp.close();
-
-    FLASH_ROM_SIZE = i;  // Size of File and Offset Align
-
-    debug("FLASH SIZE: %d", FLASH_ROM_SIZE);
-
-    ROM = 0;
-    /// if (handle1) spi_flash_munmap(handle1);
-    printf("Mapping %x (+%x)\n", SPI_FLASH_ADDRESS, FLASH_ROM_SIZE);
-    ESP_ERROR_CHECK(spi_flash_mmap(SPI_FLASH_ADDRESS, FLASH_ROM_SIZE,
-                                   SPI_FLASH_MMAP_DATA, &ROM, &handle1));
-    printf("mmap_res: handle=%d ptr=%p\n", handle1, ROM);
-    debug("[NES ROM MAPPED ON FLASH!]");
-    return (unsigned char *)ROM;
-  }
 }
 
 void onKeysCallback(uint8_t keyMap) { debug("on key press: %d\n", keyMap); }

@@ -68,11 +68,12 @@ void drawRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
                    uint8_t color);
 
 uint8_t drawChar(uint16_t Main_x, uint16_t Main_y, char Main_char,
-                 const char *font, uint8_t color = 48);
+                 const char *font, uint8_t color, uint8_t bkgColor);
 
-uint8_t drawString(uint8_t x, uint8_t y, const char *c, uint8_t color = 48);
+uint8_t drawString(uint8_t x, uint8_t y, const char *c, uint8_t color,
+                   uint8_t bkgColor);
 
-uint8_t drawString(const char *c, uint8_t color = 48);
+uint8_t drawString(const char *c, uint8_t color, uint8_t bkgColor);
 
 void setFont(const char *font);
 

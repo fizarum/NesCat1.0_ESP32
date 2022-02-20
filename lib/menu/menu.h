@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#define MENU_TEXT_COLOR 0x30
+#define MENU_BACKGROUND_COLOR 0x0c
+
 /**
  * @brief update active menu based on controls state
  * @param isJoyMovedHorizontally horizontal position of joystick: 1 for left, 2

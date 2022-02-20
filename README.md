@@ -6,7 +6,7 @@ Currently I'm working on software changes, but PCB reworking is planned as well
 Planned changes:
 
 - ~~move from SD7789 to ILI9341 display~~ done
-- add PCF8574N for keyboard (keys)
+- ~~add PCF8574N for keyboard (keys)~~ added for ABCD buttons
 - add charger module
 - change to Max98357A I2S module
 

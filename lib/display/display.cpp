@@ -5,7 +5,7 @@
 
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
-uint16_t screenBuffer[256];
+uint16_t screenBuffer[NES_SCREEN_WIDTH];
 uint8_t *screenMemory[256 + 1];
 
 // text position
@@ -129,7 +129,7 @@ void drawRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
 }
 
 uint8_t nescreen::drawChar(uint16_t Main_x, uint16_t Main_y, char Main_char,
-                           const char *font, uint8_t color) {
+                           const char *font, uint8_t color, uint8_t bkgColor) {
   uint8_t charWidth = font[0];   // x char size
   uint8_t charHeight = font[1];  // y char size
   uint8_t charOffset = font[2];  // char start offset
@@ -144,53 +144,52 @@ uint8_t nescreen::drawChar(uint16_t Main_x, uint16_t Main_y, char Main_char,
         if ((Xpos + 0 < charWidth) && (CHARLINE & 0b10000000) != 0)
           nescreen::drawPixel(Main_x + Xpos + 0, Main_y + Ypos, color);
         else
-          nescreen::drawPixel(Main_x + Xpos + 0, Main_y + Ypos,
-                              UNIVERSAL_BKG_COLOR);
+          nescreen::drawPixel(Main_x + Xpos + 0, Main_y + Ypos, bkgColor);
+
         if ((Xpos + 1 < charWidth) && (CHARLINE & 0b01000000) != 0)
           nescreen::drawPixel(Main_x + Xpos + 1, Main_y + Ypos, color);
         else
-          nescreen::drawPixel(Main_x + Xpos + 1, Main_y + Ypos,
-                              UNIVERSAL_BKG_COLOR);
+          nescreen::drawPixel(Main_x + Xpos + 1, Main_y + Ypos, bkgColor);
+
         if ((Xpos + 2 < charWidth) && (CHARLINE & 0b00100000) != 0)
           nescreen::drawPixel(Main_x + Xpos + 2, Main_y + Ypos, color);
         else
-          nescreen::drawPixel(Main_x + Xpos + 2, Main_y + Ypos,
-                              UNIVERSAL_BKG_COLOR);
+          nescreen::drawPixel(Main_x + Xpos + 2, Main_y + Ypos, bkgColor);
+
         if ((Xpos + 3 < charWidth) && (CHARLINE & 0b00010000) != 0)
           nescreen::drawPixel(Main_x + Xpos + 3, Main_y + Ypos, color);
         else
-          nescreen::drawPixel(Main_x + Xpos + 3, Main_y + Ypos,
-                              UNIVERSAL_BKG_COLOR);
+          nescreen::drawPixel(Main_x + Xpos + 3, Main_y + Ypos, bkgColor);
+
         if ((Xpos + 4 < charWidth) && (CHARLINE & 0b00001000) != 0)
           nescreen::drawPixel(Main_x + Xpos + 4, Main_y + Ypos, color);
         else
-          nescreen::drawPixel(Main_x + Xpos + 4, Main_y + Ypos,
-                              UNIVERSAL_BKG_COLOR);
+          nescreen::drawPixel(Main_x + Xpos + 4, Main_y + Ypos, bkgColor);
+
         if ((Xpos + 5 < charWidth) && (CHARLINE & 0b00000100) != 0)
           nescreen::drawPixel(Main_x + Xpos + 5, Main_y + Ypos, color);
         else
-          nescreen::drawPixel(Main_x + Xpos + 5, Main_y + Ypos,
-                              UNIVERSAL_BKG_COLOR);
+          nescreen::drawPixel(Main_x + Xpos + 5, Main_y + Ypos, bkgColor);
+
         if ((Xpos + 6 < charWidth) && (CHARLINE & 0b00000010) != 0)
           nescreen::drawPixel(Main_x + Xpos + 6, Main_y + Ypos, color);
         else
-          nescreen::drawPixel(Main_x + Xpos + 6, Main_y + Ypos,
-                              UNIVERSAL_BKG_COLOR);
+          nescreen::drawPixel(Main_x + Xpos + 6, Main_y + Ypos, bkgColor);
+
         if ((Xpos + 7 < charWidth) && (CHARLINE & 0b00000001) != 0)
           nescreen::drawPixel(Main_x + Xpos + 7, Main_y + Ypos, color);
         else
-          nescreen::drawPixel(Main_x + Xpos + 7, Main_y + Ypos,
-                              UNIVERSAL_BKG_COLOR);
+          nescreen::drawPixel(Main_x + Xpos + 7, Main_y + Ypos, bkgColor);
       }
   return charWidth;
 }
 
-uint8_t nescreen::drawString(uint8_t x, uint8_t y, const char *c,
-                             uint8_t color) {
+uint8_t nescreen::drawString(uint8_t x, uint8_t y, const char *c, uint8_t color,
+                             uint8_t bkgColor) {
   uint8_t width;
   uint8_t textwidth = 0;
   while (*c) {
-    width = nescreen::drawChar(x, y, *c, displayFontSet, color);
+    width = nescreen::drawChar(x, y, *c, displayFontSet, color, bkgColor);
     textwidth += (width);
     x += (width);
     c++;
@@ -199,8 +198,8 @@ uint8_t nescreen::drawString(uint8_t x, uint8_t y, const char *c,
   return textwidth;
 }
 
-uint8_t nescreen::drawString(const char *c, uint8_t color) {
-  return drawString(xPosOfText, yPosOfText, c, color);
+uint8_t nescreen::drawString(const char *c, uint8_t color, uint8_t bkgColor) {
+  return drawString(xPosOfText, yPosOfText, c, color, bkgColor);
 }
 
 void nescreen::setFont(const char *font) { displayFontSet = font; }
