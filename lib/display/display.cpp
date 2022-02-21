@@ -3,6 +3,8 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 
+#include "Retro8x16.c"
+
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
 uint16_t screenBuffer[NES_SCREEN_WIDTH];
@@ -26,6 +28,7 @@ void displayInit() {
   tft.setTextSize(1);
   tft.printf("loading...");
   prepareVideoMemory();
+  nescreen::setFont(Retro8x16);
 }
 
 void nescreen::drawPixel(uint8_t X, uint8_t Y, uint8_t colorIndex) {
@@ -46,14 +49,14 @@ void nescreen::writeFrame(const uint16_t x, const uint16_t y,
   uint8_t index;
   int16_t absYPos;
 
-  for (uint16_t i = 0; i < height; i++) {
+  for (uint16_t hLineIndex = 0; hLineIndex < height; hLineIndex++) {
     for (uint16_t X_ = 8; X_ < 248; X_++) {  // not 256 the 240
-      index = (UNIVERSAL_BKG_COLOR & (screenMemory[i])[X_]);
+      index = (UNIVERSAL_BKG_COLOR & (screenMemory[hLineIndex])[X_]);
       screenBuffer[X_] = nes_16bit[index];
     }
 
     /// PAL optimalisation in this case:
-    absYPos = y + i;
+    absYPos = y + hLineIndex;
     tft.drawRGBBitmap(x + 0, absYPos, screenBuffer, 48, 1);
     tft.drawRGBBitmap(x + 48, absYPos, screenBuffer + 48, 48, 1);
     tft.drawRGBBitmap(x + 96, absYPos, screenBuffer + 96, 48, 1);
@@ -200,6 +203,15 @@ uint8_t nescreen::drawString(uint8_t x, uint8_t y, const char *c, uint8_t color,
 
 uint8_t nescreen::drawString(const char *c, uint8_t color, uint8_t bkgColor) {
   return drawString(xPosOfText, yPosOfText, c, color, bkgColor);
+}
+
+void nescreen::drawText(const char *text, uint8_t color, uint8_t bkgColor) {
+  if (text[strlen(text) - 1] == '\n') {
+    nescreen::drawString(text, color, bkgColor);
+    nescreen::setTextNewLine();
+  } else {
+    nescreen::drawString(text, color, bkgColor);
+  }
 }
 
 void nescreen::setFont(const char *font) { displayFontSet = font; }

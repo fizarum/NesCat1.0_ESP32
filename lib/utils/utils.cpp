@@ -35,6 +35,29 @@ void debug(const char *templateString, const char *value) {
   debug(debugBuff);
 }
 
+/**
+ * @brief Set (to 1) the bit in byte
+ *
+ * @param source source byte
+ * @param position of bit to change, counts from 0
+ * @return uint8_t
+ */
+uint8_t bit::setBit(uint8_t source, uint8_t position) {
+  return source | (1UL << position);
+}
+
+/**
+ * @brief Reset (to 0) the bit in byte
+ *
+ * @param source source byte
+ * @param position of bit to change, counts from 0
+ * @return uint8_t
+ */
+uint8_t bit::resetBit(uint8_t source, uint8_t position) {
+  // if position is 1 then it moves 0001 to 0010
+  return source & (~(1UL << position));
+}
+
 void sortStrings(char *arr[], int n) {
   char temp[MAXFILENAME_LENGTH];
 

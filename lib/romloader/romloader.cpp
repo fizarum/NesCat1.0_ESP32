@@ -20,6 +20,8 @@ unsigned char *romdata = 0;
 
 char loadmessage[64];
 
+char *ROMFILENAME;  // NES load File name
+
 // constant data pointer for direct access
 const void *ROM;
 

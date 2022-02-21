@@ -36,6 +36,9 @@
 // https://emudev.de/nes-emulator/palettes-attribute-tables-and-sprites/ or
 // https://helloacm.com/tutorial-7-c-programming-in-6502-colour-setting-for-nes/
 #define UNIVERSAL_BKG_COLOR 0x3f
+// menu part
+#define MENU_TEXT_COLOR 0x30
+#define MENU_BACKGROUND_COLOR 0x0c
 
 #include <SPI.h>
 
@@ -74,6 +77,9 @@ uint8_t drawString(uint8_t x, uint8_t y, const char *c, uint8_t color,
                    uint8_t bkgColor);
 
 uint8_t drawString(const char *c, uint8_t color, uint8_t bkgColor);
+
+void drawText(const char *text, uint8_t color = MENU_TEXT_COLOR,
+              uint8_t bkgColor = MENU_BACKGROUND_COLOR);
 
 void setFont(const char *font);
 

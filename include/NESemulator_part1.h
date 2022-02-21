@@ -1,7 +1,9 @@
 #ifndef NESEMULATOR_1_H
 #define NESEMULATOR_1_H
 
-#include "utils.h"
+#include <display.h>
+#include <fstorage.h>
+#include <utils.h>
 
 //--------------------------------------------------------------------------------
 /// TYPEDEFS:
@@ -45,6 +47,9 @@
 #define NES6502_BANKSHIFT 12
 #define NES6502_BANKSIZE (0x10000 / NES6502_NUMBANKS)
 #define NES6502_BANKMASK (NES6502_BANKSIZE - 1)
+
+SdFile dirFile;
+SdFile file;
 
 uint8_t NES_POWER = 1;
 
@@ -331,19 +336,19 @@ char *NESEXPLORE(char *path) {
   while (1) {
     PAGE = CURSOR / FILESPERPAGE;
     if (!NamesDisplayed) {
-      screenmemory_fillscreen(63);  // black color
-      set_font_XY(16, 24);
-      draw_string(path);
+      nescreen::fillscreen();
+      nescreen::setTextPosition(16, 24);
+      nescreen::drawText(path);
+      updateScreen();
 
       for (num = PAGE * FILESPERPAGE;
            num < ((PAGE + 1) * FILESPERPAGE) && num < loadedFileNames; num++) {
-        set_font_XY(40, 48 + 20 * (num % FILESPERPAGE));
-        /// draw_string(filename[num],48);
+        nescreen::setTextPosition(40, 48 + 20 * (num % FILESPERPAGE));
 
         if (filename[num][strlen(filename[num]) - 1] == '/')
-          draw_string(filename[num], 23);
+          nescreen::drawText(filename[num], 23);
         else
-          draw_string(filename[num], 48);
+          nescreen::drawText(filename[num], 48);
 
         delay(1);
       }
@@ -351,8 +356,8 @@ char *NESEXPLORE(char *path) {
     }
 
     // Draw Cursor
-    set_font_XY(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
-    draw_string("->", 48);
+    nescreen::setTextPosition(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
+    nescreen::drawText("->", 48);
     delay(200);
 
     // PROCESS CURSOR SELECTION
@@ -394,8 +399,8 @@ char *NESEXPLORE(char *path) {
     }
 
     // Empty Cursor
-    set_font_XY(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
-    draw_string("  ", 48);
+    nescreen::setTextPosition(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
+    nescreen::drawText("  ", 48);
 
     if (JOY_SHARE == 1 && JOY_OPTIONS == 1) {
       JOY_SHARE = 0;
