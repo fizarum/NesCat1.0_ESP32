@@ -3,8 +3,7 @@
 
 #include <stdint.h>
 
-#define MENU_TEXT_COLOR 0x30
-#define MENU_BACKGROUND_COLOR 0x0c
+void menuInit();
 
 /**
  * @brief update active menu based on controls state

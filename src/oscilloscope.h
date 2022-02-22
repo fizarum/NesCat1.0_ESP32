@@ -1,4 +1,13 @@
+#ifndef OSCILLOSCOPE_H
+#define OSCILLOSCOPE_H
+
 #if COMPOSITE_VIDEO_ENABLED
+
+#include "rom/lldesc.h"
+#include "soc/rtc.h"
+
+// Oscilloscope INPUT:
+#define ADC_CHANNEL ADC1_CHANNEL_6  // GPIO34
 
 #define NUM_SAMPLES 1000  // number of samples
 #define BUFF_SIZE 50000
@@ -45,22 +54,6 @@ class mean_filter {
   int _values = 5;
   float _data[100] = {0};
 };
-//--------------------------------------------------------------------------------
-float to_scale(float reading) {
-  float temp =  /// reading-24576;
-      TFT_HEIGHT -
-      ((((float)((reading - 24576.0) / 4095.0) +
-         (float)(v_offset / 3.3)  /// vertical offset is zero in VOLTS
-         ) *
-        3300 / (float)(v_div * 8)  /// vertically 8divs
-        )) *
-          (TFT_HEIGHT - 1) -
-      1;
-  temp = temp * (float)(v_scale);  /// vertical scale to %
-  temp = temp + (float)(TFT_HEIGHT *
-                        ((1 - v_scale) / 2));  // vertical offset from scale/2 %
-  return temp;
-}
 //--------------------------------------------------------------------------------
 float to_voltage(float reading) { return (reading - 24576.0) / 4095.0 * 3.3; }
 //--------------------------------------------------------------------------------
@@ -702,88 +695,10 @@ void core1_task(void *pvParameters) {
       default:
         I2S0.sample_rate_conf.rx_bck_div_num = 2;  // 1x scale time base
     }
-
-    //--------------------------------------------------------------------------------
-    // draw sprite:
-
-    float px_h_offset =
-        (float)(TFT_WIDTH *
-                ((1 - h_scale) / 2));  // vertical offset from scale/2 %
-
-    uint16_t n_data = 0, o_data = to_scale(dma_buff[0][0]);
-
-    for (uint32_t i = 1; i < 240; i++) {
-      uint32_t index = 0;
-
-      switch (TIMEBASE) {
-        case 2:
-          index = px_h_offset + trigger0 +
-                  (uint32_t)((i + 1) *
-                             1.1135);  /// waveform is triggered.... 2.0us/DIV
-          break;
-        case 5:
-          index = px_h_offset + trigger0 +
-                  (uint32_t)((i + 1) *
-                             2.8636);  /// waveform is triggered.... 5.0us/DIV
-          break;
-        case 10:
-          index = px_h_offset + trigger0 +
-                  (uint32_t)((i + 1) * 5.7272 /
-                             2);  /// waveform is triggered.... 10.0us/DIV
-          break;
-        case 20:
-          index = px_h_offset + trigger0 +
-                  (uint32_t)((i + 1) * 1.1135 *
-                             5);  /// waveform is triggered.... 10x2.0us/DIV
-          break;
-        case 50:
-          index = px_h_offset + trigger0 +
-                  (uint32_t)((i + 1) * 2.7920 *
-                             5);  /// waveform is triggered.... 10x5.0us/DIV
-          break;
-        case 100:
-          index = px_h_offset + trigger0 +
-                  (uint32_t)((i + 1) * 5.5840 *
-                             2.5);  /// waveform is triggered.... 10x10.0us/DIV
-          break;
-        case 200:
-          index = px_h_offset + trigger0 +
-                  (uint32_t)((i + 1) * 11.1680 *
-                             2.5);  /// waveform is triggered.... 2.0us/DIV
-          break;
-        case 500:
-          index = px_h_offset + trigger0 +
-                  (uint32_t)((i + 1) * 27.9200 *
-                             2.5);  /// waveform is triggered.... 5.0us/DIV
-          break;
-        case 1000:
-          index = px_h_offset + trigger0 +
-                  (uint32_t)((i + 1) * 55.8400 *
-                             2.5);  /// waveform is triggered.... 10.0us/DIV
-          break;
-        case 2000:
-          index = px_h_offset + trigger0 +
-                  (uint32_t)((i + 1) * 111.6800 *
-                             2.5);  /// waveform is triggered.... 2.0us/DIV
-          break;
-        case 5000:
-          index = px_h_offset + trigger0 +
-                  (uint32_t)((i + 1) * 279.2000 / 2 *
-                             5.0);  /// waveform is triggered.... 5.0us/DIV
-          break;
-        case 10000:
-          index = px_h_offset + trigger0 +
-                  (uint32_t)((i + 1) * 558.4000 / 2 *
-                             5.0);  /// waveform is triggered.... 10.0us/DIV
-          break;
-        default:
-          index = px_h_offset + trigger0 +
-                  (uint32_t)((i + 1) *
-                             0.944);  /// waveform is triggered.... 2.0us/DIV
-      }
-    }
     //--------------------------------------------------------------------------------
     I2S0.conf.rx_start = 1;  // start DMA ADC
   }
 }
 #endif
+
+#endif  // OSCILLOSCOPE_H

@@ -2,6 +2,20 @@
 //*  COMPOSITE VIDEO OUT *//
 //*******************************************************************************//
 
+#ifndef COMPOSITE_VIDEO_H
+#define COMPOSITE_VIDEO_H
+
+#include <audio.h>
+
+#include "driver/dac.h"
+// todo: move this include(i2s.h) to audio module
+#include "driver/i2s.h"
+#include "rom/lldesc.h"
+#include "soc/rtc.h"
+
+// COMPOSITE_VIDEO: - //DAC_GPIO25_CHANNEL or DAC_GPIO26_CHANNEL
+#define VIDEO_OUT (DAC_GPIO26_CHANNEL)
+
 #define NTSC_COLOR_CLOCKS_PER_SCANLINE \
   228  // really 227.5 for NTSC but want to avoid half phase fiddling for now
 #define NTSC_FREQUENCY (315000000.0 / 88)  /// 315000000.0/88
@@ -616,4 +630,4 @@ void initCompositeVideo(int samples_per_cc, int machine,
   video_init_hw(_line_width, _samples_per_cc);  // init the hardware
 }
 
-//********************************************************************************
+#endif  // COMPOSITE_VIDEO_H

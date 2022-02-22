@@ -12,9 +12,11 @@ PCF8574 pcf8574(0x20);
 
 uint8_t keyPressedFlag = 0;
 uint8_t keysState;
+uint8_t joystickState;
 
 // callback for keyboard
 void (*onKeysCallbackPtr)(uint8_t);
+void (*onJoysticMovedPtr)(uint8_t);
 
 // filters only pressed keys
 uint8_t filterOnlyPressedKeys(uint8_t keysState, uint8_t keysStateLength);
@@ -47,14 +49,15 @@ unsigned long lastRequestedTimeOfJoystic = 0;
 void requestKeysState();
 void requestJoystickStateByPullMethod();
 
-void _onKeyPressed() { keyPressedFlag = 1; }
+void onKeyPressedInt() { keyPressedFlag = 1; }
 
 /**
  * @brief should be called inside of setup() function
  */
-void controlsInit(void (*onKeysCallback)(uint8_t)) {
+void controlsInit(void (*onKeysCallback)(uint8_t),
+                  void (*onJoysticMovedCallback)(uint8_t)) {
   pinMode(ESP_INT_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(ESP_INT_PIN), _onKeyPressed, FALLING);
+  attachInterrupt(digitalPinToInterrupt(ESP_INT_PIN), onKeyPressedInt, FALLING);
 
   pcf8574.pinMode(P0, INPUT);
   pcf8574.pinMode(P1, INPUT);
@@ -69,6 +72,7 @@ void controlsInit(void (*onKeysCallback)(uint8_t)) {
     debug("init pcf8574... error");
   }
   onKeysCallbackPtr = onKeysCallback;
+  onJoysticMovedPtr = onJoysticMovedCallback;
 }
 
 /**
@@ -112,11 +116,36 @@ void requestJoystickStateByPullMethod() {
     // default range is from 0 to 4096
     uint16_t joystickHorizontalPos = analogRead(PIN_LEFT);
     uint16_t joystickVerticalPos = analogRead(PIN_UP);
+    // reset previous state
+    joystickState = 0;
 
-    if (joystickHorizontalPos <= JOY_NORMAL_VAL - JOY_TRESHOLD) JOY_LEFT = 1;
-    if (joystickHorizontalPos >= JOY_NORMAL_VAL + JOY_TRESHOLD) JOY_RIGHT = 1;
-    if (joystickVerticalPos <= JOY_NORMAL_VAL - JOY_TRESHOLD) JOY_DOWN = 1;
-    if (joystickVerticalPos >= JOY_NORMAL_VAL + JOY_TRESHOLD) JOY_UP = 1;
+    // left
+    if (joystickHorizontalPos <= JOY_NORMAL_VAL - JOY_TRESHOLD) {
+      joystickState = bit::setBit(joystickState, 0);
+      JOY_LEFT = 1;
+    }
+
+    // right
+    if (joystickHorizontalPos >= JOY_NORMAL_VAL + JOY_TRESHOLD) {
+      joystickState = bit::setBit(joystickState, 1);
+      JOY_RIGHT = 1;
+    }
+
+    // down
+    if (joystickVerticalPos <= JOY_NORMAL_VAL - JOY_TRESHOLD) {
+      joystickState = bit::setBit(joystickState, 2);
+      JOY_DOWN = 1;
+    }
+
+    // top
+    if (joystickVerticalPos >= JOY_NORMAL_VAL + JOY_TRESHOLD) {
+      joystickState = bit::setBit(joystickState, 3);
+      JOY_UP = 1;
+    }
+
+    if (joystickState != 0) {
+      onJoysticMovedPtr(joystickState);
+    }
 
     lastRequestedTimeOfJoystic = now;
   }
