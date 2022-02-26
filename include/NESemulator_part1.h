@@ -5,6 +5,8 @@
 #include <fstorage.h>
 #include <utils.h>
 
+#include "nes/nes.h"
+
 //--------------------------------------------------------------------------------
 /// TYPEDEFS:
 
@@ -15,7 +17,6 @@
 // quell stupid compiler warnings
 #define UNUSED(x) ((x) = (x))
 
-//================================================================================
 // AUDIO_SETUP
 #define DEFAULT_SAMPLERATE 24000
 #define DEFAULT_FRAGSIZE 60  // max.256, default 240
@@ -33,8 +34,6 @@
 #define NES_REFRESH_RATE 60
 #endif
 
-#define MAX_MEM_HANDLERS 32
-
 #define NES_CLOCK_DIVIDER 12  // default: 12
 //#define  NES_MASTER_CLOCK     21477272.727272727272
 #define NES_MASTER_CLOCK (236250000 / 11)
@@ -43,7 +42,6 @@
 
 #define NES_RAMSIZE 0x800
 
-#define NES6502_NUMBANKS 16
 #define NES6502_BANKSHIFT 12
 #define NES6502_BANKSIZE (0x10000 / NES6502_NUMBANKS)
 #define NES6502_BANKMASK (NES6502_BANKSIZE - 1)
@@ -55,7 +53,6 @@ uint8_t NES_POWER = 1;
 
 void (*audio_callback)(void *buffer, int length) = NULL;
 
-//********************************************************************************
 /* read counters */
 int pad0_readcount, pad1_readcount, ppad_readcount, ark_readcount;
 
@@ -68,7 +65,6 @@ void input_strobe(void) {
 
 uint8_t get_pad0(void) {
   uint8_t value;
-  ///  value = (uint8_t) retrieve_type(INP_JOYPAD0);
   value = 0;
 
   //  12, 33, 9, 10 pin not usable
@@ -118,10 +114,6 @@ uint8_t get_pad0(void) {
   /// return (0x40 | ((value >> pad0_readcount++) & 1));
   return (((value >> pad0_readcount++) & 1));
 }
-//********************************************************************************
-//================================================================================
-
-//********************************************************************************
 //********************************************************************************
 //********************************************************************************
 TimerHandle_t timer_1;
@@ -190,13 +182,8 @@ void osd_setsound(void (*playfunc)(void *buffer, int length)) {
   audio_callback = playfunc;
 }
 
-void osd_stopsound(void)
+void osd_stopsound(void) { audio_callback = NULL; }
 
-{
-  audio_callback = NULL;
-}
-
-void osd_getsoundinfo(sndinfo_t *info);
 void osd_getsoundinfo(sndinfo_t *info) {
   info->sample_rate = DEFAULT_SAMPLERATE;
   info->bps = 16;
@@ -320,11 +307,8 @@ char *NESEXPLORE(char *path) {
 
   dirFile.close();
 
-  if (DEBUG) {
-    Serial.println("--------------------------------------");
-    Serial.print("Count of loaded File Names:");
-    Serial.println(loadedFileNames);
-  }
+  debug("--------------------------------------");
+  debug("Count of loaded File Names: %d\n", loadedFileNames);
 
   sortStrings(filename, loadedFileNames);
 
@@ -457,10 +441,7 @@ char *NESEXPLORE(char *path) {
       ///         TOTALFILES=loadedFileNames;
 
       sprintf(MAINPATH, "%s%s", path, filename[CURSOR]);
-      if (DEBUG) Serial.println(MAINPATH);
-
-      ///         sprintf(TRACKNAME, "%s", filename[CURSOR]);
-
+      debug(MAINPATH);
       return MAINPATH;  // START //A
     }
     if ((JOY_SQUARE == 1) && JOY_OPTIONS == 0) {
@@ -501,592 +482,16 @@ char *NESBrowse(char *path) {
       }
     }
 
-  for (uint16_t tmp = 0; tmp < MAXFILES; tmp++) {
-    ///    filename[tmp] = (char*)malloc(MAXFILENAME_LENGTH);
-    ///    fileext[tmp] = (char*)malloc(4);
-  }
-
   EXIT = false;
   //................................................................................
   while (EXIT == false && path[strlen(path) - 1] == '/') {
     path = NESEXPLORE(path);
     Serial.println(path);
   }
-  //................................................................................
-
-  for (uint16_t tmp = 0; tmp < MAXFILES; tmp++) {
-    ///      free(filename[tmp]);
-    ///      free(fileext[tmp]);
-  }
   return path;
 }
 //________________________________________________________________________________
 
-//--------------------------------------------------------------------------------
-// CPU.H:
-// Define this to enable decimal mode in ADC / SBC (not needed in NES)
-//#define  NES6502_DECIMAL
-
-// P (flag) register bitmasks
-#define N_FLAG 0x80
-#define V_FLAG 0x40
-#define R_FLAG 0x20  // Reserved, always 1
-#define B_FLAG 0x10
-#define D_FLAG 0x08
-#define I_FLAG 0x04
-#define Z_FLAG 0x02
-#define C_FLAG 0x01
-
-// Vector addresses
-#define NMI_VECTOR 0xFFFA
-#define RESET_VECTOR 0xFFFC
-#define IRQ_VECTOR 0xFFFE
-
-// cycle counts for interrupts
-#define INT_CYCLES 7
-#define RESET_CYCLES 6
-
-#define NMI_MASK 0x01
-#define IRQ_MASK 0x02
-
-// Stack is located on 6502 page 1
-#define STACK_OFFSET 0x0100
-
-typedef struct {
-  uint32_t min_range, max_range;
-  uint8_t (*read_func)(uint32_t address);
-} nes6502_memread;
-
-typedef struct {
-  uint32_t min_range, max_range;
-  void (*write_func)(uint32_t address, uint8_t value);
-} nes6502_memwrite;
-
-typedef struct {
-  uint8_t *mem_page[NES6502_NUMBANKS];  // memory page pointers
-  nes6502_memread *read_handler;
-  nes6502_memwrite *write_handler;
-  uint32_t pc_reg;
-  uint8_t a_reg, p_reg;
-  uint8_t x_reg, y_reg;
-  uint8_t s_reg;
-  uint8_t jammed;  // is processor jammed?
-  uint8_t int_pending, int_latency;
-  int32_t total_cycles, burn_cycles;
-} nes6502_context;
-
-//--------------------------------------------------------------------------------
-// PPU.H:
-// PPU register defines
-#define PPU_CTRL0 0x2000
-#define PPU_CTRL1 0x2001
-#define PPU_STAT 0x2002
-#define PPU_OAMADDR 0x2003
-#define PPU_OAMDATA 0x2004
-#define PPU_SCROLL 0x2005
-#define PPU_VADDR 0x2006
-#define PPU_VDATA 0x2007
-
-#define PPU_OAMDMA 0x4014
-#define PPU_JOY0 0x4016
-#define PPU_JOY1 0x4017
-
-// $2000
-#define PPU_CTRL0F_NMI 0x80
-#define PPU_CTRL0F_OBJ16 0x20
-#define PPU_CTRL0F_BGADDR 0x10
-#define PPU_CTRL0F_OBJADDR 0x08
-#define PPU_CTRL0F_ADDRINC 0x04
-#define PPU_CTRL0F_NAMETAB 0x03
-
-// $2001
-#define PPU_CTRL1F_OBJON 0x10
-#define PPU_CTRL1F_BGON 0x08
-#define PPU_CTRL1F_OBJMASK 0x04
-#define PPU_CTRL1F_BGMASK 0x02
-
-// $2002
-#define PPU_STATF_VBLANK 0x80
-#define PPU_STATF_STRIKE 0x40
-#define PPU_STATF_MAXSPRITE 0x20
-
-// Sprite attribute byte bitmasks
-#define OAMF_VFLIP 0x80
-#define OAMF_HFLIP 0x40
-#define OAMF_BEHIND 0x20
-
-// Maximum number of sprites per horizontal scanline
-#define PPU_MAXSPRITE 8
-
-// some mappers do *dumb* things
-typedef void (*ppulatchfunc_t)(uint32_t address, uint8_t value);
-typedef void (*ppuvromswitch_t)(uint8_t value);
-
-typedef struct ppu_s {
-  // big nasty memory chunks
-  uint8_t nametab[0x1000];
-  uint8_t oam[256];
-  uint8_t palette[32];
-  uint8_t *page[16];
-
-  // hardware registers
-  uint8_t ctrl0, ctrl1, stat, oam_addr;
-  uint32_t vaddr, vaddr_latch;
-  int tile_xofs, flipflop;
-  int vaddr_inc;
-  uint32_t tile_nametab;
-
-  uint8_t obj_height;
-  uint32_t obj_base, bg_base;
-
-  bool bg_on, obj_on;
-  bool obj_mask, bg_mask;
-
-  uint8_t latch, vdata_latch;
-  uint8_t strobe;
-
-  bool strikeflag;
-  uint32_t strike_cycle;
-
-  // callbacks for naughty mappers
-  ppulatchfunc_t latchfunc;
-  ppuvromswitch_t vromswitch;
-
-  bool vram_accessible;
-
-  bool vram_present;
-  bool drawsprites;
-} ppu_t;
-//--------------------------------------------------------------------------------
-// APU.H:
-// define this for realtime generated noise
-#define REALTIME_NOISE
-
-#define APU_WRA0 0x4000
-#define APU_WRA1 0x4001
-#define APU_WRA2 0x4002
-#define APU_WRA3 0x4003
-#define APU_WRB0 0x4004
-#define APU_WRB1 0x4005
-#define APU_WRB2 0x4006
-#define APU_WRB3 0x4007
-#define APU_WRC0 0x4008
-#define APU_WRC2 0x400A
-#define APU_WRC3 0x400B
-#define APU_WRD0 0x400C
-#define APU_WRD2 0x400E
-#define APU_WRD3 0x400F
-#define APU_WRE0 0x4010
-#define APU_WRE1 0x4011
-#define APU_WRE2 0x4012
-#define APU_WRE3 0x4013
-
-#define APU_SMASK 0x4015
-
-// length of generated noise
-#define APU_NOISE_32K 0x7FFF
-#define APU_NOISE_93 93
-
-#define APU_BASEFREQ 1789772.7272727272727272
-
-// channel structures:  As much data as possible is precalculated, to keep the
-// sample processing as lean as possible
-
-typedef struct rectangle_s {
-  uint8_t regs[4];
-
-  bool enabled;
-
-  float accum;
-  int32_t freq;
-  int32_t output_vol;
-  bool fixed_envelope;
-  bool holdnote;
-  uint8_t volume;
-
-  int32_t sweep_phase;
-  int32_t sweep_delay;
-  bool sweep_on;
-  uint8_t sweep_shifts;
-  uint8_t sweep_length;
-  bool sweep_inc;
-
-  // this may not be necessary in the future
-  int32_t freq_limit;
-  int32_t env_phase;
-  int32_t env_delay;
-  uint8_t env_vol;
-
-  int vbl_length;
-  uint8_t adder;
-  int duty_flip;
-} rectangle_t;
-
-typedef struct triangle_s {
-  uint8_t regs[3];
-
-  bool enabled;
-
-  float accum;
-  int32_t freq;
-  int32_t output_vol;
-
-  uint8_t adder;
-
-  bool holdnote;
-  bool counter_started;
-  // quasi-hack
-  int write_latency;
-
-  int vbl_length;
-  int linear_length;
-} triangle_t;
-
-typedef struct noise_s {
-  uint8_t regs[3];
-
-  bool enabled;
-
-  float accum;
-  int32_t freq;
-  int32_t output_vol;
-
-  int32_t env_phase;
-  int32_t env_delay;
-  uint8_t env_vol;
-  bool fixed_envelope;
-  bool holdnote;
-
-  uint8_t volume;
-
-  int vbl_length;
-
-#ifdef REALTIME_NOISE
-  uint8_t xor_tap;
-#else
-  bool short_sample;
-  int cur_pos;
-#endif  // REALTIME_NOISE
-} noise_t;
-
-typedef struct dmc_s {
-  uint8_t regs[4];
-
-  // bodge for timestamp queue
-  bool enabled;
-
-  float accum;
-  int32_t freq;
-  int32_t output_vol;
-
-  uint32_t address;
-  uint32_t cached_addr;
-  int dma_length;
-  int cached_dmalength;
-  uint8_t cur_byte;
-
-  bool looping;
-  bool irq_gen;
-  bool irq_occurred;
-
-} dmc_t;
-
-enum { APU_FILTER_NONE, APU_FILTER_LOWPASS, APU_FILTER_WEIGHTED };
-
-typedef struct {
-  uint32_t min_range, max_range;
-  uint8_t (*read_func)(uint32_t address);
-} apu_memread;
-
-typedef struct {
-  uint32_t min_range, max_range;
-  void (*write_func)(uint32_t address, uint8_t value);
-} apu_memwrite;
-
-// external sound chip stuff
-typedef struct apuext_s {
-  int (*init)(void);
-  void (*shutdown)(void);
-  void (*reset)(void);
-  int32_t (*process)(void);
-  apu_memread *mem_read;
-  apu_memwrite *mem_write;
-} apuext_t;
-
-typedef struct apu_s {
-  rectangle_t rectangle[2];
-  triangle_t triangle;
-  noise_t noise;
-  dmc_t dmc;
-  uint8_t enable_reg;
-
-  void *buffer;  // pointer to output buffer
-  int num_samples;
-
-  uint8_t mix_enable;
-  int filter_type;
-
-  double base_freq;
-  float cycle_rate;
-
-  int sample_rate;
-  int sample_bits;
-  int refresh_rate;
-
-  void (*process)(void *buffer, int num_samples);
-  void (*irq_callback)(void);
-  uint8_t (*irqclear_callback)(void);
-
-  // external sound chip
-  apuext_t *ext;
-} apu_t;
-//--------------------------------------------------------------------------------
-// ROM.H:
-typedef enum { MIRROR_HORIZ = 0, MIRROR_VERT = 1 } mirror_t;
-
-#define ROM_FLAG_BATTERY 0x01
-#define ROM_FLAG_TRAINER 0x02
-#define ROM_FLAG_FOURSCREEN 0x04
-#define ROM_FLAG_VERSUS 0x08
-
-typedef struct rominfo_s {
-  // pointers to ROM and VROM
-  uint8_t *rom, *vrom;
-
-  // pointers to SRAM and VRAM
-  uint8_t *sram, *vram;
-
-  // number of banks
-  int rom_banks, vrom_banks;
-  int sram_banks, vram_banks;
-
-  int mapper_number;
-  mirror_t mirror;
-
-  uint8_t flags;
-} rominfo_t;
-
-typedef struct inesheader_s {
-  uint8_t ines_magic[4];
-  uint8_t rom_banks;
-  uint8_t vrom_banks;
-  uint8_t rom_type;
-  uint8_t mapper_hinybble;
-  uint8_t reserved[8];
-} inesheader_t;
-//--------------------------------------------------------------------------------
-// LIBSNS.H:
-#define TAG_LENGTH 4
-
-struct mapper1Data {
-  unsigned char registers[4];
-  unsigned char latch;
-  unsigned char numberOfBits;
-};
-
-struct mapper4Data {
-  unsigned char irqCounter;
-  unsigned char irqLatchCounter;
-  unsigned char irqCounterEnabled;
-  unsigned char last8000Write;
-};
-
-struct mapper5Data {
-  unsigned char
-      dummy;  // needed for some compilers; remove if any members are added
-};
-
-struct mapper6Data {
-  unsigned char irqCounter;
-  unsigned char irqLatchCounter;
-  unsigned char irqCounterEnabled;
-  unsigned char last43FEWrite;
-  unsigned char last4500Write;
-};
-
-struct mapper9Data {
-  unsigned char latch[2];
-  unsigned char lastB000Write;
-  unsigned char lastC000Write;
-  unsigned char lastD000Write;
-  unsigned char lastE000Write;
-};
-
-struct mapper10Data {
-  unsigned char latch[2];
-  unsigned char lastB000Write;
-  unsigned char lastC000Write;
-  unsigned char lastD000Write;
-  unsigned char lastE000Write;
-};
-
-struct mapper16Data {
-  unsigned char irqCounterLowByte;
-  unsigned char irqCounterHighByte;
-  unsigned char irqCounterEnabled;
-};
-
-struct mapper17Data {
-  unsigned char irqCounterLowByte;
-  unsigned char irqCounterHighByte;
-  unsigned char irqCounterEnabled;
-};
-
-struct mapper18Data {
-  unsigned char irqCounterLowByte;
-  unsigned char irqCounterHighByte;
-  unsigned char irqCounterEnabled;
-};
-
-struct mapper19Data {
-  unsigned char irqCounterLowByte;
-  unsigned char irqCounterHighByte;
-  unsigned char irqCounterEnabled;
-};
-
-struct mapper21Data {
-  unsigned char irqCounter;
-  unsigned char irqCounterEnabled;
-};
-
-struct mapper24Data {
-  unsigned char irqCounter;
-  unsigned char irqCounterEnabled;
-};
-
-struct mapper40Data {
-  unsigned char irqCounter;
-  unsigned char irqCounterEnabled;
-};
-
-struct mapper69Data {
-  unsigned char irqCounterLowByte;
-  unsigned char irqCounterHighByte;
-  unsigned char irqCounterEnabled;
-};
-
-struct mapper90Data {
-  unsigned char irqCounter;
-  unsigned char irqLatchCounter;
-  unsigned char irqCounterEnabled;
-};
-
-struct mapper224Data {
-  unsigned char chrRamWriteable;
-};
-
-struct mapper225Data {
-  unsigned char prgSize;
-  unsigned char registers[4];
-};
-
-struct mapper226Data {
-  unsigned char chrRamWriteable;
-};
-
-struct mapper228Data {
-  unsigned char prgChipSelected;
-};
-
-struct mapper230Data {
-  unsigned char numberOfResets;
-};
-
-typedef struct _SnssFileHeader {
-  char tag[TAG_LENGTH + 1];
-  unsigned int numberOfBlocks;
-} SnssFileHeader;
-
-// this block appears before every block in the SNSS file
-typedef struct _SnssBlockHeader {
-  char tag[TAG_LENGTH + 1];
-  unsigned int blockVersion;
-  unsigned int blockLength;
-} SnssBlockHeader;
-
-#define MAPPER_BLOCK_LENGTH 0x98
-typedef struct _SnssMapperBlock {
-  unsigned short prgPages[4];
-  unsigned short chrPages[8];
-
-  union _extraData {
-    unsigned char mapperData[128];
-    struct mapper1Data mapper1;
-    struct mapper4Data mapper4;
-    struct mapper5Data mapper5;
-    struct mapper6Data mapper6;
-    struct mapper9Data mapper9;
-    struct mapper10Data mapper10;
-    struct mapper16Data mapper16;
-    struct mapper17Data mapper17;
-    struct mapper18Data mapper18;
-    struct mapper19Data mapper19;
-    struct mapper21Data mapper21;
-    struct mapper24Data mapper24;
-    struct mapper40Data mapper40;
-    struct mapper69Data mapper69;
-    struct mapper90Data mapper90;
-    struct mapper224Data mapper224;
-    struct mapper225Data mapper225;
-    struct mapper226Data mapper226;
-    struct mapper228Data mapper228;
-    struct mapper230Data mapper230;
-  } extraData;
-} SnssMapperBlock;
-//--------------------------------------------------------------------------------
-// MMC.H:
-#define MMC_LASTBANK -1
-
-typedef struct {
-  uint32_t min_range, max_range;
-  uint8_t (*read_func)(uint32_t address);
-} map_memread;
-
-typedef struct {
-  uint32_t min_range, max_range;
-  void (*write_func)(uint32_t address, uint8_t value);
-} map_memwrite;
-
-typedef struct mapintf_s {
-  int number;
-  const char *name;
-  void (*init)(void);
-  void (*vblank)(void);
-  void (*hblank)(int vblank);
-  void (*get_state)(SnssMapperBlock *state);
-  void (*set_state)(SnssMapperBlock *state);
-  map_memread *mem_read;
-  map_memwrite *mem_write;
-  apuext_t *sound_ext;
-} mapintf_t;
-
-typedef struct mmc_s {
-  mapintf_t *intf;
-  rominfo_t *cart;  // link it back to the cart
-} mmc_t;
-//--------------------------------------------------------------------------------
-// NES.H
-
-typedef struct nes_s {
-  // hardware things
-  nes6502_context *cpu;
-  nes6502_memread readhandler[MAX_MEM_HANDLERS];
-  nes6502_memwrite writehandler[MAX_MEM_HANDLERS];
-
-  ppu_t *ppu;
-  apu_t *apu;
-  mmc_t *mmc;
-  rominfo_t *rominfo;
-
-  bool fiq_occurred;
-  uint8_t fiq_state;
-  int fiq_cycles;
-
-  int scanline;
-
-  // Timing stuff
-  float scanline_cycles;
-} nes_t;
 //--------------------------------------------------------------------------------
 ppu_t ppu;
 apu_t apu;
@@ -1099,165 +504,6 @@ nes_t *NESmachine;
 //
 //   EMULATOR CORE CODES:
 //
-//--------------------------------------------------------------------------------
-// ROM.C
-// Max length for displayed filename
-#define ROM_DISP_MAXLEN 20
-
-#define ROM_FOURSCREEN 0x08
-#define ROM_TRAINER 0x04
-#define ROM_BATTERY 0x02
-#define ROM_MIRRORTYPE 0x01
-#define ROM_INES_MAGIC "NES\x1A"
-
-#define TRAINER_OFFSET 0x1000
-#define TRAINER_LENGTH 0x200
-#define VRAM_LENGTH 0x2000
-#define ROM_BANK_LENGTH 0x4000
-#define VROM_BANK_LENGTH 0x2000
-#define SRAM_BANK_LENGTH 0x0400
-#define VRAM_BANK_LENGTH 0x2000
-
-bool SRAM_allocated = false;
-
-// Allocate space for SRAM
-int rom_allocsram(rominfo_t *rominfo);
-int rom_allocsram(rominfo_t *rominfo) {
-  // Load up SRAM
-  if (NULL == rominfo->sram)
-    rominfo->sram = (uint8_t *)malloc(SRAM_BANK_LENGTH * rominfo->sram_banks);
-  if (NULL == rominfo->sram) {
-    /// gui_sendmsg(GUI_RED, "Could not allocate space for battery RAM");
-    return -1;
-  }
-
-  // make damn sure SRAM is clear
-  memset(rominfo->sram, 0, SRAM_BANK_LENGTH * rominfo->sram_banks);
-  return 0;
-}
-
-// If there's a trainer, load it in at $7000
-void rom_loadtrainer(unsigned char **rom, rominfo_t *rominfo);
-void rom_loadtrainer(unsigned char **rom, rominfo_t *rominfo) {
-  if (rominfo->flags & ROM_FLAG_TRAINER) {
-    //      fread(rominfo->sram + TRAINER_OFFSET, TRAINER_LENGTH, 1, fp);
-    memcpy(rominfo->sram + TRAINER_OFFSET, *rom, TRAINER_LENGTH);
-    rom += TRAINER_LENGTH;
-    /// nes_log_printf("Read in trainer at $7000\n");
-  }
-}
-
-int rom_loadrom(unsigned char **rom, rominfo_t *rominfo);
-int rom_loadrom(unsigned char **rom, rominfo_t *rominfo) {
-  rominfo->rom = *rom;
-  *rom += ROM_BANK_LENGTH * rominfo->rom_banks;
-
-  // If there's VROM, allocate and stuff it in
-  if (rominfo->vrom_banks) {
-    rominfo->vrom = *rom;
-    *rom += VROM_BANK_LENGTH * rominfo->vrom_banks;
-  } else {
-    if (NULL == rominfo->vram) rominfo->vram = (uint8_t *)malloc(VRAM_LENGTH);
-    if (NULL == rominfo->vram) {
-      /// gui_sendmsg(GUI_RED, "Could not allocate space for VRAM");
-      return -1;
-    }
-    memset(rominfo->vram, 0, VRAM_LENGTH);
-  }
-
-  return 0;
-}
-
-#define RESERVED_LENGTH 8
-
-int rom_getheader(unsigned char **rom, rominfo_t *rominfo) {
-  inesheader_t head;
-  uint8_t reserved[RESERVED_LENGTH];
-  bool header_dirty;
-
-  // Read in the header
-  if (DEBUG) {
-    Serial.print("Head:  ");
-    Serial.print((*rom)[0]);
-    Serial.print("  ");
-    Serial.print((*rom)[1]);
-    Serial.print("  ");
-    Serial.print((*rom)[2]);
-    Serial.print("  ");
-    Serial.println((*rom)[3]);
-  }
-
-  memcpy(&head, *rom, sizeof(head));
-  *rom += sizeof(head);
-
-  if (memcmp(head.ines_magic, ROM_INES_MAGIC, 4)) {
-    return -1;
-  }
-
-  rominfo->rom_banks = head.rom_banks;
-  rominfo->vrom_banks = head.vrom_banks;
-  // iNES assumptions
-  rominfo->sram_banks = 8;  // 1kB banks, so 8KB
-  rominfo->vram_banks = 1;  // 8kB banks, so 8KB
-  rominfo->mirror =
-      (head.rom_type & ROM_MIRRORTYPE) ? MIRROR_VERT : MIRROR_HORIZ;
-  rominfo->flags = 0;
-  if (head.rom_type & ROM_BATTERY) rominfo->flags |= ROM_FLAG_BATTERY;
-  if (head.rom_type & ROM_TRAINER) rominfo->flags |= ROM_FLAG_TRAINER;
-  if (head.rom_type & ROM_FOURSCREEN) rominfo->flags |= ROM_FLAG_FOURSCREEN;
-  // TODO: fourscreen a mirroring type?
-  rominfo->mapper_number = head.rom_type >> 4;
-
-  // Do a compare - see if we've got a clean extended header
-  memset(reserved, 0, RESERVED_LENGTH);
-  if (0 == memcmp(head.reserved, reserved, RESERVED_LENGTH)) {
-    // We were clean
-    header_dirty = false;
-    rominfo->mapper_number |= (head.mapper_hinybble & 0xF0);
-  } else {
-    header_dirty = true;
-
-    // @!?#@! DiskDude.
-    if (('D' == head.mapper_hinybble) &&
-        (0 == memcmp(head.reserved, "iskDude!", 8))) {
-      /// nes_log_printf("`DiskDude!' found in ROM header, ignoring high mapper
-      /// nybble\n");
-    } else {
-      /// nes_log_printf("ROM header dirty, possible problem\n");
-      rominfo->mapper_number |= (head.mapper_hinybble & 0xF0);
-    }
-    /// rom_adddirty(rominfo->filename);
-  }
-  // Check for VS unisystem mapper
-  if (99 == rominfo->mapper_number) rominfo->flags |= ROM_FLAG_VERSUS;
-  return 0;
-}
-
-/* Free a ROM */
-void rom_free(rominfo_t **rominfo);
-void rom_free(rominfo_t **rominfo) {
-  if (NULL == *rominfo) {
-    if (DEBUG) Serial.println("ROM not loaded");
-    return;
-  }
-
-  /*  if ((*rominfo)->sram)
-      free((*rominfo)->sram);
-    Serial.println("sram");    */
-  /*  if ((*rominfo)->rom)
-      free((*rominfo)->rom);
-    Serial.println("rom");
-    if ((*rominfo)->vrom)
-      free((*rominfo)->vrom);
-    Serial.println("vrom");
-    if ((*rominfo)->vram)
-      free((*rominfo)->vram);
-    Serial.println("vram"); */
-
-  free(*rominfo);
-}
-//================================================================================
-
 //--------------------------------------------------------------------------------
 /// CPU.C:
 
@@ -2164,7 +1410,6 @@ static void mem_writebyte(uint32_t address, uint8_t value) {
   bank_writebyte(address, value);
 }
 
-void nes6502_setcontext(nes6502_context *context);
 void nes6502_setcontext(nes6502_context *context) {
   int loop;
   cpu = *context;
@@ -2175,7 +1420,6 @@ void nes6502_setcontext(nes6502_context *context) {
   stack = ram + STACK_OFFSET;
 }
 
-void nes6502_getcontext(nes6502_context *context);
 void nes6502_getcontext(nes6502_context *context) {
   int loop;
   *context = cpu;
@@ -3302,7 +2546,6 @@ void nes_nmi(void) { nes6502_nmi(); }
 
 void ppu_displaysprites(bool display) { ppu.drawsprites = display; }
 
-void ppu_getcontext(ppu_t *dest_ppu);
 void ppu_getcontext(ppu_t *dest_ppu) {
   int nametab[4];
 
@@ -3362,7 +2605,6 @@ void ppu_setcontext(ppu_t *src_ppu) {
 
 ppu_t *temp;
 
-ppu_t *ppu_create(void);
 ppu_t *ppu_create(void) {
   static bool pal_generated = false;
 
@@ -4124,7 +3366,6 @@ void ppu_scanline(int scanline, bool draw_flag) {
   xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
 }
 
-void ppu_destroy(ppu_t **src_ppu);
 void ppu_destroy(ppu_t **src_ppu) {
   if (*src_ppu) {
     free(*src_ppu);
@@ -4176,10 +3417,8 @@ const int dmc_clocks[16] = {428, 380, 340, 320, 286, 254, 226, 214,
 // ratios of pos/neg pulse for rectangle waves
 const int duty_flip[4] = {2, 4, 8, 12};
 
-void apu_setcontext(apu_t *src_apu);
 void apu_setcontext(apu_t *src_apu) { apu = *src_apu; }
 
-void apu_getcontext(apu_t *dest_apu);
 void apu_getcontext(apu_t *dest_apu) { *dest_apu = apu; }
 
 void apu_setchan(int chan, bool enabled) {
@@ -4923,8 +4162,6 @@ apu_t *temp_apu;
 
 // Initializes emulated sound hardware, creates waveforms/voices
 apu_t *apu_create(double base_freq, int sample_rate, int refresh_rate,
-                  int sample_bits);
-apu_t *apu_create(double base_freq, int sample_rate, int refresh_rate,
                   int sample_bits) {
   int channel;
 
@@ -4949,7 +4186,6 @@ apu_t *apu_create(double base_freq, int sample_rate, int refresh_rate,
   return temp_apu;
 }
 
-void apu_destroy(apu_t **src_apu);
 void apu_destroy(apu_t **src_apu) {
   if (*src_apu) {
     ///    if ((*src_apu)->ext && NULL != (*src_apu)->ext->shutdown)
@@ -4959,7 +4195,6 @@ void apu_destroy(apu_t **src_apu) {
   }
 }
 
-void apu_setext(apu_t *src_apu, apuext_t *ext);
 void apu_setext(apu_t *src_apu, apuext_t *ext) {
   src_apu->ext = ext;
 
@@ -4969,7 +4204,6 @@ void apu_setext(apu_t *src_apu, apuext_t *ext) {
 //--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
 
-nes_t *nes_getcontextptr(void);
 nes_t *nes_getcontextptr(void) { return &nes; }
 
 //--------------------------------------------------------------------------------
@@ -4977,11 +4211,8 @@ nes_t *nes_getcontextptr(void) { return &nes; }
 //--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
 ///(MMC.C) part
-rominfo_t *mmc_getinfo(void);
 rominfo_t *mmc_getinfo(void) { return mmc.cart; }
-void ppu_setlatchfunc(ppulatchfunc_t func);
 void ppu_setlatchfunc(ppulatchfunc_t func) { ppu.latchfunc = func; }
-void ppu_setvromswitch(ppuvromswitch_t func);
 void ppu_setvromswitch(ppuvromswitch_t func) { ppu.vromswitch = func; }
 
 //--------------------------------------------------------------------------------
@@ -5002,13 +4233,11 @@ void ppu_setvromswitch(ppuvromswitch_t func) { ppu.vromswitch = func; }
 #define MMC_LAST2KVROM (MMC_2KVROM - 1)
 #define MMC_LAST1KVROM (MMC_1KVROM - 1)
 
-void mmc_setcontext(mmc_t *src_mmc);
 void mmc_setcontext(mmc_t *src_mmc) { mmc = *src_mmc; }
 
 // raise an IRQ
 void nes_irq(void) { nes6502_irq(); }
 
-void mmc_getcontext(mmc_t *dest_mmc);
 void mmc_getcontext(mmc_t *dest_mmc) { *dest_mmc = mmc; }
 
 // VROM bankswitching

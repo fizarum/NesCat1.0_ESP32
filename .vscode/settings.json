@@ -3,6 +3,7 @@
         "MOSI",
         "VSPI",
         "nescreen",
-        "PSRAM"
+        "PSRAM",
+        "sram"
     ]
 }
