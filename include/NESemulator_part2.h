@@ -59,7 +59,6 @@ void mmc_reset(void) {
   if (mmc.intf->init) mmc.intf->init();
 }
 
-void mmc_destroy(mmc_t **nes_mmc);
 void mmc_destroy(mmc_t **nes_mmc) {
   if (*nes_mmc) free(*nes_mmc);
 }
@@ -67,7 +66,6 @@ void mmc_destroy(mmc_t **nes_mmc) {
 mmc_t *mmc_temp;
 mapintf_t **map_ptr;
 
-mmc_t *mmc_create(rominfo_t *rominfo);
 mmc_t *mmc_create(rominfo_t *rominfo) {
   for (map_ptr = (mapintf_t **)mappers;
        (*map_ptr)->number != rominfo->mapper_number; map_ptr++) {
@@ -117,7 +115,6 @@ nes_t *machine;
 sndinfo_t osd_sound;
 
 // Initialize NES CPU, hardware, etc.
-nes_t *nes_create(void);
 nes_t *nes_create(void) {
   int i;
 
@@ -305,7 +302,6 @@ static void build_address_handlers(nes_t *machine) {
   num_handlers++;
 }
 
-void nes_setcontext(nes_t *machine);
 void nes_setcontext(nes_t *machine) {
   if (SOUND_ENABLED) apu_setcontext(machine->apu);
   ppu_setcontext(machine->ppu);
@@ -363,7 +359,6 @@ void nes_renderframe(bool draw_flag) {
 }
 
 //--------------------------------------------------------------------------------
-void nes_destroy(nes_t **machine);
 void nes_destroy(nes_t **machine) {
   if (*machine) {
     ///    rom_free(&(*machine)->rominfo);
@@ -380,6 +375,4 @@ void nes_destroy(nes_t **machine) {
     *machine = NULL;
   }
 }
-//--------------------------------------------------------------------------------
-//--------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------
