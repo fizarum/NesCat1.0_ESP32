@@ -7,6 +7,7 @@
 //#define  NES6502_DECIMAL
 
 #define NES6502_NUMBANKS 16
+#define NES6502_BANKSHIFT 12
 
 // P (flag) register bitmasks
 #define N_FLAG 0x80
@@ -55,5 +56,16 @@ typedef struct {
   uint8_t int_pending, int_latency;
   int32_t total_cycles, burn_cycles;
 } nes6502_context;
+
+void nes6502_reset(void);
+void nes6502_setcontext(nes6502_context *context);
+void nes6502_getcontext(nes6502_context *context);
+uint8_t nes6502_getbyte(uint32_t address);
+uint32_t nes6502_getcycles(uint8_t reset_flag);
+void nes6502_nmi(void);
+void nes6502_irq(void);
+int nes6502_execute(int timeslice_cycles);
+void nes6502_burn(int cycles);
+void nes6502_release(void);
 
 #endif  // CPU_H

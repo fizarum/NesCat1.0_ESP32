@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <utils.h>
 
 #define SRAM_BANK_LENGTH 0x0400
 #define TRAINER_OFFSET 0x1000
