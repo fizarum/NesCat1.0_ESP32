@@ -1,25 +1,42 @@
 #include "controls.h"
 
-#include <PCF8574.h>
+#include <PCF8575.h>
 #include <esp32-hal-adc.h>
 #include <utils.h>
 
-#define ESP_INT_PIN 02
-// count of connected lines to pcf8574 as buttons
-#define CONNECTED_PINS 6
+#define JOY_MAX_VAL 4096
+// normal postition of joystic - no keys pressed
+#define JOY_NORMAL_VAL JOY_MAX_VAL / 2
+// minimal step for joystic to register press event
+#define JOY_THRESHOLD JOY_MAX_VAL / 10
 
-PCF8574 pcf8574(0x20);
+#define I2C_ADDRESS 0x25
+
+#define ESP_SDA_PIN 21
+#define ESP_SCL_PIN 22
+#define ESP_INT_PIN 02
+
+PCF8575 pcf8575(I2C_ADDRESS);
 
 uint8_t keyPressedFlag = 0;
-uint8_t keysState;
-uint8_t joystickState;
 
+/**
+ * @brief all input joy/keys are represented as uint16_t value
+ * keymap is next:
+ * [0..3] - x/y information of joystick
+ * [4   ] start button
+ * [5   ] select button
+ * [6   ] A (triangle) button
+ * [7   ] B (circle) button
+ * [8   ] C (cross) button
+ * [9   ] D (square) button
+ * [10  ] joystick middle
+ */
+uint16_t inputState;
+bool joystickStateUpdated;
 // callback for keyboard
-void (*onKeysCallbackPtr)(uint8_t);
-void (*onJoysticMovedPtr)(uint8_t);
-
-// filters only pressed keys
-uint8_t filterOnlyPressedKeys(uint8_t keysState, uint8_t keysStateLength);
+void (*onKeysCallbackPtr)(uint16_t);
+void (*onJoystickMovedPtr)(uint16_t);
 
 // todo: rework on one uint8_t variable for joystick (at least)
 //  INPUT SYSTEM:
@@ -38,12 +55,12 @@ uint8_t JOY_OPTIONS = 0;  //(SELECT)
 unsigned long now;
 
 // keyboard part
-uint16_t delayBetweenKeyStateRequests = 50;
-unsigned long lastKeyStateRequestedAt = 0;
+uint16_t delayBetweenKeyRequests = 50;
+unsigned long keyRequestedAt = 0;
 
 // joystick part
-uint16_t delayBetweenRequestsOfJoystic = 220;
-unsigned long lastRequestedTimeOfJoystic = 0;
+uint16_t delayBetweenRequestsOfJoystick = 220;
+unsigned long lastRequestedTimeOfJoystick = 0;
 
 // request keys state: A,B,C,D
 void requestKeysState();
@@ -54,25 +71,21 @@ void onKeyPressedInt() { keyPressedFlag = 1; }
 /**
  * @brief should be called inside of setup() function
  */
-void controlsInit(void (*onKeysCallback)(uint8_t),
-                  void (*onJoysticMovedCallback)(uint8_t)) {
+void controlsInit(void (*onKeysCallback)(uint16_t),
+                  void (*onJoystickMovedCallback)(uint16_t)) {
   pinMode(ESP_INT_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(ESP_INT_PIN), onKeyPressedInt, FALLING);
 
-  pcf8574.pinMode(P0, INPUT);
-  pcf8574.pinMode(P1, INPUT);
-  pcf8574.pinMode(P2, INPUT);
-  pcf8574.pinMode(P3, INPUT);
-  pcf8574.pinMode(P4, INPUT);
-  pcf8574.pinMode(P5, INPUT);
+  pcf8575.begin(ESP_SDA_PIN, ESP_SCL_PIN);
 
-  if (pcf8574.begin()) {
-    debug("init pcf8574... ok");
+  if (pcf8575.isConnected()) {
+    debug("init pcf8575... ok");
   } else {
-    debug("init pcf8574... error");
+    debug("init pcf8575... error");
   }
+
   onKeysCallbackPtr = onKeysCallback;
-  onJoysticMovedPtr = onJoysticMovedCallback;
+  onJoystickMovedPtr = onJoystickMovedCallback;
 }
 
 /**
@@ -84,95 +97,76 @@ void controlsUpdate() {
   requestJoystickStateByPullMethod();
 }
 
+uint16_t tempKeyState;
+
 void requestKeysState() {
-  if (now >= lastKeyStateRequestedAt + delayBetweenKeyStateRequests) {
-    lastKeyStateRequestedAt = now;
+  if (now >= keyRequestedAt + delayBetweenKeyRequests) {
+    keyRequestedAt = now;
 
     if (keyPressedFlag == 1) {
-      keysState = pcf8574.digitalReadAll();
+      tempKeyState = ~pcf8575.read16();
 
-      // todo: remove on refactoring complete
-      JOY_SQUARE = keysState & 0xf7;    // buttonD;
-      JOY_CROSS = keysState & 0xfb;     // buttonC;
-      JOY_CIRCLE = keysState & 0xfd;    // buttonB;
-      JOY_TRIANGLE = keysState & 0xfe;  // buttonA;
+      JOY_TRIANGLE = bit::isBitSet(tempKeyState, 0);
+      inputState = bit::setBit16(tempKeyState, 6, JOY_TRIANGLE);
 
-      keysState = filterOnlyPressedKeys(keysState, CONNECTED_PINS);
-      // todo: add more advanced filter mechanism to ignore released one of
-      // several buttons
-      if (keysState != 0) {
-        onKeysCallbackPtr(keysState);
-      }
+      JOY_CIRCLE = bit::isBitSet(tempKeyState, 1);
+      inputState = bit::setBit16(tempKeyState, 7, JOY_CIRCLE);
+
+      JOY_CROSS = bit::isBitSet(tempKeyState, 2);
+      inputState = bit::setBit16(tempKeyState, 8, JOY_CROSS);
+
+      JOY_SQUARE = bit::isBitSet(tempKeyState, 3);
+      inputState = bit::setBit16(tempKeyState, 9, JOY_SQUARE);
+
+      onKeysCallbackPtr(inputState);
 
       keyPressedFlag = 0;
     }
   }
 }
 
+uint16_t hPos, vPos;
 // currently implemented analog joystick but later it should be replaced to
 // "button" like one
 void requestJoystickStateByPullMethod() {
-  if (now >= lastRequestedTimeOfJoystic + delayBetweenRequestsOfJoystic) {
+  if (now >= lastRequestedTimeOfJoystick + delayBetweenRequestsOfJoystick) {
     // default range is from 0 to 4096
-    uint16_t joystickHorizontalPos = analogRead(PIN_LEFT);
-    uint16_t joystickVerticalPos = analogRead(PIN_UP);
-    // reset previous state
-    joystickState = 0;
+    hPos = analogRead(PIN_LEFT);
+    vPos = analogRead(PIN_UP);
+    joystickStateUpdated = false;
 
     // left
-    if (joystickHorizontalPos <= JOY_NORMAL_VAL - JOY_TRESHOLD) {
-      joystickState = bit::setBit(joystickState, 0);
+    if (hPos <= JOY_NORMAL_VAL - JOY_THRESHOLD) {
+      inputState = bit::setBit16(inputState, 0);
       JOY_LEFT = 1;
+      joystickStateUpdated = true;
     }
 
     // right
-    if (joystickHorizontalPos >= JOY_NORMAL_VAL + JOY_TRESHOLD) {
-      joystickState = bit::setBit(joystickState, 1);
+    if (hPos >= JOY_NORMAL_VAL + JOY_THRESHOLD) {
+      inputState = bit::setBit16(inputState, 1);
       JOY_RIGHT = 1;
+      joystickStateUpdated = true;
     }
 
     // down
-    if (joystickVerticalPos <= JOY_NORMAL_VAL - JOY_TRESHOLD) {
-      joystickState = bit::setBit(joystickState, 2);
+    if (vPos <= JOY_NORMAL_VAL - JOY_THRESHOLD) {
+      inputState = bit::setBit16(inputState, 2);
       JOY_DOWN = 1;
+      joystickStateUpdated = true;
     }
 
     // top
-    if (joystickVerticalPos >= JOY_NORMAL_VAL + JOY_TRESHOLD) {
-      joystickState = bit::setBit(joystickState, 3);
+    if (vPos >= JOY_NORMAL_VAL + JOY_THRESHOLD) {
+      inputState = bit::setBit16(inputState, 3);
       JOY_UP = 1;
+      joystickStateUpdated = true;
     }
 
-    if (joystickState != 0) {
-      onJoysticMovedPtr(joystickState);
+    if (joystickStateUpdated == true) {
+      onJoystickMovedPtr(inputState);
     }
 
-    lastRequestedTimeOfJoystic = now;
+    lastRequestedTimeOfJoystick = now;
   }
-}
-
-/**
- * @brief filters only pressed keys
- *
- * @param keysState byte representing inverted value of pressed keys, for
- * example: 11111111 - no key pressed; 11111110 - first (by index) is pressed
- * @param keysStateLength the length of data which is processed. For example, if
- * only 5 buttons are connected this argument is 5 and only first 5 bits (from
- * keyState) is processed
- * @return uint8_t of reverted (and truncated by keysStateLength) keysState
- * value. For example if keysState: 11011110; keysStateLength: 5, result is:
- * 00000001
- * For same setup but keysStateLength: 6, result is: 00100001
- */
-uint8_t filterOnlyPressedKeys(uint8_t keysState, uint8_t keysStateLength) {
-  // 8 here is max uint8_t (byte) size in bits
-  uint8_t partToIgnore = (8 - keysStateLength);
-
-  uint8_t result = 0xff ^ keysState;
-  // this part shifts left result on "partToIgnore" bytes to erase leading bytes
-  result = result << partToIgnore;
-  // this part shifts right result on "partToIgnore" bytes to fill leading bytes
-  // by 0
-  result = result >> partToIgnore;
-  return result;
 }

@@ -16,8 +16,8 @@ void debug(const char *message) {
 }
 
 void debug(const char *templateString, uint32_t value) {
-  int strlength = strlen(templateString);
-  if (strlength >= buffMaxLen) {
+  int len = strlen(templateString);
+  if (len >= buffMaxLen) {
     sprintf(debugBuff, "value: %u", value);
   } else {
     sprintf(debugBuff, templateString, value);
@@ -25,9 +25,19 @@ void debug(const char *templateString, uint32_t value) {
   debug(debugBuff);
 }
 
+void debug(const char *templateString, uint8_t value) {
+  int len = strlen(templateString);
+  if (len >= buffMaxLen) {
+    sprintf(debugBuff, "value: %d", value);
+  } else {
+    sprintf(debugBuff, templateString, value);
+  }
+  debug(debugBuff);
+}
+
 void debug(const char *templateString, const char *value) {
-  int strlength = strlen(templateString);
-  if (strlength >= buffMaxLen) {
+  int len = strlen(templateString);
+  if (len >= buffMaxLen) {
     sprintf(debugBuff, "value: %s", value);
   } else {
     sprintf(debugBuff, templateString, value);
@@ -47,6 +57,22 @@ uint8_t bit::setBit(uint8_t source, uint8_t position) {
 }
 
 /**
+ * @brief Set or reset the bit in uint16_t
+ *
+ * @param source source uint16_t
+ * @param position of bit to change, counts from 0
+ * @param isSet 0 means reset, > 0 - means set
+ * @return uint16_t
+ */
+uint16_t bit::setBit16(uint16_t source, uint8_t position, uint8_t isSet) {
+  if (isSet > 0) {
+    return source | (1UL << position);
+  } else {
+    return source & (~(1UL << position));
+  }
+}
+
+/**
  * @brief Reset (to 0) the bit in byte
  *
  * @param source source byte
@@ -56,6 +82,11 @@ uint8_t bit::setBit(uint8_t source, uint8_t position) {
 uint8_t bit::resetBit(uint8_t source, uint8_t position) {
   // if position is 1 then it moves 0001 to 0010
   return source & (~(1UL << position));
+}
+
+bool bit::isBitSet(uint16_t source, uint8_t position) {
+  uint16_t mask = (1UL << position);
+  return (source & mask) == mask;
 }
 
 void sortStrings(char *arr[], int n) {
