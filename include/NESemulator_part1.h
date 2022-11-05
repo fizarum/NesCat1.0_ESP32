@@ -156,7 +156,7 @@ i2s_config_t audio_cfg = {
     ///  static_cast<i2s_comm_format_t>(I2S_COMM_FORMAT_PCM |
     ///  I2S_COMM_FORMAT_I2S_MSB),
     .communication_format = static_cast<i2s_comm_format_t>(
-        I2S_COMM_FORMAT_PCM | I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
+        I2S_COMM_FORMAT_STAND_PCM_SHORT | I2S_COMM_FORMAT_STAND_I2S),
     .intr_alloc_flags =
         ESP_INTR_FLAG_LEVEL1 /*| ESP_INTR_FLAG_IRAM  | ESP_INTR_FLAG_SHARED*/,
     .dma_buf_count = 6,
@@ -320,7 +320,7 @@ char *NESEXPLORE(char *path) {
       nescreen::fillScreen();
       nescreen::setTextPosition(16, 24);
       nescreen::drawText(path);
-      updateScreen();
+      nescreen::update();
 
       for (num = PAGE * FILESPERPAGE;
            num < ((PAGE + 1) * FILESPERPAGE) && num < loadedFileNames; num++) {
@@ -1343,7 +1343,7 @@ void ppu_scanline(int scanline, bool draw_flag) {
     ppu.vram_accessible = false;
   }
 
-  xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
+  nescreen::update();
 }
 
 void ppu_destroy(ppu_t **src_ppu) {

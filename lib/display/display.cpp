@@ -3,6 +3,8 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 
+#include <queue>
+
 #include "Retro8x16.c"
 
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
@@ -17,6 +19,8 @@ uint8_t yPosOfText = 0;
 // font
 const char *displayFontSet = NULL;
 
+QueueHandle_t vidQueue;
+
 void prepareVideoMemory();
 
 void displayInit() {
@@ -30,6 +34,8 @@ void displayInit() {
   prepareVideoMemory();
   nescreen::setFont(Retro8x16);
 }
+
+void nescreen::update() { xQueueSend(vidQueue, &screenMemory, 0); }
 
 void nescreen::drawPixel(uint8_t X, uint8_t Y, uint8_t colorIndex) {
   if (Y < NES_SCREEN_HEIGHT && X < NES_SCREEN_WIDTH) {

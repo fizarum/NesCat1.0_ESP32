@@ -46,6 +46,8 @@
 extern uint16_t screenBuffer[256];      // 512 bytes
 extern uint8_t *screenMemory[256 + 1];  // 256*256 bytes + 256 offset
 
+extern QueueHandle_t vidQueue;
+
 void displayInit();
 
 // video memory namespace

@@ -72,9 +72,6 @@ unsigned char *rom = 0;  // Actual ROM pointer
 
 //===============================================================================
 // VIDEO SYSTEM:
-QueueHandle_t vidQueue;
-
-inline void updateScreen() { xQueueSend(vidQueue, &screenMemory, 0); }
 
 int initVideo() {
   //  disable Core 0 WDT
@@ -180,7 +177,7 @@ void setup() {
   getMemoryStatus();
 
   menuInit();
-  updateScreen();
+  nescreen::update();
 }
 
 uint8_t hJoyPos = 0;
@@ -198,7 +195,7 @@ void handleMenu() {
   updateActiveMenuIndex(hJoyPos);
   // todo: temporary solution - rework later
   if (hJoyPos != 0) {
-    updateScreen();
+    nescreen::update();
   }
 }
 
