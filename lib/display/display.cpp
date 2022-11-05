@@ -1,7 +1,10 @@
 #include "display.h"
 
-#include <Adafruit_GFX.h>
+// #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
+#include <esp_task_wdt.h>
+
+#include <queue>
 
 #include "Retro8x16.c"
 
@@ -17,6 +20,10 @@ uint8_t yPosOfText = 0;
 // font
 const char *displayFontSet = NULL;
 
+QueueHandle_t vidQueue;
+
+static void videoTask(void *arg);
+
 void prepareVideoMemory();
 
 void displayInit() {
@@ -29,7 +36,27 @@ void displayInit() {
   tft.printf("loading...");
   prepareVideoMemory();
   nescreen::setFont(Retro8x16);
+  delay(200);
 }
+
+void initVideo() {
+  //  disable Core 0 WDT
+  TaskHandle_t idle_0 = xTaskGetIdleTaskHandleForCPU(0);
+  esp_task_wdt_delete(idle_0);
+
+  vidQueue = xQueueCreate(1, sizeof(uint8_t *));
+
+  xTaskCreatePinnedToCore(&videoTask, "videoTask", 2048, NULL, 5, NULL, 0);
+}
+
+static void videoTask(void *arg) {
+  while (1) {
+    xQueueReceive(vidQueue, &screenMemory, portMAX_DELAY);
+    nescreen::writeFrame(X_POS_OF_VIRTUAL_SCREEN, Y_POS_OF_VIRTUAL_SCREEN);
+  }
+}
+
+void nescreen::update() { xQueueSend(vidQueue, &screenMemory, 0); }
 
 void nescreen::drawPixel(uint8_t X, uint8_t Y, uint8_t colorIndex) {
   if (Y < NES_SCREEN_HEIGHT && X < NES_SCREEN_WIDTH) {
@@ -37,7 +64,7 @@ void nescreen::drawPixel(uint8_t X, uint8_t Y, uint8_t colorIndex) {
   }
 }
 
-void nescreen::fillscreen(uint8_t colorIndex) {
+void nescreen::fillScreen(uint8_t colorIndex) {
   for (uint16_t y = 0; y < NES_SCREEN_HEIGHT; y++)
     for (uint16_t x = 0; x < NES_SCREEN_WIDTH; x++) {
       screenMemory[y][x] = colorIndex;

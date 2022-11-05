@@ -5,6 +5,7 @@
 #include <fstorage.h>
 #include <utils.h>
 
+#include "compositevideo.h"
 #include "nes/nes.h"
 
 //--------------------------------------------------------------------------------
@@ -41,6 +42,7 @@
 #define NES_FIQ_PERIOD (NES_MASTER_CLOCK / NES_CLOCK_DIVIDER / 60)
 
 #define NES_RAMSIZE 0x800
+#define FILESPERPAGE 8
 
 SdFile dirFile;
 SdFile file;
@@ -58,6 +60,10 @@ void input_strobe(void) {
   ppad_readcount = 0;
   ark_readcount = 0;
 }
+
+// moved from main cpp file, from setup() function, after initVideo()
+// I2S0.conf.rx_start = 0;  /// stop DMA ADC
+// I2S0.in_link.start = 0;
 
 uint8_t get_pad0(void) {
   uint8_t value;
@@ -155,7 +161,7 @@ i2s_config_t audio_cfg = {
     ///  static_cast<i2s_comm_format_t>(I2S_COMM_FORMAT_PCM |
     ///  I2S_COMM_FORMAT_I2S_MSB),
     .communication_format = static_cast<i2s_comm_format_t>(
-        I2S_COMM_FORMAT_PCM | I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
+        I2S_COMM_FORMAT_STAND_PCM_SHORT | I2S_COMM_FORMAT_STAND_I2S),
     .intr_alloc_flags =
         ESP_INTR_FLAG_LEVEL1 /*| ESP_INTR_FLAG_IRAM  | ESP_INTR_FLAG_SHARED*/,
     .dma_buf_count = 6,
@@ -316,10 +322,10 @@ char *NESEXPLORE(char *path) {
   while (1) {
     PAGE = CURSOR / FILESPERPAGE;
     if (!NamesDisplayed) {
-      nescreen::fillscreen();
+      nescreen::fillScreen();
       nescreen::setTextPosition(16, 24);
       nescreen::drawText(path);
-      updateScreen();
+      nescreen::update();
 
       for (num = PAGE * FILESPERPAGE;
            num < ((PAGE + 1) * FILESPERPAGE) && num < loadedFileNames; num++) {
@@ -340,43 +346,44 @@ char *NESEXPLORE(char *path) {
     nescreen::drawText("->", 48);
     delay(200);
 
-    // PROCESS CURSOR SELECTION
-    while (JOY_CROSS == 0 && JOY_SQUARE == 0 && JOY_OPTIONS == 0 &&
-           JOY_SHARE == 0 && JOY_UP == 0 && JOY_DOWN == 0 && JOY_LEFT == 0 &&
-           JOY_RIGHT == 0) {
-      if (digitalRead(PIN_A) == 1) {
-        JOY_CROSS = 1;  // A
-        delay(25);
-      }
-      if (digitalRead(PIN_B) == 1) {
-        JOY_SQUARE = 1;  // B
-        delay(25);
-      }
-      if (digitalRead(PIN_SELECT) == 1) {
-        JOY_OPTIONS = 1;  // SELECT
-        delay(25);
-      }
-      if (digitalRead(PIN_START) == 1) {
-        JOY_SHARE = 1;  // START
-        delay(25);
-      }
-      if (digitalRead(PIN_UP) == 1) {
-        JOY_UP = 1;
-        delay(25);
-      }
-      if (digitalRead(PIN_DOWN) == 1) {
-        JOY_DOWN = 1;  // DOWN
-        delay(25);
-      }
-      if (digitalRead(PIN_LEFT) == 1) {
-        JOY_LEFT = 1;  // LEFT
-        delay(25);
-      }
-      if (digitalRead(PIN_RIGHT) == 1) {
-        JOY_RIGHT = 1;  // RIGHT
-        delay(25);
-      }
-    }
+    // todo: recheck and remove
+    //  // PROCESS CURSOR SELECTION
+    //  while (JOY_CROSS == 0 && JOY_SQUARE == 0 && JOY_OPTIONS == 0 &&
+    //         JOY_SHARE == 0 && JOY_UP == 0 && JOY_DOWN == 0 && JOY_LEFT == 0
+    //         && JOY_RIGHT == 0) {
+    //    if (digitalRead(PIN_A) == 1) {
+    //      JOY_CROSS = 1;  // A
+    //      delay(25);
+    //    }
+    //    if (digitalRead(PIN_B) == 1) {
+    //      JOY_SQUARE = 1;  // B
+    //      delay(25);
+    //    }
+    //    if (digitalRead(PIN_SELECT) == 1) {
+    //      JOY_OPTIONS = 1;  // SELECT
+    //      delay(25);
+    //    }
+    //    if (digitalRead(PIN_START) == 1) {
+    //      JOY_SHARE = 1;  // START
+    //      delay(25);
+    //    }
+    //    if (digitalRead(PIN_UP) == 1) {
+    //      JOY_UP = 1;
+    //      delay(25);
+    //    }
+    //    if (digitalRead(PIN_DOWN) == 1) {
+    //      JOY_DOWN = 1;  // DOWN
+    //      delay(25);
+    //    }
+    //    if (digitalRead(PIN_LEFT) == 1) {
+    //      JOY_LEFT = 1;  // LEFT
+    //      delay(25);
+    //    }
+    //    if (digitalRead(PIN_RIGHT) == 1) {
+    //      JOY_RIGHT = 1;  // RIGHT
+    //      delay(25);
+    //    }
+    //  }
 
     // Empty Cursor
     nescreen::setTextPosition(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
@@ -1341,7 +1348,7 @@ void ppu_scanline(int scanline, bool draw_flag) {
     ppu.vram_accessible = false;
   }
 
-  xQueueSend(vidQueue, &screenMemory, 0);  // refresh LCD
+  nescreen::update();
 }
 
 void ppu_destroy(ppu_t **src_ppu) {

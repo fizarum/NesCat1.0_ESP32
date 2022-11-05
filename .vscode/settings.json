@@ -13,5 +13,8 @@
             "addWords": true,
             "scope": "workspace"
         }
+    },
+    "files.associations": {
+        "*.tcc": "cpp"
     }
 }

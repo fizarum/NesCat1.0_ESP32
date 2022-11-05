@@ -80,7 +80,7 @@ const char *getCurrentMenuTitle() {
 uint8_t getCurrentMenuIndex() { return (uint8_t)menuItem; }
 
 void drawCurentMenuItem() {
-  nescreen::fillscreen(MENU_BACKGROUND_COLOR);
+  nescreen::fillScreen(MENU_BACKGROUND_COLOR);
   nescreen::drawString(xPos, yPos, getCurrentMenuTitle(), MENU_TEXT_COLOR,
                        MENU_BACKGROUND_COLOR);
   debug("menu item: %s", getCurrentMenuTitle());

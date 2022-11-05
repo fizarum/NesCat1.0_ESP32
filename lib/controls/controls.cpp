@@ -5,9 +5,9 @@
 #include <utils.h>
 
 #define JOY_MAX_VAL 4096
-// normal postition of joystic - no keys pressed
+// normal position of joystick - no keys pressed
 #define JOY_NORMAL_VAL JOY_MAX_VAL / 2
-// minimal step for joystic to register press event
+// minimal step for joystick to register press event
 #define JOY_THRESHOLD JOY_MAX_VAL / 10
 
 #define I2C_ADDRESS 0x25
@@ -106,17 +106,23 @@ void requestKeysState() {
     if (keyPressedFlag == 1) {
       tempKeyState = ~pcf8575.read16();
 
-      JOY_TRIANGLE = bit::isBitSet(tempKeyState, 0);
+      JOY_TRIANGLE = isTrianglePressed(tempKeyState);
       inputState = bit::setBit16(tempKeyState, 6, JOY_TRIANGLE);
 
-      JOY_CIRCLE = bit::isBitSet(tempKeyState, 1);
+      JOY_CIRCLE = isCirclePressed(tempKeyState);
       inputState = bit::setBit16(tempKeyState, 7, JOY_CIRCLE);
 
-      JOY_CROSS = bit::isBitSet(tempKeyState, 2);
+      JOY_CROSS = isCrossPressed(tempKeyState);
       inputState = bit::setBit16(tempKeyState, 8, JOY_CROSS);
 
-      JOY_SQUARE = bit::isBitSet(tempKeyState, 3);
+      JOY_SQUARE = isSquarePressed(tempKeyState);
       inputState = bit::setBit16(tempKeyState, 9, JOY_SQUARE);
+
+      JOY_SHARE = isStartPressed(tempKeyState);
+      inputState = bit::setBit16(tempKeyState, 5, JOY_SHARE);
+
+      JOY_OPTIONS = isSelectPressed(tempKeyState);
+      inputState = bit::setBit16(tempKeyState, 4, JOY_OPTIONS);
 
       onKeysCallbackPtr(inputState);
 
@@ -170,3 +176,11 @@ void requestJoystickStateByPullMethod() {
     lastRequestedTimeOfJoystick = now;
   }
 }
+
+bool isTrianglePressed(uint16_t state) { return bit::isBitSet(state, 0); }
+bool isCirclePressed(uint16_t state) { return bit::isBitSet(state, 1); }
+bool isCrossPressed(uint16_t state) { return bit::isBitSet(state, 2); }
+bool isSquarePressed(uint16_t state) { return bit::isBitSet(state, 3); }
+
+bool isSelectPressed(uint16_t state) { return bit::isBitSet(state, 4); }
+bool isStartPressed(uint16_t state) { return bit::isBitSet(state, 5); }

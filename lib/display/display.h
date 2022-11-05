@@ -46,16 +46,19 @@
 extern uint16_t screenBuffer[256];      // 512 bytes
 extern uint8_t *screenMemory[256 + 1];  // 256*256 bytes + 256 offset
 
+extern QueueHandle_t vidQueue;
+
 void displayInit();
+
+void initVideo();
 
 // video memory namespace
 namespace nescreen {
-
 void update();
 
 void drawPixel(uint8_t X, uint8_t Y, uint8_t colorIndex);
 
-void fillscreen(uint8_t colorIndex = UNIVERSAL_BKG_COLOR);
+void fillScreen(uint8_t colorIndex = UNIVERSAL_BKG_COLOR);
 
 void writeFrame(const uint16_t x, const uint16_t y,
                 const uint16_t width = DEFAULT_WIDTH,

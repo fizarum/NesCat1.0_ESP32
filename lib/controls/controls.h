@@ -31,4 +31,12 @@ void controlsInit(void (*onKeysCallback)(uint16_t),
                   void (*onJoystickMovedCallback)(uint16_t));
 void controlsUpdate();
 
+bool isTrianglePressed(uint16_t state);
+bool isCirclePressed(uint16_t state);
+bool isCrossPressed(uint16_t state);
+bool isSquarePressed(uint16_t state);
+
+bool isStartPressed(uint16_t state);
+bool isSelectPressed(uint16_t state);
+
 #endif  // CONTROLS_H
