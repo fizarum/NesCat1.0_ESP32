@@ -37,7 +37,7 @@ void nescreen::drawPixel(uint8_t X, uint8_t Y, uint8_t colorIndex) {
   }
 }
 
-void nescreen::fillscreen(uint8_t colorIndex) {
+void nescreen::fillScreen(uint8_t colorIndex) {
   for (uint16_t y = 0; y < NES_SCREEN_HEIGHT; y++)
     for (uint16_t x = 0; x < NES_SCREEN_WIDTH; x++) {
       screenMemory[y][x] = colorIndex;

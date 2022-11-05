@@ -24,8 +24,7 @@
 
 #define COMPOSITE_VIDEO_ENABLED true  // Do not disable! it also disable ADC.
 
-#define DEBUG true        // Serial debugging enable.
-#define DEBUGEXTRA false  // Extra Serial debugging enable.
+#define DEBUG true  // Serial debugging enable.
 
 #include <audio.h>
 #include <controls.h>
@@ -77,7 +76,7 @@ QueueHandle_t vidQueue;
 
 inline void updateScreen() { xQueueSend(vidQueue, &screenMemory, 0); }
 
-int audiovideo_init() {
+int initVideo() {
   //  disable Core 0 WDT
   TaskHandle_t idle_0 = xTaskGetIdleTaskHandleForCPU(0);
   esp_task_wdt_delete(idle_0);
@@ -94,7 +93,6 @@ bool EXIT = false;
 #define MAXFILES 512
 char *filename[MAXFILES];
 char fileext[4];
-#define FILESPERPAGE 8
 
 char *MAINPATH;
 char textbuf[64] = {0};
@@ -111,31 +109,34 @@ static void videoTask(void *arg) {
   }
 }
 
-//--------------------------------------------------------------------------------
-// bool oscilloscope_installed = false;
-// TaskHandle_t task_adc;
-// void install_oscilloscope() {
-// #if COMPOSITE_VIDEO_ENABLED
-//   xTaskCreatePinnedToCore(core1_task, "adc_handle",
-//                           20000,      // Stack size in words
-//                           NULL,       // Task input parameter
-//                           3,          // Priority of the task
-//                           &task_adc,  // Task handle.
-//                           1           // Core where the task should run
-//   );
-//   oscilloscope_installed = true;
-// #endif
-// }
-
 void onKeysCallback(uint16_t keyMap) {
   if (keyMap == 0) {
     debug("on key release\n");
     return;
   }
-  debug("is square pressed: %d\n", JOY_SQUARE);
-  debug("is cross pressed: %d\n", JOY_CROSS);
-  debug("is circle pressed: %d\n", JOY_CIRCLE);
-  debug("is triangle pressed: %d\n", JOY_TRIANGLE);
+
+  if (isTrianglePressed(keyMap)) {
+    debug("triangle pressed");
+  }
+
+  if (isCirclePressed(keyMap)) {
+    debug("circle pressed");
+  }
+
+  if (isCrossPressed(keyMap)) {
+    debug("cross pressed");
+  }
+
+  if (isSquarePressed(keyMap)) {
+    debug("square pressed");
+  }
+
+  if (isSelectPressed(keyMap)) {
+    debug("select pressed");
+  }
+  if (isStartPressed(keyMap)) {
+    debug("start pressed");
+  }
 }
 
 void onJoystickCallback(uint16_t joystickMoveMap) {
@@ -166,7 +167,7 @@ void setup() {
   // start the A/V pump on app core
   initCompositeVideo(4, 2, nes_32bit, 1);
 #endif
-  audiovideo_init();
+  initVideo();
 
   I2S0.conf.rx_start = 0;  /// stop DMA ADC
   I2S0.in_link.start = 0;

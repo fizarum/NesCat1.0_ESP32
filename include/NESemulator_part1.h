@@ -41,6 +41,7 @@
 #define NES_FIQ_PERIOD (NES_MASTER_CLOCK / NES_CLOCK_DIVIDER / 60)
 
 #define NES_RAMSIZE 0x800
+#define FILESPERPAGE 8
 
 SdFile dirFile;
 SdFile file;
@@ -316,7 +317,7 @@ char *NESEXPLORE(char *path) {
   while (1) {
     PAGE = CURSOR / FILESPERPAGE;
     if (!NamesDisplayed) {
-      nescreen::fillscreen();
+      nescreen::fillScreen();
       nescreen::setTextPosition(16, 24);
       nescreen::drawText(path);
       updateScreen();
@@ -340,43 +341,44 @@ char *NESEXPLORE(char *path) {
     nescreen::drawText("->", 48);
     delay(200);
 
-    // PROCESS CURSOR SELECTION
-    while (JOY_CROSS == 0 && JOY_SQUARE == 0 && JOY_OPTIONS == 0 &&
-           JOY_SHARE == 0 && JOY_UP == 0 && JOY_DOWN == 0 && JOY_LEFT == 0 &&
-           JOY_RIGHT == 0) {
-      if (digitalRead(PIN_A) == 1) {
-        JOY_CROSS = 1;  // A
-        delay(25);
-      }
-      if (digitalRead(PIN_B) == 1) {
-        JOY_SQUARE = 1;  // B
-        delay(25);
-      }
-      if (digitalRead(PIN_SELECT) == 1) {
-        JOY_OPTIONS = 1;  // SELECT
-        delay(25);
-      }
-      if (digitalRead(PIN_START) == 1) {
-        JOY_SHARE = 1;  // START
-        delay(25);
-      }
-      if (digitalRead(PIN_UP) == 1) {
-        JOY_UP = 1;
-        delay(25);
-      }
-      if (digitalRead(PIN_DOWN) == 1) {
-        JOY_DOWN = 1;  // DOWN
-        delay(25);
-      }
-      if (digitalRead(PIN_LEFT) == 1) {
-        JOY_LEFT = 1;  // LEFT
-        delay(25);
-      }
-      if (digitalRead(PIN_RIGHT) == 1) {
-        JOY_RIGHT = 1;  // RIGHT
-        delay(25);
-      }
-    }
+    // todo: recheck and remove
+    //  // PROCESS CURSOR SELECTION
+    //  while (JOY_CROSS == 0 && JOY_SQUARE == 0 && JOY_OPTIONS == 0 &&
+    //         JOY_SHARE == 0 && JOY_UP == 0 && JOY_DOWN == 0 && JOY_LEFT == 0
+    //         && JOY_RIGHT == 0) {
+    //    if (digitalRead(PIN_A) == 1) {
+    //      JOY_CROSS = 1;  // A
+    //      delay(25);
+    //    }
+    //    if (digitalRead(PIN_B) == 1) {
+    //      JOY_SQUARE = 1;  // B
+    //      delay(25);
+    //    }
+    //    if (digitalRead(PIN_SELECT) == 1) {
+    //      JOY_OPTIONS = 1;  // SELECT
+    //      delay(25);
+    //    }
+    //    if (digitalRead(PIN_START) == 1) {
+    //      JOY_SHARE = 1;  // START
+    //      delay(25);
+    //    }
+    //    if (digitalRead(PIN_UP) == 1) {
+    //      JOY_UP = 1;
+    //      delay(25);
+    //    }
+    //    if (digitalRead(PIN_DOWN) == 1) {
+    //      JOY_DOWN = 1;  // DOWN
+    //      delay(25);
+    //    }
+    //    if (digitalRead(PIN_LEFT) == 1) {
+    //      JOY_LEFT = 1;  // LEFT
+    //      delay(25);
+    //    }
+    //    if (digitalRead(PIN_RIGHT) == 1) {
+    //      JOY_RIGHT = 1;  // RIGHT
+    //      delay(25);
+    //    }
+    //  }
 
     // Empty Cursor
     nescreen::setTextPosition(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
