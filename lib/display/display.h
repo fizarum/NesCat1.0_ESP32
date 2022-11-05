@@ -50,9 +50,10 @@ extern QueueHandle_t vidQueue;
 
 void displayInit();
 
+void initVideo();
+
 // video memory namespace
 namespace nescreen {
-
 void update();
 
 void drawPixel(uint8_t X, uint8_t Y, uint8_t colorIndex);

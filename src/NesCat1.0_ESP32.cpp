@@ -22,7 +22,7 @@
 //*
 //********************************************************************************
 
-#define COMPOSITE_VIDEO_ENABLED true  // Do not disable! it also disable ADC.
+// #define COMPOSITE_VIDEO_ENABLED true  // Do not disable! it also disable ADC.
 
 #define DEBUG true  // Serial debugging enable.
 
@@ -48,10 +48,8 @@
 // MAIN LIBRARIES:
 
 #include <Arduino.h>
-#include <esp_task_wdt.h>
+// #include <esp_task_wdt.h>
 #include <utils.h>
-
-static void videoTask(void *arg);
 
 //********************************************************************************
 // VARIABLES:
@@ -64,26 +62,6 @@ uint8_t *PSRAM;
 #include "esp_spi_flash.h"
 
 unsigned char *rom = 0;  // Actual ROM pointer
-
-// COMPOSITE_VIDEO_OUT
-#if COMPOSITE_VIDEO_ENABLED
-#include "compositevideo.h"
-#endif
-
-//===============================================================================
-// VIDEO SYSTEM:
-
-int initVideo() {
-  //  disable Core 0 WDT
-  TaskHandle_t idle_0 = xTaskGetIdleTaskHandleForCPU(0);
-  esp_task_wdt_delete(idle_0);
-
-  vidQueue = xQueueCreate(1, sizeof(uint8_t *));
-
-  xTaskCreatePinnedToCore(&videoTask, "videoTask", 2048, NULL, 5, NULL, 0);
-  debug("videoTask Pinned To Core 0...");
-  return 0;
-}
 
 bool EXIT = false;
 
@@ -98,13 +76,6 @@ char textbuf[64] = {0};
 #include "NESemulator_part1.h"
 #include "NESemulator_part2.h"
 #include "mappers.h"
-
-static void videoTask(void *arg) {
-  while (1) {
-    xQueueReceive(vidQueue, &screenMemory, portMAX_DELAY);
-    nescreen::writeFrame(X_POS_OF_VIRTUAL_SCREEN, Y_POS_OF_VIRTUAL_SCREEN);
-  }
-}
 
 void onKeysCallback(uint16_t keyMap) {
   if (keyMap == 0) {
@@ -152,22 +123,14 @@ void preparePsRam() {
 void setup() {
   Serial.begin(115200);
   getMemoryStatus();
-
   preparePsRam();
 
   controlsInit(&onKeysCallback, &onJoystickCallback);
 
   displayInit();
 
-  // DAC COMPOSITE VIDEO & ADC has setup here:
-#if COMPOSITE_VIDEO_ENABLED
-  // start the A/V pump on app core
-  initCompositeVideo(4, 2, nes_32bit, 1);
-#endif
   initVideo();
-
-  I2S0.conf.rx_start = 0;  /// stop DMA ADC
-  I2S0.in_link.start = 0;
+  debug("videoTask Pinned To Core 0...");
 
   MAINPATH = (char *)malloc(256);
 

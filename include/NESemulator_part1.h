@@ -5,6 +5,7 @@
 #include <fstorage.h>
 #include <utils.h>
 
+#include "compositevideo.h"
 #include "nes/nes.h"
 
 //--------------------------------------------------------------------------------
@@ -59,6 +60,10 @@ void input_strobe(void) {
   ppad_readcount = 0;
   ark_readcount = 0;
 }
+
+// moved from main cpp file, from setup() function, after initVideo()
+// I2S0.conf.rx_start = 0;  /// stop DMA ADC
+// I2S0.in_link.start = 0;
 
 uint8_t get_pad0(void) {
   uint8_t value;

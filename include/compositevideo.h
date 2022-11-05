@@ -235,49 +235,49 @@ void IRAM_ATTR pal_sync(uint16_t* line, int i) {
 //--------------------------------------------------------------------------------
 // ISR handles audio and video updates
 static inline void IRAM_ATTR video_isr(volatile void* vbuf) {
-  int i = _line_counter++;
-  uint16_t* buf = (uint16_t*)vbuf;
+  // int i = _line_counter++;
+  // uint16_t* buf = (uint16_t*)vbuf;
 
-  if (_pal_) {
-    // pal
-    if (i < 32) {
-      blanking(buf, false);               // pre render/black 0-32
-    } else if (i < _active_lines + 32) {  // active video 32-272
-      sync(buf, _hsync);
-      burst(buf);
-      ///            blit(_lines[i-32],buf + _active_start);
-      blit(screenMemory[i - 32], buf + _active_start);
+  // if (_pal_) {
+  //   // pal
+  //   if (i < 32) {
+  //     blanking(buf, false);               // pre render/black 0-32
+  //   } else if (i < _active_lines + 32) {  // active video 32-272
+  //     sync(buf, _hsync);
+  //     burst(buf);
+  //     ///            blit(_lines[i-32],buf + _active_start);
+  //     blit(screenMemory[i - 32], buf + _active_start);
 
-    } else if (i < 304) {  // post render/black 272-304
-      if (i <
-          272)  // slight optimization here, once you have 2 blanking buffers
-        blanking(buf, false);
-    } else {
-      pal_sync(buf, i);  // 8 lines of sync 304-312
-    }
-  } else {
-    // ntsc
-    if (i < _active_lines) {  // active video
-      sync(buf, _hsync);
-      burst(buf);
-      ///            blit(_lines[i],buf + _active_start);
-      blit(screenMemory[i], buf + _active_start);
+  //   } else if (i < 304) {  // post render/black 272-304
+  //     if (i <
+  //         272)  // slight optimization here, once you have 2 blanking buffers
+  //       blanking(buf, false);
+  //   } else {
+  //     pal_sync(buf, i);  // 8 lines of sync 304-312
+  //   }
+  // } else {
+  //   // ntsc
+  //   if (i < _active_lines) {  // active video
+  //     sync(buf, _hsync);
+  //     burst(buf);
+  //     ///            blit(_lines[i],buf + _active_start);
+  //     blit(screenMemory[i], buf + _active_start);
 
-    } else if (i < (_active_lines + 5)) {  // post render/black
-      blanking(buf, false);
+  //   } else if (i < (_active_lines + 5)) {  // post render/black
+  //     blanking(buf, false);
 
-    } else if (i < (_active_lines + 8)) {  // vsync
-      blanking(buf, true);
+  //   } else if (i < (_active_lines + 8)) {  // vsync
+  //     blanking(buf, true);
 
-    } else {  // pre render/black
-      blanking(buf, false);
-    }
-  }
+  //   } else {  // pre render/black
+  //     blanking(buf, false);
+  //   }
+  // }
 
-  if (_line_counter == _line_count) {
-    _line_counter = 0;  // frame is done
-    _frame_counter++;
-  }
+  // if (_line_counter == _line_count) {
+  //   _line_counter = 0;  // frame is done
+  //   _frame_counter++;
+  // }
 }
 
 // simple isr
@@ -585,28 +585,28 @@ void video_init_hw(int line_width, int samples_per_cc) {
 // PAL
 
 void pal_init() {
-  int cc_width = 4;
-  _sample_rate = PAL_FREQUENCY * cc_width / 1000000.0;  // DAC rate in mhz
-  _line_width = PAL_COLOR_CLOCKS_PER_SCANLINE * cc_width;
-  _line_count = PAL_LINES;
-  _hsync_short = usec(2);
-  _hsync_long = usec(30);
-  _hsync = usec(4.7);
-  _burst_start = usec(5.6);
-  _burst_width = (int)(10 * cc_width + 4) & 0xFFFE;
-  _active_start = usec(10.4);
+  // int cc_width = 4;
+  // _sample_rate = PAL_FREQUENCY * cc_width / 1000000.0;  // DAC rate in mhz
+  // _line_width = PAL_COLOR_CLOCKS_PER_SCANLINE * cc_width;
+  // _line_count = PAL_LINES;
+  // _hsync_short = usec(2);
+  // _hsync_long = usec(30);
+  // _hsync = usec(4.7);
+  // _burst_start = usec(5.6);
+  // _burst_width = (int)(10 * cc_width + 4) & 0xFFFE;
+  // _active_start = usec(10.4);
 
-  // make colorburst tables for even and odd lines
-  _burst0 = new int16_t[_burst_width];
-  _burst1 = new int16_t[_burst_width];
-  float phase = 2 * M_PI / 2;
-  for (int i = 0; i < _burst_width; i++) {
-    _burst0[i] =
-        BLANKING_LEVEL + sin(phase + 3 * M_PI / 4) * BLANKING_LEVEL / 1.5;
-    _burst1[i] =
-        BLANKING_LEVEL + sin(phase - 3 * M_PI / 4) * BLANKING_LEVEL / 1.5;
-    phase += 2 * M_PI / cc_width;
-  }
+  // // make colorburst tables for even and odd lines
+  // _burst0 = new int16_t[_burst_width];
+  // _burst1 = new int16_t[_burst_width];
+  // float phase = 2 * M_PI / 2;
+  // for (int i = 0; i < _burst_width; i++) {
+  //   _burst0[i] =
+  //       BLANKING_LEVEL + sin(phase + 3 * M_PI / 4) * BLANKING_LEVEL / 1.5;
+  //   _burst1[i] =
+  //       BLANKING_LEVEL + sin(phase - 3 * M_PI / 4) * BLANKING_LEVEL / 1.5;
+  //   phase += 2 * M_PI / cc_width;
+  // }
 }
 void initCompositeVideo(int samples_per_cc, int machine,
                         const uint32_t* palette, int ntsc) {

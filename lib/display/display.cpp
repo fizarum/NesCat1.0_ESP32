@@ -1,7 +1,8 @@
 #include "display.h"
 
-#include <Adafruit_GFX.h>
+// #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
+#include <esp_task_wdt.h>
 
 #include <queue>
 
@@ -21,6 +22,8 @@ const char *displayFontSet = NULL;
 
 QueueHandle_t vidQueue;
 
+static void videoTask(void *arg);
+
 void prepareVideoMemory();
 
 void displayInit() {
@@ -33,6 +36,24 @@ void displayInit() {
   tft.printf("loading...");
   prepareVideoMemory();
   nescreen::setFont(Retro8x16);
+  delay(200);
+}
+
+void initVideo() {
+  //  disable Core 0 WDT
+  TaskHandle_t idle_0 = xTaskGetIdleTaskHandleForCPU(0);
+  esp_task_wdt_delete(idle_0);
+
+  vidQueue = xQueueCreate(1, sizeof(uint8_t *));
+
+  xTaskCreatePinnedToCore(&videoTask, "videoTask", 2048, NULL, 5, NULL, 0);
+}
+
+static void videoTask(void *arg) {
+  while (1) {
+    xQueueReceive(vidQueue, &screenMemory, portMAX_DELAY);
+    nescreen::writeFrame(X_POS_OF_VIRTUAL_SCREEN, Y_POS_OF_VIRTUAL_SCREEN);
+  }
 }
 
 void nescreen::update() { xQueueSend(vidQueue, &screenMemory, 0); }
