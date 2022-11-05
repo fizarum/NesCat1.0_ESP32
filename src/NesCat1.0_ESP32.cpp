@@ -127,9 +127,19 @@ static void videoTask(void *arg) {
 // #endif
 // }
 
-void onKeysCallback(uint8_t keyMap) { debug("on key press: %d\n", keyMap); }
-void onJoystickCallback(uint8_t joystickMoveMap) {
-  debug("on joystic moved: %d\n", joystickMoveMap);
+void onKeysCallback(uint16_t keyMap) {
+  if (keyMap == 0) {
+    debug("on key release\n");
+    return;
+  }
+  debug("is square pressed: %d\n", JOY_SQUARE);
+  debug("is cross pressed: %d\n", JOY_CROSS);
+  debug("is circle pressed: %d\n", JOY_CIRCLE);
+  debug("is triangle pressed: %d\n", JOY_TRIANGLE);
+}
+
+void onJoystickCallback(uint16_t joystickMoveMap) {
+  debug("on joystick moved: %d\n", joystickMoveMap);
 }
 
 void preparePsRam() {
