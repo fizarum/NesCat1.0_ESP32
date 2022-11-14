@@ -4,9 +4,9 @@
 #include <stdint.h>
 
 // KEY BUTTONS PINS:
-#define PIN_UP 39     // SVN
+#define PIN_UP 35     // SVN
 #define PIN_DOWN 35   // IO35
-#define PIN_LEFT 36   // SVP
+#define PIN_LEFT 34   // SVP
 #define PIN_RIGHT 12  // TDI
 // todo: should be removed
 #define PIN_A 2        // IO2

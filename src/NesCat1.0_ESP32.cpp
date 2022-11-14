@@ -2,9 +2,7 @@
 //*
 //*   NCAT SYSTEM Rework 1.1
 //*
-//*   Includes: 1. NES EMULATOR
-//*
-//*   Requirements: NodeMCU ESP32S, ILI9341 LCD, MICROSD CARD slot,
+//*   Requirements: NodeMCU ESP32S, ILI9341 LCD, MICRO SD CARD slot,
 //*   PCM5102 I2S AUDIO MODULE, OTHER PARTS...
 //*
 //*   Only for personal & educational use!
@@ -22,19 +20,22 @@
 //*
 //********************************************************************************
 
-// #define COMPOSITE_VIDEO_ENABLED true  // Do not disable! it also disable ADC.
+#include <Arduino.h>
+// for SPI flash memory access
+#include "esp_spi_flash.h"
 
 #define DEBUG true  // Serial debugging enable.
 
 #include <audio.h>
 #include <controls.h>
+#include <utils.h>
 
 // display part
 #include <display.h>
 #include <menu.h>
 
 // SD card part
-#include <fstorage.h>
+#include <storage.h>
 
 // player Digital I/O used
 //#define SD_CS          -1
@@ -45,32 +46,16 @@
 // #define I2S_BCLK I2S_BCK_IO
 // #define I2S_LRC I2S_WS_IO
 //********************************************************************************
-// MAIN LIBRARIES:
-
-#include <Arduino.h>
-// #include <esp_task_wdt.h>
-#include <utils.h>
-
-//********************************************************************************
-// VARIABLES:
 
 uint32_t psRAMSize = 0;
 uint8_t *PSRAM;
 
-//--------------------------------------------------------------------------------
-// SPI FLASH MEMORY ACCESS:
-#include "esp_spi_flash.h"
-
-unsigned char *rom = 0;  // Actual ROM pointer
+// unsigned char *rom = 0;  // Actual ROM pointer
 
 bool EXIT = false;
 
 #define MAXFILES 512
 char *filename[MAXFILES];
-char fileext[4];
-
-char *MAINPATH;
-char textbuf[64] = {0};
 
 // NES EMU SECTION
 #include "NESemulator_part1.h"
@@ -130,11 +115,9 @@ void setup() {
   displayInit();
 
   initVideo();
-  debug("videoTask Pinned To Core 0...");
 
-  MAINPATH = (char *)malloc(256);
-
-  fStorageInit();
+  storageInit();
+  printHomeFolder();
 
   install_timer(60);  // 60Hz
   getMemoryStatus();

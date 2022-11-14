@@ -3,10 +3,19 @@
 // #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 #include <esp_task_wdt.h>
+#include <utils.h>
 
 #include <queue>
 
 #include "Retro8x16.c"
+
+// VSPI pins on NodeMCU ESP32S
+#define TFT_CLK 18
+#define TFT_MOSI 23
+#define TFT_MISO 19
+#define TFT_CS 5
+#define TFT_DC 16
+#define TFT_RST 17
 
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
@@ -47,6 +56,7 @@ void initVideo() {
   vidQueue = xQueueCreate(1, sizeof(uint8_t *));
 
   xTaskCreatePinnedToCore(&videoTask, "videoTask", 2048, NULL, 5, NULL, 0);
+  debug("videoTask Pinned To Core 0...");
 }
 
 static void videoTask(void *arg) {
@@ -58,9 +68,9 @@ static void videoTask(void *arg) {
 
 void nescreen::update() { xQueueSend(vidQueue, &screenMemory, 0); }
 
-void nescreen::drawPixel(uint8_t X, uint8_t Y, uint8_t colorIndex) {
-  if (Y < NES_SCREEN_HEIGHT && X < NES_SCREEN_WIDTH) {
-    screenMemory[Y][X] = colorIndex;
+void nescreen::drawPixel(uint8_t x, uint8_t y, uint8_t colorIndex) {
+  if (y < NES_SCREEN_HEIGHT && x < NES_SCREEN_WIDTH) {
+    screenMemory[y][x] = colorIndex;
   }
 }
 
@@ -100,14 +110,14 @@ void fillRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
     }
 }
 
-void nescreen::drawLine(int16_t startx, int16_t starty, int16_t endx,
-                        int16_t endy, uint8_t color) {
+void nescreen::drawLine(int16_t startX, int16_t startY, int16_t endX,
+                        int16_t endY, uint8_t color) {
   int t, distance;
   int xerr = 0, yerr = 0, delta_x, delta_y;
   int incx, incy;
   // compute the distances in both directions
-  delta_x = endx - startx;
-  delta_y = endy - starty;
+  delta_x = endX - startX;
+  delta_y = endY - startY;
   // Compute the direction of the increment,
   //   an increment of 0 means either a horizontal or vertical
   //   line.
@@ -135,97 +145,89 @@ void nescreen::drawLine(int16_t startx, int16_t starty, int16_t endx,
 
   // draw the line
   for (t = 0; t <= distance + 1; t++) {
-    nescreen::drawPixel(startx, starty, color);
+    nescreen::drawPixel(startX, startY, color);
 
     xerr += delta_x;
     yerr += delta_y;
     if (xerr > distance) {
       xerr -= distance;
-      startx += incx;
+      startX += incx;
     }
     if (yerr > distance) {
       yerr -= distance;
-      starty += incy;
+      startY += incy;
     }
   }
 }
 
-void drawRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
-                   uint8_t color) {
-  nescreen::drawLine(x, y, x + width, y, color);
-  nescreen::drawLine(x, y, x, y + height, color);
-  nescreen::drawLine(x + width, y, x + width, y + height, color);
-  nescreen::drawLine(x, y + height, x + width, y + height, color);
+void nescreen::drawHLine(int16_t startX, int16_t startY, int16_t endX,
+                         uint8_t color) {
+  for (uint16_t x = startX; x < endX; ++x) {
+    nescreen::drawPixel(x, startY, color);
+  }
 }
 
+void nescreen::drawVLine(int16_t startX, int16_t startY, int16_t endY,
+                         uint8_t color) {
+  for (uint16_t y = startY; y < endY; ++y) {
+    nescreen::drawPixel(startX, y, color);
+  }
+}
+
+void nescreen::drawRectangle(int16_t x, int16_t y, int16_t width,
+                             int16_t height, uint8_t color) {
+  nescreen::drawHLine(x, y, x + width, color);
+  nescreen::drawVLine(x, y, y + height, color);
+  nescreen::drawVLine(x + width, y, y + height, color);
+  nescreen::drawHLine(x, y + height, x + width, color);
+}
+
+#define CHAR_SEGMENT_WITH 8
 uint8_t nescreen::drawChar(uint16_t Main_x, uint16_t Main_y, char Main_char,
                            const char *font, uint8_t color, uint8_t bkgColor) {
   uint8_t charWidth = font[0];   // x char size
   uint8_t charHeight = font[1];  // y char size
   uint8_t charOffset = font[2];  // char start offset
 
-  if (Main_char != '\n' && Main_char != '\r')
-    for (uint16_t Ypos = 0; Ypos < charHeight; Ypos++)
-      for (uint16_t Xpos = 0; Xpos < charWidth; Xpos += 8) {
-        uint8_t CHARLINE =
-            font[(Main_char - charOffset) * (charHeight * (charWidth / 8)) +
-                 (Ypos) * (charWidth / 8) + Xpos / 8 + 4];
+  if (Main_char == '\n' || Main_char == '\r') {
+    return charWidth;
+  }
 
-        if ((Xpos + 0 < charWidth) && (CHARLINE & 0b10000000) != 0)
-          nescreen::drawPixel(Main_x + Xpos + 0, Main_y + Ypos, color);
-        else
-          nescreen::drawPixel(Main_x + Xpos + 0, Main_y + Ypos, bkgColor);
+  uint8_t activeColor;
+  uint8_t mask;
+  uint8_t widthInSegments = charWidth / CHAR_SEGMENT_WITH;
 
-        if ((Xpos + 1 < charWidth) && (CHARLINE & 0b01000000) != 0)
-          nescreen::drawPixel(Main_x + Xpos + 1, Main_y + Ypos, color);
-        else
-          nescreen::drawPixel(Main_x + Xpos + 1, Main_y + Ypos, bkgColor);
+  for (uint16_t yPos = 0; yPos < charHeight; yPos++)
+    for (uint16_t xPos = 0; xPos < charWidth; xPos += CHAR_SEGMENT_WITH) {
+      uint8_t charLine =
+          font[(Main_char - charOffset) * (charHeight * widthInSegments) +
+               (yPos)*widthInSegments + xPos / CHAR_SEGMENT_WITH + 4];
 
-        if ((Xpos + 2 < charWidth) && (CHARLINE & 0b00100000) != 0)
-          nescreen::drawPixel(Main_x + Xpos + 2, Main_y + Ypos, color);
-        else
-          nescreen::drawPixel(Main_x + Xpos + 2, Main_y + Ypos, bkgColor);
-
-        if ((Xpos + 3 < charWidth) && (CHARLINE & 0b00010000) != 0)
-          nescreen::drawPixel(Main_x + Xpos + 3, Main_y + Ypos, color);
-        else
-          nescreen::drawPixel(Main_x + Xpos + 3, Main_y + Ypos, bkgColor);
-
-        if ((Xpos + 4 < charWidth) && (CHARLINE & 0b00001000) != 0)
-          nescreen::drawPixel(Main_x + Xpos + 4, Main_y + Ypos, color);
-        else
-          nescreen::drawPixel(Main_x + Xpos + 4, Main_y + Ypos, bkgColor);
-
-        if ((Xpos + 5 < charWidth) && (CHARLINE & 0b00000100) != 0)
-          nescreen::drawPixel(Main_x + Xpos + 5, Main_y + Ypos, color);
-        else
-          nescreen::drawPixel(Main_x + Xpos + 5, Main_y + Ypos, bkgColor);
-
-        if ((Xpos + 6 < charWidth) && (CHARLINE & 0b00000010) != 0)
-          nescreen::drawPixel(Main_x + Xpos + 6, Main_y + Ypos, color);
-        else
-          nescreen::drawPixel(Main_x + Xpos + 6, Main_y + Ypos, bkgColor);
-
-        if ((Xpos + 7 < charWidth) && (CHARLINE & 0b00000001) != 0)
-          nescreen::drawPixel(Main_x + Xpos + 7, Main_y + Ypos, color);
-        else
-          nescreen::drawPixel(Main_x + Xpos + 7, Main_y + Ypos, bkgColor);
+      // iterate from first (leading) to last bit
+      // and draw pixel by pixel one segment of line
+      mask = 1 << 7;  // 0b10000000
+      for (uint8_t relX = xPos; relX < xPos + CHAR_SEGMENT_WITH; ++relX) {
+        activeColor =
+            (relX < charWidth) && (charLine & mask) != 0 ? color : bkgColor;
+        nescreen::drawPixel(Main_x + relX, Main_y + yPos, activeColor);
+        mask = mask >> 1;
       }
+    }
   return charWidth;
 }
 
 uint8_t nescreen::drawString(uint8_t x, uint8_t y, const char *c, uint8_t color,
                              uint8_t bkgColor) {
   uint8_t width;
-  uint8_t textwidth = 0;
+  uint8_t textWidth = 0;
   while (*c) {
     width = nescreen::drawChar(x, y, *c, displayFontSet, color, bkgColor);
-    textwidth += (width);
+    textWidth += (width);
     x += (width);
     c++;
   }
   setTextPosition(x, y);
-  return textwidth;
+  return textWidth;
 }
 
 uint8_t nescreen::drawString(const char *c, uint8_t color, uint8_t bkgColor) {
