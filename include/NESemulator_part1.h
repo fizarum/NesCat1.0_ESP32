@@ -2,7 +2,7 @@
 #define NESEMULATOR_1_H
 
 #include <display.h>
-#include <fstorage.h>
+#include <storage.h>
 #include <utils.h>
 
 #include "compositevideo.h"
@@ -43,6 +43,9 @@
 
 #define NES_RAMSIZE 0x800
 #define FILESPERPAGE 8
+
+char *MAINPATH = new char[256];
+char fileExt[4];
 
 SdFile dirFile;
 SdFile file;
@@ -255,10 +258,8 @@ char *NESEXPLORE(char *path) {
   // clear memory variables
   for (uint16_t tmp = 0; tmp < MAXFILES; tmp++)
     memset(filename[tmp], 0, sizeof(filename[tmp]));
-  fileext[0] = 0;
-  fileext[1] = 0;
-  fileext[2] = 0;
-  fileext[3] = 0;
+
+  memset(fileExt, 0, 4);
 
   num = 0;
   loadedFileNames = 0;
@@ -282,24 +283,24 @@ char *NESEXPLORE(char *path) {
       } else {
         for (uint8_t i = strlen(filename[num]); i > 3; i--) {
           if (filename[num][i] != 0) {
-            fileext[3] = '\0';
-            fileext[2] = filename[num][i];
-            fileext[1] = filename[num][i - 1];
-            fileext[0] = filename[num][i - 2];
+            fileExt[3] = '\0';
+            fileExt[2] = filename[num][i];
+            fileExt[1] = filename[num][i - 1];
+            fileExt[0] = filename[num][i - 2];
             break;
           }
         }
       }
 
       if (DEBUG) {
-        /// Serial.println(fileext[num]);
+        /// Serial.println(fileExt[num]);
         /// Serial.println(strlen(filename[num]));
       }
 
       // check NES File extension, then increase index
-      if ((fileext[0] == 'N' || fileext[0] == 'n') &&
-          (fileext[1] == 'E' || fileext[1] == 'e') &&
-          (fileext[2] == 'S' || fileext[2] == 's')) {
+      if ((fileExt[0] == 'N' || fileExt[0] == 'n') &&
+          (fileExt[1] == 'E' || fileExt[1] == 'e') &&
+          (fileExt[2] == 'S' || fileExt[2] == 's')) {
         num++;
       }
     }

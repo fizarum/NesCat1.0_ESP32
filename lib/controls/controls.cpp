@@ -10,7 +10,7 @@
 // minimal step for joystick to register press event
 #define JOY_THRESHOLD JOY_MAX_VAL / 10
 
-#define I2C_ADDRESS 0x25
+#define I2C_ADDRESS 0x20
 
 #define ESP_SDA_PIN 21
 #define ESP_SCL_PIN 22

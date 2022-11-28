@@ -24,14 +24,6 @@
 #define H_CENTER NES_SCREEN_WIDTH / 2
 #define V_CENTER NES_SCREEN_HEIGHT / 2
 
-// VSPI pins on NodeMCU ESP32S
-#define TFT_CLK 18
-#define TFT_MOSI 23
-#define TFT_MISO 19
-#define TFT_CS 5
-#define TFT_DC 16
-#define TFT_RST 17
-
 // nes universal background color, more:
 // https://emudev.de/nes-emulator/palettes-attribute-tables-and-sprites/ or
 // https://helloacm.com/tutorial-7-c-programming-in-6502-colour-setting-for-nes/
@@ -39,6 +31,7 @@
 // menu part
 #define MENU_TEXT_COLOR 0x30
 #define MENU_BACKGROUND_COLOR 0x0c
+#define ACCENT_COLOR 0x16
 
 #include <SPI.h>
 
@@ -67,8 +60,12 @@ void writeFrame(const uint16_t x, const uint16_t y,
 void fillRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
                    uint8_t color);
 
-void drawLine(int16_t startx, int16_t starty, int16_t endx, int16_t endy,
+void drawLine(int16_t startX, int16_t startY, int16_t endX, int16_t endY,
               uint8_t color);
+
+void drawHLine(int16_t startX, int16_t startY, int16_t endX, uint8_t color);
+
+void drawVLine(int16_t startX, int16_t startY, int16_t endY, uint8_t color);
 
 void drawRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
                    uint8_t color);
