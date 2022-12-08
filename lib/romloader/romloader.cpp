@@ -49,8 +49,7 @@ unsigned char *getromdata(SdFat *sd, const char *filename) {
 
   uint16_t blockCount =
       (fileSize + SPI_FLASH_SECTOR_SIZE) / SPI_FLASH_SECTOR_SIZE;
-  Serial.print("block count: ");
-  Serial.print(blockCount);
+  debug("block count: %u\n", blockCount);
 
   if (psRAMSize > 0) {
     uint32_t i = 0;

@@ -19,12 +19,13 @@
 //*   - huge NES ROMs up to 512kB (read from FLASH)
 //*
 //********************************************************************************
-
 #include <Arduino.h>
+#include <Wire.h>
 // for SPI flash memory access
 #include "esp_spi_flash.h"
 
-#define DEBUG true  // Serial debugging enable.
+// Serial debugging enable.
+#define DEBUG true
 
 #include <audio.h>
 #include <controls.h>
@@ -32,20 +33,13 @@
 
 // display part
 #include <display.h>
-#include <menu.h>
 
 // SD card part
 #include <storage.h>
+// start app - menu
+#include <app_menu.h>
 
-// player Digital I/O used
-//#define SD_CS          -1
-// #define SPI_MOSI SOFTSD_MOSI_PIN
-// #define SPI_MISO SOFTSD_MISO_PIN
-// #define SPI_SCK SOFTSD_SCK_PIN
-// #define I2S_DOUT I2S_DO_IO
-// #define I2S_BCLK I2S_BCK_IO
-// #define I2S_LRC I2S_WS_IO
-//********************************************************************************
+Menu menu;
 
 uint32_t psRAMSize = 0;
 uint8_t *PSRAM;
@@ -62,7 +56,13 @@ char *filename[MAXFILES];
 #include "NESemulator_part2.h"
 #include "mappers.h"
 
+void onAppClosedCallback();
+
 void onKeysCallback(uint16_t keyMap) {
+  if (menu.handle(keyMap) == true) {
+    return;
+  }
+
   if (keyMap == 0) {
     debug("on key release\n");
     return;
@@ -90,10 +90,11 @@ void onKeysCallback(uint16_t keyMap) {
   if (isStartPressed(keyMap)) {
     debug("start pressed");
   }
+  nescreen::update();
 }
 
 void onJoystickCallback(uint16_t joystickMoveMap) {
-  debug("on joystick moved: %d\n", joystickMoveMap);
+  menu.handle(joystickMoveMap);
 }
 
 void preparePsRam() {
@@ -107,10 +108,13 @@ void preparePsRam() {
 
 void setup() {
   Serial.begin(115200);
+  while (!Serial) {
+    // wait for serial completion init
+  }
+  controlsInit(&onKeysCallback, &onJoystickCallback);
+
   getMemoryStatus();
   preparePsRam();
-
-  controlsInit(&onKeysCallback, &onJoystickCallback);
 
   displayInit();
 
@@ -119,54 +123,36 @@ void setup() {
   storageInit();
   printHomeFolder();
 
-  install_timer(60);  // 60Hz
+  // install_timer(60);  // 60Hz
   getMemoryStatus();
 
-  menuInit();
-  nescreen::update();
-}
-
-uint8_t hJoyPos = 0;
-
-void handleMenu() {
-  if (JOY_LEFT) {
-    hJoyPos = 1;
-    JOY_LEFT = 0;
-  } else if (JOY_RIGHT) {
-    hJoyPos = 2;
-    JOY_RIGHT = 0;
-  } else {
-    hJoyPos = 0;
-  }
-  updateActiveMenuIndex(hJoyPos);
-  // todo: temporary solution - rework later
-  if (hJoyPos != 0) {
-    nescreen::update();
-  }
+  menu.open(&onAppClosedCallback);
 }
 
 void loop() {
   EXIT = false;
   controlsUpdate();
-  handleMenu();
-  switch (getCurrentMenuIndex()) {
-    case 0:
-      // debug("nes emulator init should be here");
-      //   nes emulator part. code has been removed to save your mental health
-      break;
-    case 1:
-      // debug("audio player init should be here");
-      //   audio player part. code has been removed to save your mental health
-      break;
-    case 2:
-      // debug("oscilloscope init should be here");
-      //   oscilloscope part. code has been removed to save your mental health
-      break;
+  menu.update();
+  // switch (getCurrentMenuIndex()) {
+  //   case 0:
+  //     // debug("nes emulator init should be here");
+  //     //   nes emulator part. code has been removed to save your mental
+  //     health break;
+  //   case 1:
+  //     // debug("audio player init should be here");
+  //     //   audio player part. code has been removed to save your mental
+  //     health break;
+  //   case 2:
+  //     // debug("oscilloscope init should be here");
+  //     //   oscilloscope part. code has been removed to save your mental
+  //     health break;
 
-    default:
-      break;
-  }
-  JOY_SHARE = 0;
-  JOY_OPTIONS = 0;
+  //   default:
+  //     break;
+  // }
+  // JOY_SHARE = 0;
+  // JOY_OPTIONS = 0;
   EXIT = false;
 }
+
+void onAppClosedCallback() { menu.closeUserApp(); }

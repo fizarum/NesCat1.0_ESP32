@@ -1,6 +1,7 @@
 #include "utils.h"
 
 #include <Arduino.h>
+#include <Wire.h>
 
 // comment to disable logs
 #define DEBUG
@@ -57,12 +58,12 @@ uint8_t bit::setBit(uint8_t source, uint8_t position) {
 }
 
 /**
- * @brief Set or reset the bit in uint16_t
+ * @brief Set or reset the bit in uint16_t, source value isn't mutated
  *
  * @param source source uint16_t
  * @param position of bit to change, counts from 0
  * @param isSet 0 means reset, > 0 - means set
- * @return uint16_t
+ * @return updated copy of source value
  */
 uint16_t bit::setBit16(uint16_t source, uint8_t position, uint8_t isSet) {
   if (isSet > 0) {
@@ -123,4 +124,17 @@ void getPsRamStatus(uint32_t psramSize) {
     debug("NO PSRAM DETECTED.");
   }
   debug("--------------------------------");
+}
+
+uint8_t findI2CDevice(const uint8_t startAddress) {
+  uint8_t address, response;
+  for (address = startAddress; address < 127; address++) {
+    Wire.beginTransmission(address);
+    response = Wire.endTransmission();
+
+    if (response == 0) {
+      return address;
+    }
+  }
+  return 0;
 }

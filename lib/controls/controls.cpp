@@ -10,28 +10,45 @@
 // minimal step for joystick to register press event
 #define JOY_THRESHOLD JOY_MAX_VAL / 10
 
-#define I2C_ADDRESS 0x20
-
-#define ESP_SDA_PIN 21
-#define ESP_SCL_PIN 22
-#define ESP_INT_PIN 02
-
-PCF8575 pcf8575(I2C_ADDRESS);
-
-uint8_t keyPressedFlag = 0;
+PCF8575 *pcf8575 = nullptr;
+uint8_t i2cAddress;
+bool initialized = false;
 
 /**
  * @brief all input joy/keys are represented as uint16_t value
  * keymap is next:
  * [0..3] - x/y information of joystick
- * [4   ] start button
- * [5   ] select button
+ * [4   ] select button
+ * [5   ] start button
  * [6   ] A (triangle) button
  * [7   ] B (circle) button
  * [8   ] C (cross) button
  * [9   ] D (square) button
  * [10  ] joystick middle
+ *
+ * !!!Important to remember!!!
+ * map of IO ports (on GPIO expander) is next:
+ * 0 - triangle
+ * 1 - circle
+ * 2 - cross
+ * 3 - square
+ * 4 - options (select)
+ * 5 - start
  */
+#define SELECT_BUTTON_BIT 4
+#define START_BUTTON_BIT 5
+#define TRIANGLE_BUTTON_BIT 6
+#define CIRCLE_BUTTON_BIT 7
+#define CROSS_BUTTON_BIT 8
+#define SQUARE_BUTTON_BIT 9
+
+// make sure that first 7 bits are only used
+#define GPIO_KEYS_MASK 127
+
+// bits from 4 to 10 (check description above) should be
+// reset before apply new values from hardware
+#define KEYS_MASK 63503
+
 uint16_t inputState;
 bool joystickStateUpdated;
 // callback for keyboard
@@ -66,68 +83,90 @@ unsigned long lastRequestedTimeOfJoystick = 0;
 void requestKeysState();
 void requestJoystickStateByPullMethod();
 
-void onKeyPressedInt() { keyPressedFlag = 1; }
-
 /**
  * @brief should be called inside of setup() function
  */
 void controlsInit(void (*onKeysCallback)(uint16_t),
                   void (*onJoystickMovedCallback)(uint16_t)) {
-  pinMode(ESP_INT_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(ESP_INT_PIN), onKeyPressedInt, FALLING);
+  Wire.begin();
+  debug("scanning i2c bus...");
+  i2cAddress = findI2CDevice();
+  if (i2cAddress == 0) {
+    debug("error during initializing keyboard!");
+    initialized = false;
+    return;
+  }
+  debug("found device on port: %x", i2cAddress);
+  pcf8575 = new PCF8575(i2cAddress);
+  pcf8575->begin(SDA, SCL);
 
-  pcf8575.begin(ESP_SDA_PIN, ESP_SCL_PIN);
-
-  if (pcf8575.isConnected()) {
+  if (pcf8575->isConnected()) {
     debug("init pcf8575... ok");
   } else {
     debug("init pcf8575... error");
+    initialized = false;
+    return;
   }
 
   onKeysCallbackPtr = onKeysCallback;
   onJoystickMovedPtr = onJoystickMovedCallback;
+  initialized = true;
 }
 
 /**
  * @brief should be called inside of loop() function
  */
 void controlsUpdate() {
+  if (initialized == false) {
+    return;
+  }
   now = millis();
   requestKeysState();
   requestJoystickStateByPullMethod();
 }
 
-uint16_t tempKeyState;
+uint16_t keyState = 0;
+uint16_t lastReadKeyState = 0;
 
 void requestKeysState() {
   if (now >= keyRequestedAt + delayBetweenKeyRequests) {
     keyRequestedAt = now;
 
-    if (keyPressedFlag == 1) {
-      tempKeyState = ~pcf8575.read16();
+    keyState = ~(pcf8575->read16());
+    keyState &= GPIO_KEYS_MASK;
 
-      JOY_TRIANGLE = isTrianglePressed(tempKeyState);
-      inputState = bit::setBit16(tempKeyState, 6, JOY_TRIANGLE);
-
-      JOY_CIRCLE = isCirclePressed(tempKeyState);
-      inputState = bit::setBit16(tempKeyState, 7, JOY_CIRCLE);
-
-      JOY_CROSS = isCrossPressed(tempKeyState);
-      inputState = bit::setBit16(tempKeyState, 8, JOY_CROSS);
-
-      JOY_SQUARE = isSquarePressed(tempKeyState);
-      inputState = bit::setBit16(tempKeyState, 9, JOY_SQUARE);
-
-      JOY_SHARE = isStartPressed(tempKeyState);
-      inputState = bit::setBit16(tempKeyState, 5, JOY_SHARE);
-
-      JOY_OPTIONS = isSelectPressed(tempKeyState);
-      inputState = bit::setBit16(tempKeyState, 4, JOY_OPTIONS);
-
-      onKeysCallbackPtr(inputState);
-
-      keyPressedFlag = 0;
+    if (lastReadKeyState == keyState) {
+      return;
     }
+
+    // reset key state of all non joystick related buttons
+    inputState &= KEYS_MASK;
+
+    JOY_TRIANGLE = bit::isBitSet(keyState, 0);
+    inputState = bit::setBit16(inputState, TRIANGLE_BUTTON_BIT, JOY_TRIANGLE);
+
+    JOY_CIRCLE = bit::isBitSet(keyState, 1);
+    inputState = bit::setBit16(inputState, CIRCLE_BUTTON_BIT, JOY_CIRCLE);
+
+    JOY_CROSS = bit::isBitSet(keyState, 2);
+    inputState = bit::setBit16(inputState, CROSS_BUTTON_BIT, JOY_CROSS);
+
+    JOY_SQUARE = bit::isBitSet(keyState, 3);
+    inputState = bit::setBit16(inputState, SQUARE_BUTTON_BIT, JOY_SQUARE);
+
+    JOY_OPTIONS = bit::isBitSet(keyState, 4);
+    inputState = bit::setBit16(inputState, SELECT_BUTTON_BIT, JOY_OPTIONS);
+
+    JOY_SHARE = bit::isBitSet(keyState, 5);
+    inputState = bit::setBit16(inputState, START_BUTTON_BIT, JOY_SHARE);
+
+    if (JOY_TRIANGLE == 1 || JOY_CIRCLE == 1 || JOY_CROSS == 1 ||
+        JOY_SQUARE == 1 || JOY_OPTIONS == 1 || JOY_SHARE == 1) {
+      debug("triggered keymap change: %u", inputState);
+      onKeysCallbackPtr(inputState);
+    }
+
+    lastReadKeyState = keyState;
   }
 }
 
@@ -144,6 +183,8 @@ void requestJoystickStateByPullMethod() {
     // left
     if (hPos <= JOY_NORMAL_VAL - JOY_THRESHOLD) {
       inputState = bit::setBit16(inputState, 0);
+      // reset flag of right button state
+      inputState = bit::resetBit(inputState, 1);
       JOY_LEFT = 1;
       joystickStateUpdated = true;
     }
@@ -151,6 +192,8 @@ void requestJoystickStateByPullMethod() {
     // right
     if (hPos >= JOY_NORMAL_VAL + JOY_THRESHOLD) {
       inputState = bit::setBit16(inputState, 1);
+      // reset flag of left button state
+      inputState = bit::resetBit(inputState, 0);
       JOY_RIGHT = 1;
       joystickStateUpdated = true;
     }
@@ -158,13 +201,17 @@ void requestJoystickStateByPullMethod() {
     // down
     if (vPos <= JOY_NORMAL_VAL - JOY_THRESHOLD) {
       inputState = bit::setBit16(inputState, 2);
+      // reset flag of top button state
+      inputState = bit::resetBit(inputState, 3);
       JOY_DOWN = 1;
       joystickStateUpdated = true;
     }
 
-    // top
+    // up
     if (vPos >= JOY_NORMAL_VAL + JOY_THRESHOLD) {
       inputState = bit::setBit16(inputState, 3);
+      // reset flag of bottom button state
+      inputState = bit::resetBit(inputState, 2);
       JOY_UP = 1;
       joystickStateUpdated = true;
     }
@@ -172,15 +219,33 @@ void requestJoystickStateByPullMethod() {
     if (joystickStateUpdated == true) {
       onJoystickMovedPtr(inputState);
     }
+    inputState = 0;
 
     lastRequestedTimeOfJoystick = now;
   }
 }
 
-bool isTrianglePressed(uint16_t state) { return bit::isBitSet(state, 0); }
-bool isCirclePressed(uint16_t state) { return bit::isBitSet(state, 1); }
-bool isCrossPressed(uint16_t state) { return bit::isBitSet(state, 2); }
-bool isSquarePressed(uint16_t state) { return bit::isBitSet(state, 3); }
+bool isTrianglePressed(uint16_t state) {
+  return bit::isBitSet(state, TRIANGLE_BUTTON_BIT);
+}
+bool isCirclePressed(uint16_t state) {
+  return bit::isBitSet(state, CIRCLE_BUTTON_BIT);
+}
+bool isCrossPressed(uint16_t state) {
+  return bit::isBitSet(state, CROSS_BUTTON_BIT);
+}
+bool isSquarePressed(uint16_t state) {
+  return bit::isBitSet(state, SQUARE_BUTTON_BIT);
+}
 
-bool isSelectPressed(uint16_t state) { return bit::isBitSet(state, 4); }
-bool isStartPressed(uint16_t state) { return bit::isBitSet(state, 5); }
+bool isSelectPressed(uint16_t state) {
+  return bit::isBitSet(state, SELECT_BUTTON_BIT);
+}
+bool isStartPressed(uint16_t state) {
+  return bit::isBitSet(state, START_BUTTON_BIT);
+}
+
+bool isLeftPressed(uint16_t state) { return bit::isBitSet(state, 0); }
+bool isRightPressed(uint16_t state) { return bit::isBitSet(state, 1); }
+bool isDownPressed(uint16_t state) { return bit::isBitSet(state, 2); }
+bool isUpPressed(uint16_t state) { return bit::isBitSet(state, 3); }

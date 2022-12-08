@@ -1,7 +1,9 @@
 # NesCat1.0_ESP32 modification
 
 Modified version of NesCat1.0_ESP32 system(original: <https://github.com/nathalis/NesCat1.0_ESP32>).
-!!! Its in progress and most features not working at this moment. !!!
+
+!!! **Its in progress and most features not working at this moment.** !!!
+
 I want to make separate releases as soon as I get stable version of my mod.
 Currently I'm working on software changes, but PCB reworking is planned as well
 

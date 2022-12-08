@@ -25,6 +25,10 @@
         "string_view": "cpp",
         "memory": "cpp",
         "random": "cpp",
-        "initializer_list": "cpp"
+        "initializer_list": "cpp",
+        "apps_registry,h": "c",
+        "new": "cpp",
+        "cstddef": "cpp",
+        "functional": "cpp"
     }
 }

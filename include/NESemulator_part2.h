@@ -1,7 +1,8 @@
 // MMCLIST.C:
 //  implemented mapper interfaces
+#include <utils.h>
+
 #include "mappers.h"
-#include "utils.h"
 
 const mapintf_t *mappers[] = {
     &map0_intf,  &map1_intf,  &map2_intf,  &map3_intf,   &map4_intf,
@@ -118,7 +119,7 @@ sndinfo_t osd_sound;
 nes_t *nes_create(void) {
   int i;
 
-  Serial.println(">>> nes_create");
+  debug(">>> nes_create");
   getMemoryStatus();
 
   if (NULL == machine) machine = (nes_t *)malloc(sizeof(nes_t));
