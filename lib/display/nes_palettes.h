@@ -30,4 +30,15 @@ const uint16_t nes_16bit[64] = {
     0xFECF, 0xDFCF, 0xBFD7, 0xBFDB, 0x07FF, 0xFEDF, 0x0000, 0x0000,
 };
 
+// nes universal background color, more:
+// https://emudev.de/nes-emulator/palettes-attribute-tables-and-sprites/ or
+// https://helloacm.com/tutorial-7-c-programming-in-6502-colour-setting-for-nes/
+#define UNIVERSAL_BKG_COLOR 0x3f
+
+#define WHITE_COLOR 0x30
+#define BLUE_COLOR 0x0c
+#define ORANGE_COLOR 0x16
+#define GREEN_COLOR 0x1a
+#define VIOLET_COLOR 0x13
+
 #endif  // PALETTE_H

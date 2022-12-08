@@ -21,4 +21,7 @@ void sortStrings(char *arr[], int n);
 void getMemoryStatus();
 void getPsRamStatus(uint32_t psramSize);
 
+// scan for i2c devices and return first found one
+uint8_t findI2CDevice(const uint8_t startAddress = 20);
+
 #endif  // UTILS_H

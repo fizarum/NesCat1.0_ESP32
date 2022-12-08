@@ -9,8 +9,6 @@
 #include "nes/nes.h"
 
 //--------------------------------------------------------------------------------
-/// TYPEDEFS:
-
 // Define this if running on little-endian (x86) systems
 #define HOST_LITTLE_ENDIAN  //!!! important for Arduino
 #define ZERO_LENGTH 0
@@ -22,10 +20,6 @@
 #define DEFAULT_SAMPLERATE 24000
 #define DEFAULT_FRAGSIZE 60  // max.256, default 240
 
-// VIDEO_SETUP
-// todo: remove from here
-#define NES_SCREEN_WIDTH 256
-
 #define PAL
 
 // NTSC = 60Hz, PAL = 50Hz
@@ -36,7 +30,7 @@
 #endif
 
 #define NES_CLOCK_DIVIDER 12  // default: 12
-//#define  NES_MASTER_CLOCK     21477272.727272727272
+// #define  NES_MASTER_CLOCK     21477272.727272727272
 #define NES_MASTER_CLOCK (236250000 / 11)
 #define NES_SCANLINE_CYCLES (1364.0 / NES_CLOCK_DIVIDER)
 #define NES_FIQ_PERIOD (NES_MASTER_CLOCK / NES_CLOCK_DIVIDER / 60)
@@ -74,14 +68,14 @@ uint8_t get_pad0(void) {
 
   //  12, 33, 9, 10 pin not usable
 
-  if (digitalRead(PIN_A) == 1) value |= 1;        // A
-  if (digitalRead(PIN_B) == 1) value |= 2;        // B
-  if (digitalRead(PIN_SELECT) == 1) value |= 4;   // SELECT
-  if (digitalRead(PIN_START) == 1) value |= 8;    // START
-  if (digitalRead(PIN_UP) == 1) value |= 16;      // UP
-  if (digitalRead(PIN_DOWN) == 1) value |= 32;    // DOWN
-  if (digitalRead(PIN_LEFT) == 1) value |= 64;    // LEFT
-  if (digitalRead(PIN_RIGHT) == 1) value |= 128;  // RIGHT
+  // if (digitalRead(PIN_A) == 1) value |= 1;        // A
+  // if (digitalRead(PIN_B) == 1) value |= 2;        // B
+  // if (digitalRead(PIN_SELECT) == 1) value |= 4;   // SELECT
+  // if (digitalRead(PIN_START) == 1) value |= 8;    // START
+  // if (digitalRead(PIN_UP) == 1) value |= 16;      // UP
+  // if (digitalRead(PIN_DOWN) == 1) value |= 32;    // DOWN
+  // if (digitalRead(PIN_LEFT) == 1) value |= 64;    // LEFT
+  // if (digitalRead(PIN_RIGHT) == 1) value |= 128;  // RIGHT
 
   if (digitalRead(PIN_SELECT) == 1 && digitalRead(PIN_START) == 1) {
     /// osd_stopsound();
@@ -455,8 +449,8 @@ char *NESEXPLORE(char *path) {
       JOY_OPTIONS = 0;
       delay(25);
 
-      if (DEBUG) Serial.println(path);
-      if (DEBUG) Serial.println(strlen(path));
+      debug(path);
+      debug("%d\n", strlen(path));
 
       sprintf(MAINPATH, "%s", path);
 
@@ -468,13 +462,13 @@ char *NESEXPLORE(char *path) {
         }
       }
 
-      if (DEBUG) Serial.println(MAINPATH);
-      if (DEBUG) Serial.println(strlen(MAINPATH));
+      debug(MAINPATH);
+      debug("%d\n", strlen(MAINPATH));
       return MAINPATH;
     }
   };
 }
-//################################################################################
+// ################################################################################
 //********************************************************************************
 char *NESBrowse(char *path) {
   if (path[strlen(path) - 1] != '/')
@@ -490,7 +484,7 @@ char *NESBrowse(char *path) {
   //................................................................................
   while (EXIT == false && path[strlen(path) - 1] == '/') {
     path = NESEXPLORE(path);
-    Serial.println(path);
+    debug(path);
   }
   return path;
 }
