@@ -4,6 +4,8 @@
 
 #include "mappers.h"
 
+#define NES_RAMSIZE 0x800
+
 const mapintf_t *mappers[] = {
     &map0_intf,  &map1_intf,  &map2_intf,  &map3_intf,   &map4_intf,
     &map5_intf,  &map7_intf,  &map8_intf,  &map9_intf,   &map11_intf,

@@ -40,5 +40,6 @@ const uint16_t nes_16bit[64] = {
 #define ORANGE_COLOR 0x16
 #define GREEN_COLOR 0x1a
 #define VIOLET_COLOR 0x13
+#define DARK_GREY 0x1d
 
 #endif  // PALETTE_H

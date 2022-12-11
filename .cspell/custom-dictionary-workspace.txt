@@ -2,3 +2,10 @@
 gpio
 IRAM
 millis
+NTSC
+NUMBANKS
+readhandler
+setchan
+setfiq
+strlwr
+writehandler

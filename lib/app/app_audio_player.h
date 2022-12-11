@@ -18,4 +18,4 @@ class AudioPlayer : public App {
   bool handle(uint16_t keyState);
 };
 
-#endif
+#endif  // app_audio_player_h

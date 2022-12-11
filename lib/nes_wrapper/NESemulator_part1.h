@@ -1,12 +1,15 @@
 #ifndef NESEMULATOR_1_H
 #define NESEMULATOR_1_H
 
+#include <SdFat.h>
+#include <controls.h>
 #include <display.h>
 #include <storage.h>
 #include <utils.h>
 
 #include "compositevideo.h"
 #include "nes/nes.h"
+#include "nes/sndinfo_t.h"
 
 //--------------------------------------------------------------------------------
 // Define this if running on little-endian (x86) systems
@@ -17,7 +20,6 @@
 #define UNUSED(x) ((x) = (x))
 
 // AUDIO_SETUP
-#define DEFAULT_SAMPLERATE 24000
 #define DEFAULT_FRAGSIZE 60  // max.256, default 240
 
 #define PAL
@@ -29,17 +31,15 @@
 #define NES_REFRESH_RATE 60
 #endif
 
-#define NES_CLOCK_DIVIDER 12  // default: 12
-// #define  NES_MASTER_CLOCK     21477272.727272727272
-#define NES_MASTER_CLOCK (236250000 / 11)
-#define NES_SCANLINE_CYCLES (1364.0 / NES_CLOCK_DIVIDER)
-#define NES_FIQ_PERIOD (NES_MASTER_CLOCK / NES_CLOCK_DIVIDER / 60)
+#define MAXFILES 512
+char *filename[MAXFILES];
 
-#define NES_RAMSIZE 0x800
 #define FILESPERPAGE 8
 
 char *MAINPATH = new char[256];
 char fileExt[4];
+
+bool EXIT = false;
 
 SdFile dirFile;
 SdFile file;
@@ -132,11 +132,6 @@ IRAM_ATTR int osd_installtimer_1(int frequency, void *func, int funcsize,
 //********************************************************************************
 //................................................................................
 // AUDIO SETUP
-typedef struct sndinfo_s {
-  int sample_rate;
-  int bps;
-} sndinfo_t;
-
 #if SOUND_ENABLED
 
 intr_handle_t i2s_interrupt;
@@ -150,7 +145,7 @@ i2s_pin_config_t pin_config = {
 i2s_config_t audio_cfg = {
     .mode = static_cast<i2s_mode_t>(I2S_MODE_MASTER |
                                     I2S_MODE_TX /*| I2S_MODE_DAC_BUILT_IN*/),
-    .sample_rate = DEFAULT_SAMPLERATE,
+    .sample_rate = DEFAULT_SAMPLE_RATE,
     .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
     ///.channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT,
     .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
@@ -170,7 +165,7 @@ int init_sound(void) {
 #if SOUND_ENABLED
   i2s_driver_install(I2S_NUM_1, &audio_cfg, 0, NULL);
   i2s_set_pin(I2S_NUM_1, &pin_config);
-  i2s_set_sample_rates(I2S_NUM_1, DEFAULT_SAMPLERATE);
+  i2s_set_sample_rates(I2S_NUM_1, DEFAULT_SAMPLE_RATE);
 #endif
   audio_callback = NULL;
   return 0;
@@ -183,8 +178,11 @@ void osd_setsound(void (*playfunc)(void *buffer, int length)) {
 
 void osd_stopsound(void) { audio_callback = NULL; }
 
+/** @deprecated
+ * should be removed asap
+ */
 void osd_getsoundinfo(sndinfo_t *info) {
-  info->sample_rate = DEFAULT_SAMPLERATE;
+  info->sample_rate = DEFAULT_SAMPLE_RATE;
   info->bps = 16;
 }
 //--------------------------------------------------------------------------------
@@ -200,7 +198,7 @@ void do_audio_frame() {
   /// printf("do_audio_frame\n");
 
 #if SOUND_ENABLED
-  int left = DEFAULT_SAMPLERATE / NES_REFRESH_RATE;
+  int left = DEFAULT_SAMPLE_RATE / NES_REFRESH_RATE;
   while (left) {
     int n = DEFAULT_FRAGSIZE;
     if (n > left) n = left;
@@ -286,10 +284,10 @@ char *NESEXPLORE(char *path) {
         }
       }
 
-      if (DEBUG) {
-        /// Serial.println(fileExt[num]);
-        /// Serial.println(strlen(filename[num]));
-      }
+      // if (DEBUG) {
+      /// Serial.println(fileExt[num]);
+      /// Serial.println(strlen(filename[num]));
+      // }
 
       // check NES File extension, then increase index
       if ((fileExt[0] == 'N' || fileExt[0] == 'n') &&
@@ -583,9 +581,8 @@ void ppu_setcontext(ppu_t *src_ppu) {
   ppu.page[15] = ppu.page[11] - 0x1000;
 }
 
-ppu_t *temp;
-
 ppu_t *ppu_create(void) {
+  ppu_t *temp;
   static bool pal_generated = false;
 
   if (NULL == temp) temp = (ppu_t *)malloc(sizeof(ppu_t));
@@ -2138,13 +2135,11 @@ void apu_setparams(double base_freq, int sample_rate, int refresh_rate,
   apu_reset();
 }
 
-apu_t *temp_apu;
-
 // Initializes emulated sound hardware, creates waveforms/voices
 apu_t *apu_create(double base_freq, int sample_rate, int refresh_rate,
                   int sample_bits) {
   int channel;
-
+  apu_t *temp_apu;
   if (NULL == temp_apu) temp_apu = (apu_t *)malloc(sizeof(apu_t));
   if (NULL == temp_apu) return NULL;
 

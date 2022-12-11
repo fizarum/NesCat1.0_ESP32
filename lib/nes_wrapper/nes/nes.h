@@ -7,6 +7,12 @@
 
 #define MAX_MEM_HANDLERS 32
 
+#define NES_CLOCK_DIVIDER 12  // default: 12
+// #define  NES_MASTER_CLOCK     21477272.727272727272
+#define NES_MASTER_CLOCK (236250000 / 11)
+#define NES_SCANLINE_CYCLES (1364.0 / NES_CLOCK_DIVIDER)
+#define NES_FIQ_PERIOD (NES_MASTER_CLOCK / NES_CLOCK_DIVIDER / 60)
+
 typedef struct nes_s {
   // hardware things
   nes6502_context *cpu;

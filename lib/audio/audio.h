@@ -8,5 +8,6 @@
 #define I2S_DI_IO (-1)
 
 #define SOUND_ENABLED true
+#define DEFAULT_SAMPLE_RATE 24000
 
 #endif  // AUDIO_H
