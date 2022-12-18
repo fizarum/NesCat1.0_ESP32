@@ -11,7 +11,7 @@ void debug(const char *templateString, const void *value);
 namespace bit {
 uint8_t setBit(uint8_t source, uint8_t position);
 uint8_t resetBit(uint8_t source, uint8_t position);
-uint16_t setBit16(uint16_t source, uint8_t position, uint8_t isSet = 1);
+uint16_t setBit16(uint16_t source, uint8_t position, bool isSet = true);
 bool isBitSet(uint16_t source, uint8_t position);
 }  // namespace bit
 
@@ -23,8 +23,6 @@ bool isBitSet(uint16_t source, uint8_t position);
  */
 void toLowerCase(char *string);
 
-// untested part
-void sortStrings(char *arr[], int n);
 void getMemoryStatus();
 void getPsRamStatus(uint32_t psramSize);
 

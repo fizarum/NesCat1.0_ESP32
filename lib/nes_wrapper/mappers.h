@@ -838,7 +838,8 @@ void map5_init(void) {
   mmc_bankrom(8, 0xE000, MMC_LASTBANK);
 
   irq.counter = irq.enabled = 0;
-  irq.reset = irq.latch = 0;
+  irq.reset = 0;
+  irq.latch = 0;
 }
 
 /* incomplete SNSS definition */

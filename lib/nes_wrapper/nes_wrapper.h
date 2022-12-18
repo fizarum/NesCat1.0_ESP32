@@ -14,4 +14,7 @@ void pickRomFile(const char *filepath);
  * indicating is operation finished*/
 bool getRomData(const char *filepath, void (*callback)(uint8_t, bool));
 
+/** untested */
+void preparePsRam();
+
 #endif  // nes_wrapper_h
