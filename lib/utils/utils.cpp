@@ -77,8 +77,8 @@ uint8_t bit::setBit(uint8_t source, uint8_t position) {
  * @param isSet 0 means reset, > 0 - means set
  * @return updated copy of source value
  */
-uint16_t bit::setBit16(uint16_t source, uint8_t position, uint8_t isSet) {
-  if (isSet > 0) {
+uint16_t bit::setBit16(uint16_t source, uint8_t position, bool isSet) {
+  if (isSet == true) {
     return source | (1UL << position);
   } else {
     return source & (~(1UL << position));
@@ -107,21 +107,6 @@ void toLowerCase(char *string) {
   while (*temp) {
     *temp = tolower(*temp);
     temp++;
-  }
-}
-
-void sortStrings(char *arr[], int n) {
-  char temp[MAXFILENAME_LENGTH];
-
-  // Sorting strings using bubble sort
-  for (int j = 0; j < n - 1; j++) {
-    for (int i = j + 1; i < n; i++) {
-      if (strcmp(arr[j], arr[i]) > 0) {
-        strcpy(temp, arr[j]);
-        strcpy(arr[j], arr[i]);
-        strcpy(arr[i], temp);
-      }
-    }
   }
 }
 

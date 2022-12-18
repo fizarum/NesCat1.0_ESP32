@@ -21,6 +21,10 @@ size_t _totalBytes = 0;
 size_t _readBytes = 0;
 size_t _totalBytesRead = 0;
 
+// untested
+uint32_t psRAMSize = 0;
+uint8_t *PSRAM;
+
 void onNewFileFoundCallback(const char *fname);
 void (*onFileLoadingCallback)(uint8_t percents, bool isFinished);
 
@@ -124,4 +128,13 @@ void onFileLoafingListener(uint8_t *block, uint16_t blockLength,
 void resetLoadingStats() {
   _readBytes = 0;
   _totalBytesRead = 0;
+}
+
+void preparePsRam() {
+  psRAMSize = ESP.getPsramSize();
+  getPsRamStatus(psRAMSize);
+
+  if (psRAMSize > 0) {
+    PSRAM = (uint8_t *)ps_malloc(2097152);  // PSRAM malloc 2MB
+  }
 }

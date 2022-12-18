@@ -33,6 +33,9 @@ uint16_t getCursorPosOnScreen(uint8_t cursorPos);
 
 void NesLauncher::init() {
   _launcher = this;
+  preparePsRam();
+  getMemoryStatus();
+
   // init nes
   debug("[nes] create nes");
   this->nes = createNes();
@@ -45,8 +48,6 @@ void NesLauncher::init() {
   filenames = getAllNesFiles(this->path);
   fileCount = getSize(filenames);
   printFileNames(filenames, fileCount);
-
-  // todo: code here
 }
 
 bool NesLauncher::handle(uint16_t keyState) {

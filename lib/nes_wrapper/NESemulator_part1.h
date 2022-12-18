@@ -2,7 +2,7 @@
 #define NESEMULATOR_1_H
 
 #include <Arduino.h>
-#include <controls.h>
+// #include <controls.h>
 #include <display.h>
 #include <storage.h>
 #include <utils.h>
@@ -14,7 +14,6 @@
 //--------------------------------------------------------------------------------
 // Define this if running on little-endian (x86) systems
 #define HOST_LITTLE_ENDIAN  //!!! important for Arduino
-#define ZERO_LENGTH 0
 
 // quell stupid compiler warnings
 #define UNUSED(x) ((x) = (x))
@@ -31,15 +30,19 @@
 #define NES_REFRESH_RATE 60
 #endif
 
-#define MAXFILES 512
-char *filename[MAXFILES];
-
-#define FILESPERPAGE 8
-
-char *MAINPATH = new char[256];
-char fileExt[4];
-
 bool EXIT = false;
+//  INPUT SYSTEM:
+uint8_t JOY_UP = 0;
+uint8_t JOY_DOWN = 0;
+uint8_t JOY_LEFT = 0;
+uint8_t JOY_RIGHT = 0;
+
+uint8_t JOY_CROSS = 0;
+uint8_t JOY_SQUARE = 0;
+uint8_t JOY_CIRCLE = 0;
+uint8_t JOY_TRIANGLE = 0;
+uint8_t JOY_SHARE = 0;    //(START)
+uint8_t JOY_OPTIONS = 0;  //(SELECT)
 
 uint8_t NES_POWER = 1;
 
@@ -239,216 +242,7 @@ IRAM_ATTR int install_timer(int hertz) {
 }
 //--------------------------------------------------------------------------------
 
-//--------------------------------------------------------------------------------
-char *NESEXPLORE(char *path) {
-  // uint8_t num = 0;
-  // uint8_t loadedFileNames = 0;
-
-  // // clear memory variables
-  // for (uint16_t tmp = 0; tmp < MAXFILES; tmp++)
-  //   memset(filename[tmp], 0, sizeof(filename[tmp]));
-
-  // memset(fileExt, 0, 4);
-
-  // num = 0;
-  // loadedFileNames = 0;
-
-  // // LOAD FILENAMES INTO MEMORY...
-
-  // // Load List files in root directory.
-  // /// if (!dirFile.open("/", O_READ)) {
-  // if (!dirFile.open(path, O_READ)) {
-  //   while (1) {
-  //   };
-  // }
-  // while (num < MAXFILES && file.openNext(&dirFile, O_READ)) {
-  //   // Skip hidden files.
-  //   if (!file.isHidden()) {
-  //     for (uint8_t i = strlen(filename[num]); i > 3; i--) filename[num][i]
-  //     = 0;
-  //     file.getName(filename[num], MAXFILENAME_LENGTH);
-  //     if (file.isSubDir()) {
-  //       sprintf(filename[num], "%s/", filename[num]);
-  //       num++;
-  //     } else {
-  //       for (uint8_t i = strlen(filename[num]); i > 3; i--) {
-  //         if (filename[num][i] != 0) {
-  //           fileExt[3] = '\0';
-  //           fileExt[2] = filename[num][i];
-  //           fileExt[1] = filename[num][i - 1];
-  //           fileExt[0] = filename[num][i - 2];
-  //           break;
-  //         }
-  //       }
-  //     }
-
-  //     // if (DEBUG) {
-  //     /// Serial.println(fileExt[num]);
-  //     /// Serial.println(strlen(filename[num]));
-  //     // }
-
-  //     // check NES File extension, then increase index
-  //     if ((fileExt[0] == 'N' || fileExt[0] == 'n') &&
-  //         (fileExt[1] == 'E' || fileExt[1] == 'e') &&
-  //         (fileExt[2] == 'S' || fileExt[2] == 's')) {
-  //       num++;
-  //     }
-  //   }
-  //   loadedFileNames = num;
-  //   file.close();
-  // }
-
-  // dirFile.close();
-
-  // debug("--------------------------------------");
-  // debug("Count of loaded File Names: %d\n", loadedFileNames);
-
-  // sortStrings(filename, loadedFileNames);
-
-  // // DRAW FILENAMES INTO BUFFER
-  // uint8_t CURSOR = 0;
-  // uint8_t PAGE = 0;
-  // bool NamesDisplayed = false;
-
-  // while (1) {
-  //   PAGE = CURSOR / FILESPERPAGE;
-  //   if (!NamesDisplayed) {
-  //     nescreen::fillScreen();
-  //     nescreen::setTextPosition(16, 24);
-  //     nescreen::drawText(path);
-  //     nescreen::update();
-
-  //     for (num = PAGE * FILESPERPAGE;
-  //          num < ((PAGE + 1) * FILESPERPAGE) && num < loadedFileNames;
-  //          num++) {
-  //       nescreen::setTextPosition(40, 48 + 20 * (num % FILESPERPAGE));
-
-  //       if (filename[num][strlen(filename[num]) - 1] == '/')
-  //         nescreen::drawText(filename[num], 23);
-  //       else
-  //         nescreen::drawText(filename[num], 48);
-
-  //       delay(1);
-  //     }
-  //     NamesDisplayed = true;
-  //   }
-
-  // // Draw Cursor
-  // nescreen::setTextPosition(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
-  // nescreen::drawText("->", 48);
-  // delay(200);
-
-  // // Empty Cursor
-  // nescreen::setTextPosition(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
-  // nescreen::drawText("  ", 48);
-
-  // if (JOY_SHARE == 1 && JOY_OPTIONS == 1) {
-  //   JOY_SHARE = 0;
-  //   JOY_OPTIONS = 0;
-  //   EXIT = true;
-  //   ///         PLAYING=false;
-  //   NES_POWER = 0;
-
-  //   return MAINPATH;
-  // }
-
-  // if (JOY_UP == 1) {
-  //   if (CURSOR % FILESPERPAGE == 0) NamesDisplayed = false;  // changed
-  //   page if (CURSOR == 0 && loadedFileNames > 0)
-  //     CURSOR = loadedFileNames - 1;
-  //   else if (CURSOR > 0 && loadedFileNames > 0)
-  //     CURSOR--;
-  //   JOY_UP = 0;
-  // }
-  // if (JOY_DOWN == 1) {
-  //   if (CURSOR % FILESPERPAGE == FILESPERPAGE - 1 ||
-  //       CURSOR == loadedFileNames - 1)
-  //     NamesDisplayed = false;  // changed page
-  //   if (CURSOR == loadedFileNames - 1 && loadedFileNames > 0)
-  //     CURSOR = 0;
-  //   else if (CURSOR < loadedFileNames - 1 && loadedFileNames > 0)
-  //     CURSOR++;
-  //   JOY_DOWN = 0;
-  // }
-  // if (JOY_LEFT == 1) {
-  //   if (CURSOR > FILESPERPAGE - 1) CURSOR -= FILESPERPAGE;
-  //   NamesDisplayed = false;
-  //   JOY_LEFT = 0;
-  // }
-  // if (JOY_RIGHT == 1) {
-  //   if (CURSOR / FILESPERPAGE < loadedFileNames / FILESPERPAGE)
-  //     CURSOR += FILESPERPAGE;
-  //   if (CURSOR > loadedFileNames - 1) CURSOR = loadedFileNames - 1;
-  //   NamesDisplayed = false;
-  //   JOY_RIGHT = 0;
-  // }
-  // if (JOY_OPTIONS == 1) {
-  //   // do nothing  = unused
-  //   JOY_OPTIONS = 0;
-  // }
-  // if ((JOY_CROSS == 1 || JOY_SHARE == 1) && JOY_OPTIONS == 0) {
-  //   dirFile.close();
-  //   JOY_CROSS = 0;
-  //   JOY_SHARE = 0;
-  //   JOY_OPTIONS = 0;
-  //   delay(25);
-
-  //   ///         PLAYINGFILE=CURSOR;
-  //   ///         TOTALFILES=loadedFileNames;
-
-  //   sprintf(MAINPATH, "%s%s", path, filename[CURSOR]);
-  //   debug(MAINPATH);
-  //   return MAINPATH;  // START //A
-  // }
-  // if ((JOY_SQUARE == 1) && JOY_OPTIONS == 0) {
-  //   dirFile.close();
-  //   JOY_SQUARE = 0;
-  //   JOY_SHARE = 0;
-  //   JOY_OPTIONS = 0;
-  //   delay(25);
-
-  //   debug(path);
-  //   debug("%d\n", strlen(path));
-
-  //   sprintf(MAINPATH, "%s", path);
-
-  //   if (strlen(MAINPATH) > 1) {
-  //     MAINPATH[strlen(MAINPATH) - 1] = '\0';
-  //     for (uint8_t strpos = strlen(MAINPATH) - 1; strpos > 0; strpos--) {
-  //       if (MAINPATH[strpos] == '/') break;
-  //       MAINPATH[strpos] = '\0';
-  //     }
-  //   }
-
-  //   debug(MAINPATH);
-  //   debug("%d\n", strlen(MAINPATH));
-  //   return MAINPATH;
-  // }
-  // };
-  return nullptr;
-}
 // ################################################################################
-//********************************************************************************
-// char *NESBrowse(char *path) {
-//   if (path[strlen(path) - 1] != '/')
-//     if (strlen(path) > 1) {
-//       path[strlen(path) - 1] = '\0';
-//       for (uint8_t strpos = strlen(path) - 1; strpos > 0; strpos--) {
-//         if (path[strpos] == '/') break;
-//         path[strpos] = '\0';
-//       }
-//     }
-
-//   EXIT = false;
-//   //................................................................................
-//   while (EXIT == false && path[strlen(path) - 1] == '/') {
-//     path = NESEXPLORE(path);
-//     debug(path);
-//   }
-//   return path;
-// }
-//________________________________________________________________________________
-
 //--------------------------------------------------------------------------------
 ppu_t ppu;
 apu_t apu;
