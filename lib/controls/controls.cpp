@@ -42,6 +42,9 @@ bool initialized = false;
 #define CROSS_BUTTON_BIT 8
 #define SQUARE_BUTTON_BIT 9
 
+#define PIN_JOY_UP 32
+#define PIN_JOY_LEFT 33
+
 // make sure that first 7 bits are only used
 #define GPIO_KEYS_MASK 127
 
@@ -176,8 +179,8 @@ uint16_t hPos, vPos;
 void requestJoystickStateByPullMethod() {
   if (now >= lastRequestedTimeOfJoystick + delayBetweenRequestsOfJoystick) {
     // default range is from 0 to 4096
-    hPos = analogRead(PIN_LEFT);
-    vPos = analogRead(PIN_UP);
+    hPos = analogRead(PIN_JOY_LEFT);
+    vPos = analogRead(PIN_JOY_UP);
     joystickStateUpdated = false;
 
     // left

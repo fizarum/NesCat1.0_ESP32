@@ -1,4 +1,13 @@
 # Custom Dictionary Words
+Espressif
 gpio
 IRAM
 millis
+NTSC
+NUMBANKS
+readhandler
+setchan
+setfiq
+strlwr
+writehandler
+WROVER

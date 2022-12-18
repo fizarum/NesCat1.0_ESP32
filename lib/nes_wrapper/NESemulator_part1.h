@@ -1,12 +1,15 @@
 #ifndef NESEMULATOR_1_H
 #define NESEMULATOR_1_H
 
+#include <Arduino.h>
+#include <controls.h>
 #include <display.h>
 #include <storage.h>
 #include <utils.h>
 
 #include "compositevideo.h"
 #include "nes/nes.h"
+#include "nes/sndinfo_t.h"
 
 //--------------------------------------------------------------------------------
 // Define this if running on little-endian (x86) systems
@@ -17,7 +20,6 @@
 #define UNUSED(x) ((x) = (x))
 
 // AUDIO_SETUP
-#define DEFAULT_SAMPLERATE 24000
 #define DEFAULT_FRAGSIZE 60  // max.256, default 240
 
 #define PAL
@@ -29,20 +31,15 @@
 #define NES_REFRESH_RATE 60
 #endif
 
-#define NES_CLOCK_DIVIDER 12  // default: 12
-// #define  NES_MASTER_CLOCK     21477272.727272727272
-#define NES_MASTER_CLOCK (236250000 / 11)
-#define NES_SCANLINE_CYCLES (1364.0 / NES_CLOCK_DIVIDER)
-#define NES_FIQ_PERIOD (NES_MASTER_CLOCK / NES_CLOCK_DIVIDER / 60)
+#define MAXFILES 512
+char *filename[MAXFILES];
 
-#define NES_RAMSIZE 0x800
 #define FILESPERPAGE 8
 
 char *MAINPATH = new char[256];
 char fileExt[4];
 
-SdFile dirFile;
-SdFile file;
+bool EXIT = false;
 
 uint8_t NES_POWER = 1;
 
@@ -77,21 +74,21 @@ uint8_t get_pad0(void) {
   // if (digitalRead(PIN_LEFT) == 1) value |= 64;    // LEFT
   // if (digitalRead(PIN_RIGHT) == 1) value |= 128;  // RIGHT
 
-  if (digitalRead(PIN_SELECT) == 1 && digitalRead(PIN_START) == 1) {
-    /// osd_stopsound();
-    /// audio_callback = NULL;
+  // if (digitalRead(PIN_SELECT) == 1 && digitalRead(PIN_START) == 1) {
+  //   /// osd_stopsound();
+  //   /// audio_callback = NULL;
 
-    NES_POWER = 0;  // EXIT
-  }
+  //   NES_POWER = 0;  // EXIT
+  // }
 
   // EJECT EMULATOR
-  if (JOY_SHARE == 1 && JOY_OPTIONS == 1) {
-    /// osd_stopsound();
+  // if (JOY_SHARE == 1 && JOY_OPTIONS == 1) {
+  //   /// osd_stopsound();
 
-    JOY_SHARE = 0;
-    JOY_OPTIONS = 0;
-    NES_POWER = 0;
-  }
+  //   JOY_SHARE = 0;
+  //   JOY_OPTIONS = 0;
+  //   NES_POWER = 0;
+  // }
 
   if (JOY_SHARE == 1) value |= 8;    // START
   if (JOY_OPTIONS == 1) value |= 4;  // SELECT
@@ -132,11 +129,6 @@ IRAM_ATTR int osd_installtimer_1(int frequency, void *func, int funcsize,
 //********************************************************************************
 //................................................................................
 // AUDIO SETUP
-typedef struct sndinfo_s {
-  int sample_rate;
-  int bps;
-} sndinfo_t;
-
 #if SOUND_ENABLED
 
 intr_handle_t i2s_interrupt;
@@ -150,7 +142,7 @@ i2s_pin_config_t pin_config = {
 i2s_config_t audio_cfg = {
     .mode = static_cast<i2s_mode_t>(I2S_MODE_MASTER |
                                     I2S_MODE_TX /*| I2S_MODE_DAC_BUILT_IN*/),
-    .sample_rate = DEFAULT_SAMPLERATE,
+    .sample_rate = DEFAULT_SAMPLE_RATE,
     .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
     ///.channel_format = I2S_CHANNEL_FMT_ONLY_RIGHT,
     .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
@@ -158,7 +150,7 @@ i2s_config_t audio_cfg = {
     ///  static_cast<i2s_comm_format_t>(I2S_COMM_FORMAT_PCM |
     ///  I2S_COMM_FORMAT_I2S_MSB),
     .communication_format = static_cast<i2s_comm_format_t>(
-        I2S_COMM_FORMAT_STAND_PCM_SHORT | I2S_COMM_FORMAT_STAND_I2S),
+        I2S_COMM_FORMAT_PCM | I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
     .intr_alloc_flags =
         ESP_INTR_FLAG_LEVEL1 /*| ESP_INTR_FLAG_IRAM  | ESP_INTR_FLAG_SHARED*/,
     .dma_buf_count = 6,
@@ -170,7 +162,7 @@ int init_sound(void) {
 #if SOUND_ENABLED
   i2s_driver_install(I2S_NUM_1, &audio_cfg, 0, NULL);
   i2s_set_pin(I2S_NUM_1, &pin_config);
-  i2s_set_sample_rates(I2S_NUM_1, DEFAULT_SAMPLERATE);
+  i2s_set_sample_rates(I2S_NUM_1, DEFAULT_SAMPLE_RATE);
 #endif
   audio_callback = NULL;
   return 0;
@@ -183,8 +175,11 @@ void osd_setsound(void (*playfunc)(void *buffer, int length)) {
 
 void osd_stopsound(void) { audio_callback = NULL; }
 
+/** @deprecated
+ * should be removed asap
+ */
 void osd_getsoundinfo(sndinfo_t *info) {
-  info->sample_rate = DEFAULT_SAMPLERATE;
+  info->sample_rate = DEFAULT_SAMPLE_RATE;
   info->bps = 16;
 }
 //--------------------------------------------------------------------------------
@@ -200,7 +195,7 @@ void do_audio_frame() {
   /// printf("do_audio_frame\n");
 
 #if SOUND_ENABLED
-  int left = DEFAULT_SAMPLERATE / NES_REFRESH_RATE;
+  int left = DEFAULT_SAMPLE_RATE / NES_REFRESH_RATE;
   while (left) {
     int n = DEFAULT_FRAGSIZE;
     if (n > left) n = left;
@@ -246,248 +241,212 @@ IRAM_ATTR int install_timer(int hertz) {
 
 //--------------------------------------------------------------------------------
 char *NESEXPLORE(char *path) {
-  uint8_t num = 0;
-  uint8_t loadedFileNames = 0;
+  // uint8_t num = 0;
+  // uint8_t loadedFileNames = 0;
 
-  // clear memory variables
-  for (uint16_t tmp = 0; tmp < MAXFILES; tmp++)
-    memset(filename[tmp], 0, sizeof(filename[tmp]));
+  // // clear memory variables
+  // for (uint16_t tmp = 0; tmp < MAXFILES; tmp++)
+  //   memset(filename[tmp], 0, sizeof(filename[tmp]));
 
-  memset(fileExt, 0, 4);
+  // memset(fileExt, 0, 4);
 
-  num = 0;
-  loadedFileNames = 0;
+  // num = 0;
+  // loadedFileNames = 0;
 
-  // LOAD FILENAMES INTO MEMORY...
+  // // LOAD FILENAMES INTO MEMORY...
 
-  // Load List files in root directory.
-  /// if (!dirFile.open("/", O_READ)) {
-  if (!dirFile.open(path, O_READ)) {
-    while (1) {
-    };
-  }
-  while (num < MAXFILES && file.openNext(&dirFile, O_READ)) {
-    // Skip hidden files.
-    if (!file.isHidden()) {
-      for (uint8_t i = strlen(filename[num]); i > 3; i--) filename[num][i] = 0;
-      file.getName(filename[num], MAXFILENAME_LENGTH);
-      if (file.isSubDir()) {
-        sprintf(filename[num], "%s/", filename[num]);
-        num++;
-      } else {
-        for (uint8_t i = strlen(filename[num]); i > 3; i--) {
-          if (filename[num][i] != 0) {
-            fileExt[3] = '\0';
-            fileExt[2] = filename[num][i];
-            fileExt[1] = filename[num][i - 1];
-            fileExt[0] = filename[num][i - 2];
-            break;
-          }
-        }
-      }
+  // // Load List files in root directory.
+  // /// if (!dirFile.open("/", O_READ)) {
+  // if (!dirFile.open(path, O_READ)) {
+  //   while (1) {
+  //   };
+  // }
+  // while (num < MAXFILES && file.openNext(&dirFile, O_READ)) {
+  //   // Skip hidden files.
+  //   if (!file.isHidden()) {
+  //     for (uint8_t i = strlen(filename[num]); i > 3; i--) filename[num][i]
+  //     = 0;
+  //     file.getName(filename[num], MAXFILENAME_LENGTH);
+  //     if (file.isSubDir()) {
+  //       sprintf(filename[num], "%s/", filename[num]);
+  //       num++;
+  //     } else {
+  //       for (uint8_t i = strlen(filename[num]); i > 3; i--) {
+  //         if (filename[num][i] != 0) {
+  //           fileExt[3] = '\0';
+  //           fileExt[2] = filename[num][i];
+  //           fileExt[1] = filename[num][i - 1];
+  //           fileExt[0] = filename[num][i - 2];
+  //           break;
+  //         }
+  //       }
+  //     }
 
-      if (DEBUG) {
-        /// Serial.println(fileExt[num]);
-        /// Serial.println(strlen(filename[num]));
-      }
+  //     // if (DEBUG) {
+  //     /// Serial.println(fileExt[num]);
+  //     /// Serial.println(strlen(filename[num]));
+  //     // }
 
-      // check NES File extension, then increase index
-      if ((fileExt[0] == 'N' || fileExt[0] == 'n') &&
-          (fileExt[1] == 'E' || fileExt[1] == 'e') &&
-          (fileExt[2] == 'S' || fileExt[2] == 's')) {
-        num++;
-      }
-    }
-    loadedFileNames = num;
-    file.close();
-  }
+  //     // check NES File extension, then increase index
+  //     if ((fileExt[0] == 'N' || fileExt[0] == 'n') &&
+  //         (fileExt[1] == 'E' || fileExt[1] == 'e') &&
+  //         (fileExt[2] == 'S' || fileExt[2] == 's')) {
+  //       num++;
+  //     }
+  //   }
+  //   loadedFileNames = num;
+  //   file.close();
+  // }
 
-  dirFile.close();
+  // dirFile.close();
 
-  debug("--------------------------------------");
-  debug("Count of loaded File Names: %d\n", loadedFileNames);
+  // debug("--------------------------------------");
+  // debug("Count of loaded File Names: %d\n", loadedFileNames);
 
-  sortStrings(filename, loadedFileNames);
+  // sortStrings(filename, loadedFileNames);
 
-  // DRAW FILENAMES INTO BUFFER
-  uint8_t CURSOR = 0;
-  uint8_t PAGE = 0;
-  bool NamesDisplayed = false;
+  // // DRAW FILENAMES INTO BUFFER
+  // uint8_t CURSOR = 0;
+  // uint8_t PAGE = 0;
+  // bool NamesDisplayed = false;
 
-  while (1) {
-    PAGE = CURSOR / FILESPERPAGE;
-    if (!NamesDisplayed) {
-      nescreen::fillScreen();
-      nescreen::setTextPosition(16, 24);
-      nescreen::drawText(path);
-      nescreen::update();
+  // while (1) {
+  //   PAGE = CURSOR / FILESPERPAGE;
+  //   if (!NamesDisplayed) {
+  //     nescreen::fillScreen();
+  //     nescreen::setTextPosition(16, 24);
+  //     nescreen::drawText(path);
+  //     nescreen::update();
 
-      for (num = PAGE * FILESPERPAGE;
-           num < ((PAGE + 1) * FILESPERPAGE) && num < loadedFileNames; num++) {
-        nescreen::setTextPosition(40, 48 + 20 * (num % FILESPERPAGE));
+  //     for (num = PAGE * FILESPERPAGE;
+  //          num < ((PAGE + 1) * FILESPERPAGE) && num < loadedFileNames;
+  //          num++) {
+  //       nescreen::setTextPosition(40, 48 + 20 * (num % FILESPERPAGE));
 
-        if (filename[num][strlen(filename[num]) - 1] == '/')
-          nescreen::drawText(filename[num], 23);
-        else
-          nescreen::drawText(filename[num], 48);
+  //       if (filename[num][strlen(filename[num]) - 1] == '/')
+  //         nescreen::drawText(filename[num], 23);
+  //       else
+  //         nescreen::drawText(filename[num], 48);
 
-        delay(1);
-      }
-      NamesDisplayed = true;
-    }
+  //       delay(1);
+  //     }
+  //     NamesDisplayed = true;
+  //   }
 
-    // Draw Cursor
-    nescreen::setTextPosition(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
-    nescreen::drawText("->", 48);
-    delay(200);
+  // // Draw Cursor
+  // nescreen::setTextPosition(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
+  // nescreen::drawText("->", 48);
+  // delay(200);
 
-    // todo: recheck and remove
-    //  // PROCESS CURSOR SELECTION
-    //  while (JOY_CROSS == 0 && JOY_SQUARE == 0 && JOY_OPTIONS == 0 &&
-    //         JOY_SHARE == 0 && JOY_UP == 0 && JOY_DOWN == 0 && JOY_LEFT == 0
-    //         && JOY_RIGHT == 0) {
-    //    if (digitalRead(PIN_A) == 1) {
-    //      JOY_CROSS = 1;  // A
-    //      delay(25);
-    //    }
-    //    if (digitalRead(PIN_B) == 1) {
-    //      JOY_SQUARE = 1;  // B
-    //      delay(25);
-    //    }
-    //    if (digitalRead(PIN_SELECT) == 1) {
-    //      JOY_OPTIONS = 1;  // SELECT
-    //      delay(25);
-    //    }
-    //    if (digitalRead(PIN_START) == 1) {
-    //      JOY_SHARE = 1;  // START
-    //      delay(25);
-    //    }
-    //    if (digitalRead(PIN_UP) == 1) {
-    //      JOY_UP = 1;
-    //      delay(25);
-    //    }
-    //    if (digitalRead(PIN_DOWN) == 1) {
-    //      JOY_DOWN = 1;  // DOWN
-    //      delay(25);
-    //    }
-    //    if (digitalRead(PIN_LEFT) == 1) {
-    //      JOY_LEFT = 1;  // LEFT
-    //      delay(25);
-    //    }
-    //    if (digitalRead(PIN_RIGHT) == 1) {
-    //      JOY_RIGHT = 1;  // RIGHT
-    //      delay(25);
-    //    }
-    //  }
+  // // Empty Cursor
+  // nescreen::setTextPosition(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
+  // nescreen::drawText("  ", 48);
 
-    // Empty Cursor
-    nescreen::setTextPosition(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
-    nescreen::drawText("  ", 48);
+  // if (JOY_SHARE == 1 && JOY_OPTIONS == 1) {
+  //   JOY_SHARE = 0;
+  //   JOY_OPTIONS = 0;
+  //   EXIT = true;
+  //   ///         PLAYING=false;
+  //   NES_POWER = 0;
 
-    if (JOY_SHARE == 1 && JOY_OPTIONS == 1) {
-      JOY_SHARE = 0;
-      JOY_OPTIONS = 0;
-      EXIT = true;
-      ///         PLAYING=false;
-      NES_POWER = 0;
+  //   return MAINPATH;
+  // }
 
-      return MAINPATH;
-    }
+  // if (JOY_UP == 1) {
+  //   if (CURSOR % FILESPERPAGE == 0) NamesDisplayed = false;  // changed
+  //   page if (CURSOR == 0 && loadedFileNames > 0)
+  //     CURSOR = loadedFileNames - 1;
+  //   else if (CURSOR > 0 && loadedFileNames > 0)
+  //     CURSOR--;
+  //   JOY_UP = 0;
+  // }
+  // if (JOY_DOWN == 1) {
+  //   if (CURSOR % FILESPERPAGE == FILESPERPAGE - 1 ||
+  //       CURSOR == loadedFileNames - 1)
+  //     NamesDisplayed = false;  // changed page
+  //   if (CURSOR == loadedFileNames - 1 && loadedFileNames > 0)
+  //     CURSOR = 0;
+  //   else if (CURSOR < loadedFileNames - 1 && loadedFileNames > 0)
+  //     CURSOR++;
+  //   JOY_DOWN = 0;
+  // }
+  // if (JOY_LEFT == 1) {
+  //   if (CURSOR > FILESPERPAGE - 1) CURSOR -= FILESPERPAGE;
+  //   NamesDisplayed = false;
+  //   JOY_LEFT = 0;
+  // }
+  // if (JOY_RIGHT == 1) {
+  //   if (CURSOR / FILESPERPAGE < loadedFileNames / FILESPERPAGE)
+  //     CURSOR += FILESPERPAGE;
+  //   if (CURSOR > loadedFileNames - 1) CURSOR = loadedFileNames - 1;
+  //   NamesDisplayed = false;
+  //   JOY_RIGHT = 0;
+  // }
+  // if (JOY_OPTIONS == 1) {
+  //   // do nothing  = unused
+  //   JOY_OPTIONS = 0;
+  // }
+  // if ((JOY_CROSS == 1 || JOY_SHARE == 1) && JOY_OPTIONS == 0) {
+  //   dirFile.close();
+  //   JOY_CROSS = 0;
+  //   JOY_SHARE = 0;
+  //   JOY_OPTIONS = 0;
+  //   delay(25);
 
-    if (JOY_UP == 1) {
-      if (CURSOR % FILESPERPAGE == 0) NamesDisplayed = false;  // changed page
-      if (CURSOR == 0 && loadedFileNames > 0)
-        CURSOR = loadedFileNames - 1;
-      else if (CURSOR > 0 && loadedFileNames > 0)
-        CURSOR--;
-      JOY_UP = 0;
-    }
-    if (JOY_DOWN == 1) {
-      if (CURSOR % FILESPERPAGE == FILESPERPAGE - 1 ||
-          CURSOR == loadedFileNames - 1)
-        NamesDisplayed = false;  // changed page
-      if (CURSOR == loadedFileNames - 1 && loadedFileNames > 0)
-        CURSOR = 0;
-      else if (CURSOR < loadedFileNames - 1 && loadedFileNames > 0)
-        CURSOR++;
-      JOY_DOWN = 0;
-    }
-    if (JOY_LEFT == 1) {
-      if (CURSOR > FILESPERPAGE - 1) CURSOR -= FILESPERPAGE;
-      NamesDisplayed = false;
-      JOY_LEFT = 0;
-    }
-    if (JOY_RIGHT == 1) {
-      if (CURSOR / FILESPERPAGE < loadedFileNames / FILESPERPAGE)
-        CURSOR += FILESPERPAGE;
-      if (CURSOR > loadedFileNames - 1) CURSOR = loadedFileNames - 1;
-      NamesDisplayed = false;
-      JOY_RIGHT = 0;
-    }
-    if (JOY_OPTIONS == 1) {
-      // do nothing  = unused
-      JOY_OPTIONS = 0;
-    }
-    if ((JOY_CROSS == 1 || JOY_SHARE == 1) && JOY_OPTIONS == 0) {
-      dirFile.close();
-      JOY_CROSS = 0;
-      JOY_SHARE = 0;
-      JOY_OPTIONS = 0;
-      delay(25);
+  //   ///         PLAYINGFILE=CURSOR;
+  //   ///         TOTALFILES=loadedFileNames;
 
-      ///         PLAYINGFILE=CURSOR;
-      ///         TOTALFILES=loadedFileNames;
+  //   sprintf(MAINPATH, "%s%s", path, filename[CURSOR]);
+  //   debug(MAINPATH);
+  //   return MAINPATH;  // START //A
+  // }
+  // if ((JOY_SQUARE == 1) && JOY_OPTIONS == 0) {
+  //   dirFile.close();
+  //   JOY_SQUARE = 0;
+  //   JOY_SHARE = 0;
+  //   JOY_OPTIONS = 0;
+  //   delay(25);
 
-      sprintf(MAINPATH, "%s%s", path, filename[CURSOR]);
-      debug(MAINPATH);
-      return MAINPATH;  // START //A
-    }
-    if ((JOY_SQUARE == 1) && JOY_OPTIONS == 0) {
-      dirFile.close();
-      JOY_SQUARE = 0;
-      JOY_SHARE = 0;
-      JOY_OPTIONS = 0;
-      delay(25);
+  //   debug(path);
+  //   debug("%d\n", strlen(path));
 
-      debug(path);
-      debug("%d\n", strlen(path));
+  //   sprintf(MAINPATH, "%s", path);
 
-      sprintf(MAINPATH, "%s", path);
+  //   if (strlen(MAINPATH) > 1) {
+  //     MAINPATH[strlen(MAINPATH) - 1] = '\0';
+  //     for (uint8_t strpos = strlen(MAINPATH) - 1; strpos > 0; strpos--) {
+  //       if (MAINPATH[strpos] == '/') break;
+  //       MAINPATH[strpos] = '\0';
+  //     }
+  //   }
 
-      if (strlen(MAINPATH) > 1) {
-        MAINPATH[strlen(MAINPATH) - 1] = '\0';
-        for (uint8_t strpos = strlen(MAINPATH) - 1; strpos > 0; strpos--) {
-          if (MAINPATH[strpos] == '/') break;
-          MAINPATH[strpos] = '\0';
-        }
-      }
-
-      debug(MAINPATH);
-      debug("%d\n", strlen(MAINPATH));
-      return MAINPATH;
-    }
-  };
+  //   debug(MAINPATH);
+  //   debug("%d\n", strlen(MAINPATH));
+  //   return MAINPATH;
+  // }
+  // };
+  return nullptr;
 }
 // ################################################################################
 //********************************************************************************
-char *NESBrowse(char *path) {
-  if (path[strlen(path) - 1] != '/')
-    if (strlen(path) > 1) {
-      path[strlen(path) - 1] = '\0';
-      for (uint8_t strpos = strlen(path) - 1; strpos > 0; strpos--) {
-        if (path[strpos] == '/') break;
-        path[strpos] = '\0';
-      }
-    }
+// char *NESBrowse(char *path) {
+//   if (path[strlen(path) - 1] != '/')
+//     if (strlen(path) > 1) {
+//       path[strlen(path) - 1] = '\0';
+//       for (uint8_t strpos = strlen(path) - 1; strpos > 0; strpos--) {
+//         if (path[strpos] == '/') break;
+//         path[strpos] = '\0';
+//       }
+//     }
 
-  EXIT = false;
-  //................................................................................
-  while (EXIT == false && path[strlen(path) - 1] == '/') {
-    path = NESEXPLORE(path);
-    debug(path);
-  }
-  return path;
-}
+//   EXIT = false;
+//   //................................................................................
+//   while (EXIT == false && path[strlen(path) - 1] == '/') {
+//     path = NESEXPLORE(path);
+//     debug(path);
+//   }
+//   return path;
+// }
 //________________________________________________________________________________
 
 //--------------------------------------------------------------------------------
@@ -583,9 +542,8 @@ void ppu_setcontext(ppu_t *src_ppu) {
   ppu.page[15] = ppu.page[11] - 0x1000;
 }
 
-ppu_t *temp;
-
 ppu_t *ppu_create(void) {
+  ppu_t *temp;
   static bool pal_generated = false;
 
   if (NULL == temp) temp = (ppu_t *)malloc(sizeof(ppu_t));
@@ -2138,13 +2096,11 @@ void apu_setparams(double base_freq, int sample_rate, int refresh_rate,
   apu_reset();
 }
 
-apu_t *temp_apu;
-
 // Initializes emulated sound hardware, creates waveforms/voices
 apu_t *apu_create(double base_freq, int sample_rate, int refresh_rate,
                   int sample_bits) {
   int channel;
-
+  apu_t *temp_apu;
   if (NULL == temp_apu) temp_apu = (apu_t *)malloc(sizeof(apu_t));
   if (NULL == temp_apu) return NULL;
 

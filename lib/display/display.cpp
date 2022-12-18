@@ -102,14 +102,6 @@ void nescreen::writeFrame(const uint16_t x, const uint16_t y,
   }
 }
 
-void fillRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
-                   uint8_t color) {
-  for (uint16_t yPos = y; yPos < y + height; yPos++)
-    for (uint16_t xPos = x; xPos < x + width; xPos++) {
-      nescreen::drawPixel(xPos, yPos, color);
-    }
-}
-
 void nescreen::drawLine(int16_t startX, int16_t startY, int16_t endX,
                         int16_t endY, uint8_t color) {
   int t, distance;
@@ -180,6 +172,14 @@ void nescreen::drawRectangle(int16_t x, int16_t y, int16_t width,
   nescreen::drawVLine(x, y, y + height, color);
   nescreen::drawVLine(x + width, y, y + height, color);
   nescreen::drawHLine(x, y + height, x + width, color);
+}
+
+void nescreen::fillRectangle(int16_t x, int16_t y, int16_t width,
+                             int16_t height, uint8_t color) {
+  for (uint16_t yPos = y; yPos < y + height; yPos++)
+    for (uint16_t xPos = x; xPos < x + width; xPos++) {
+      nescreen::drawPixel(xPos, yPos, color);
+    }
 }
 
 #define CHAR_SEGMENT_WITH 8

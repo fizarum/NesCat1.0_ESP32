@@ -25,6 +25,8 @@
 #define V_CENTER NES_SCREEN_HEIGHT / 2
 
 #include <SPI.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
 
 // screen buffer variables:
 extern uint16_t screenBuffer[256];      // 512 bytes
@@ -56,6 +58,9 @@ void drawHLine(int16_t startX, int16_t startY, int16_t endX, uint8_t color);
 void drawVLine(int16_t startX, int16_t startY, int16_t endY, uint8_t color);
 
 void drawRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
+                   uint8_t color);
+
+void fillRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
                    uint8_t color);
 
 uint8_t drawChar(uint16_t Main_x, uint16_t Main_y, char Main_char,

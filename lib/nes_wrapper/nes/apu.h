@@ -185,4 +185,8 @@ typedef struct apu_s {
   apuext_t *ext;
 } apu_t;
 
+void apu_setcontext(apu_t *src_apu);
+void apu_getcontext(apu_t *dest_apu);
+void apu_setchan(int chan, bool enabled);
+
 #endif  // APU_H

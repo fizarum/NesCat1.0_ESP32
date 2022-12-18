@@ -6,6 +6,8 @@
 // comment to disable logs
 #define DEBUG
 
+#define MAXFILENAME_LENGTH 64
+
 const uint8_t buffMaxLen = 30;
 
 char debugBuff[buffMaxLen];
@@ -40,6 +42,16 @@ void debug(const char *templateString, const char *value) {
   int len = strlen(templateString);
   if (len >= buffMaxLen) {
     sprintf(debugBuff, "value: %s", value);
+  } else {
+    sprintf(debugBuff, templateString, value);
+  }
+  debug(debugBuff);
+}
+
+void debug(const char *templateString, const void *value) {
+  int len = strlen(templateString);
+  if (len >= buffMaxLen) {
+    sprintf(debugBuff, "value: %p", value);
   } else {
     sprintf(debugBuff, templateString, value);
   }
@@ -90,6 +102,14 @@ bool bit::isBitSet(uint16_t source, uint8_t position) {
   return (source & mask) == mask;
 }
 
+void toLowerCase(char *string) {
+  char *temp = string;
+  while (*temp) {
+    *temp = tolower(*temp);
+    temp++;
+  }
+}
+
 void sortStrings(char *arr[], int n) {
   char temp[MAXFILENAME_LENGTH];
 
@@ -137,4 +157,14 @@ uint8_t findI2CDevice(const uint8_t startAddress) {
     }
   }
   return 0;
+}
+
+uint32_t alignTo(uint32_t value, uint16_t blockSize) {
+  uint32_t blockCounts = value / blockSize;
+  uint32_t rounded = blockCounts * blockSize;
+  if (value == rounded) {
+    return rounded;
+  }
+  rounded += blockSize;
+  return rounded;
 }

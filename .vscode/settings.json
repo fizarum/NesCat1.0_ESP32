@@ -29,6 +29,11 @@
         "apps_registry,h": "c",
         "new": "cpp",
         "cstddef": "cpp",
-        "functional": "cpp"
+        "functional": "cpp",
+        "cstdlib": "cpp",
+        "typeinfo": "cpp",
+        "utility": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp"
     }
 }

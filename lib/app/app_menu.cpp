@@ -6,6 +6,7 @@
 #include "app_file_manager.h"
 #include "app_settings.h"
 #include "display.h"
+#include "nes_launcher.h"
 #include "utils.h"
 
 // position of menu
@@ -15,6 +16,7 @@ const uint8_t yPos = V_CENTER - 24;
 FileManager fileManager;
 Settings settings;
 AudioPlayer audioPlayer;
+NesLauncher nesLauncher;
 
 App *app = nullptr;
 
@@ -78,8 +80,8 @@ bool Menu::handle(uint16_t keyState) {
     debug("menu: is cross key pressed: %u", keyState);
     app = pickSelectedApp(selectedMenu);
     if (app != nullptr) {
-      app->open(this->onCloseListener);
       debug("menu: opening %s", app->getName());
+      app->open(this->onCloseListener);
     }
     requestRedraw();
     return true;
@@ -125,6 +127,8 @@ App *pickSelectedApp(uint8_t menuIndex) {
   switch (menuIndex) {
     case 0:
       return &fileManager;
+    case 1:
+      return &nesLauncher;
     case 2:
       return &audioPlayer;
     case 3:
