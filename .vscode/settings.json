@@ -30,6 +30,10 @@
         "new": "cpp",
         "cstddef": "cpp",
         "functional": "cpp",
-        "cstdlib": "cpp"
+        "cstdlib": "cpp",
+        "typeinfo": "cpp",
+        "utility": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp"
     }
 }

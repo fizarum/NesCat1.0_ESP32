@@ -1,4 +1,5 @@
 # Custom Dictionary Words
+Espressif
 gpio
 IRAM
 millis
@@ -9,3 +10,4 @@ setchan
 setfiq
 strlwr
 writehandler
+WROVER

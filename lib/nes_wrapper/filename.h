@@ -1,6 +1,8 @@
 #ifndef filename_h
 #define filename_h
 
+#include <stdint.h>
+
 #include <cstdlib>
 
 /** simple structure for representing file names on FS */

@@ -21,10 +21,6 @@ class App {
   /** called on app's close() */
   void (*onCloseListener)() = nullptr;
 
-  /** set flag needsToRedraw to true, on next update
-  it will be redrawn */
-  void requestRedraw();
-
   /** app specific implementation of update */
   virtual void onUpdate() = 0;
 
@@ -40,6 +36,8 @@ class App {
   virtual void update() final;
   virtual void draw() = 0;
   virtual bool needsToBeRedrawn();
+  /** set flag needsToRedraw to true, on next update it will be redrawn */
+  void requestRedraw();
 
   /**
   handles user input, returns:

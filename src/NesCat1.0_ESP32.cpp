@@ -54,7 +54,7 @@ void onKeysCallback(uint16_t keyMap) {
   }
 
   if (keyMap == 0) {
-    debug("on key release\n");
+    debug("on key release");
     return;
   }
 

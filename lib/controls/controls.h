@@ -12,17 +12,6 @@ sony joystick map used in project:
 
 #include <stdint.h>
 
-// KEY BUTTONS PINS:
-#define PIN_UP 35     // SVN
-#define PIN_DOWN 35   // IO35
-#define PIN_LEFT 34   // SVP
-#define PIN_RIGHT 12  // TDI
-// todo: should be removed
-#define PIN_A 2        // IO2
-#define PIN_B 14       // TMS
-#define PIN_START 15   // TDO
-#define PIN_SELECT 13  // TCK
-
 extern uint8_t JOY_UP;
 extern uint8_t JOY_DOWN;
 extern uint8_t JOY_LEFT;

@@ -1,7 +1,7 @@
 #ifndef NESEMULATOR_1_H
 #define NESEMULATOR_1_H
 
-#include <SdFat.h>
+#include <Arduino.h>
 #include <controls.h>
 #include <display.h>
 #include <storage.h>
@@ -41,9 +41,6 @@ char fileExt[4];
 
 bool EXIT = false;
 
-SdFile dirFile;
-SdFile file;
-
 uint8_t NES_POWER = 1;
 
 void (*audio_callback)(void *buffer, int length) = NULL;
@@ -77,21 +74,21 @@ uint8_t get_pad0(void) {
   // if (digitalRead(PIN_LEFT) == 1) value |= 64;    // LEFT
   // if (digitalRead(PIN_RIGHT) == 1) value |= 128;  // RIGHT
 
-  if (digitalRead(PIN_SELECT) == 1 && digitalRead(PIN_START) == 1) {
-    /// osd_stopsound();
-    /// audio_callback = NULL;
+  // if (digitalRead(PIN_SELECT) == 1 && digitalRead(PIN_START) == 1) {
+  //   /// osd_stopsound();
+  //   /// audio_callback = NULL;
 
-    NES_POWER = 0;  // EXIT
-  }
+  //   NES_POWER = 0;  // EXIT
+  // }
 
   // EJECT EMULATOR
-  if (JOY_SHARE == 1 && JOY_OPTIONS == 1) {
-    /// osd_stopsound();
+  // if (JOY_SHARE == 1 && JOY_OPTIONS == 1) {
+  //   /// osd_stopsound();
 
-    JOY_SHARE = 0;
-    JOY_OPTIONS = 0;
-    NES_POWER = 0;
-  }
+  //   JOY_SHARE = 0;
+  //   JOY_OPTIONS = 0;
+  //   NES_POWER = 0;
+  // }
 
   if (JOY_SHARE == 1) value |= 8;    // START
   if (JOY_OPTIONS == 1) value |= 4;  // SELECT
@@ -153,7 +150,7 @@ i2s_config_t audio_cfg = {
     ///  static_cast<i2s_comm_format_t>(I2S_COMM_FORMAT_PCM |
     ///  I2S_COMM_FORMAT_I2S_MSB),
     .communication_format = static_cast<i2s_comm_format_t>(
-        I2S_COMM_FORMAT_STAND_PCM_SHORT | I2S_COMM_FORMAT_STAND_I2S),
+        I2S_COMM_FORMAT_PCM | I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
     .intr_alloc_flags =
         ESP_INTR_FLAG_LEVEL1 /*| ESP_INTR_FLAG_IRAM  | ESP_INTR_FLAG_SHARED*/,
     .dma_buf_count = 6,
@@ -244,248 +241,212 @@ IRAM_ATTR int install_timer(int hertz) {
 
 //--------------------------------------------------------------------------------
 char *NESEXPLORE(char *path) {
-  uint8_t num = 0;
-  uint8_t loadedFileNames = 0;
+  // uint8_t num = 0;
+  // uint8_t loadedFileNames = 0;
 
-  // clear memory variables
-  for (uint16_t tmp = 0; tmp < MAXFILES; tmp++)
-    memset(filename[tmp], 0, sizeof(filename[tmp]));
+  // // clear memory variables
+  // for (uint16_t tmp = 0; tmp < MAXFILES; tmp++)
+  //   memset(filename[tmp], 0, sizeof(filename[tmp]));
 
-  memset(fileExt, 0, 4);
+  // memset(fileExt, 0, 4);
 
-  num = 0;
-  loadedFileNames = 0;
+  // num = 0;
+  // loadedFileNames = 0;
 
-  // LOAD FILENAMES INTO MEMORY...
+  // // LOAD FILENAMES INTO MEMORY...
 
-  // Load List files in root directory.
-  /// if (!dirFile.open("/", O_READ)) {
-  if (!dirFile.open(path, O_READ)) {
-    while (1) {
-    };
-  }
-  while (num < MAXFILES && file.openNext(&dirFile, O_READ)) {
-    // Skip hidden files.
-    if (!file.isHidden()) {
-      for (uint8_t i = strlen(filename[num]); i > 3; i--) filename[num][i] = 0;
-      file.getName(filename[num], MAXFILENAME_LENGTH);
-      if (file.isSubDir()) {
-        sprintf(filename[num], "%s/", filename[num]);
-        num++;
-      } else {
-        for (uint8_t i = strlen(filename[num]); i > 3; i--) {
-          if (filename[num][i] != 0) {
-            fileExt[3] = '\0';
-            fileExt[2] = filename[num][i];
-            fileExt[1] = filename[num][i - 1];
-            fileExt[0] = filename[num][i - 2];
-            break;
-          }
-        }
-      }
+  // // Load List files in root directory.
+  // /// if (!dirFile.open("/", O_READ)) {
+  // if (!dirFile.open(path, O_READ)) {
+  //   while (1) {
+  //   };
+  // }
+  // while (num < MAXFILES && file.openNext(&dirFile, O_READ)) {
+  //   // Skip hidden files.
+  //   if (!file.isHidden()) {
+  //     for (uint8_t i = strlen(filename[num]); i > 3; i--) filename[num][i]
+  //     = 0;
+  //     file.getName(filename[num], MAXFILENAME_LENGTH);
+  //     if (file.isSubDir()) {
+  //       sprintf(filename[num], "%s/", filename[num]);
+  //       num++;
+  //     } else {
+  //       for (uint8_t i = strlen(filename[num]); i > 3; i--) {
+  //         if (filename[num][i] != 0) {
+  //           fileExt[3] = '\0';
+  //           fileExt[2] = filename[num][i];
+  //           fileExt[1] = filename[num][i - 1];
+  //           fileExt[0] = filename[num][i - 2];
+  //           break;
+  //         }
+  //       }
+  //     }
 
-      // if (DEBUG) {
-      /// Serial.println(fileExt[num]);
-      /// Serial.println(strlen(filename[num]));
-      // }
+  //     // if (DEBUG) {
+  //     /// Serial.println(fileExt[num]);
+  //     /// Serial.println(strlen(filename[num]));
+  //     // }
 
-      // check NES File extension, then increase index
-      if ((fileExt[0] == 'N' || fileExt[0] == 'n') &&
-          (fileExt[1] == 'E' || fileExt[1] == 'e') &&
-          (fileExt[2] == 'S' || fileExt[2] == 's')) {
-        num++;
-      }
-    }
-    loadedFileNames = num;
-    file.close();
-  }
+  //     // check NES File extension, then increase index
+  //     if ((fileExt[0] == 'N' || fileExt[0] == 'n') &&
+  //         (fileExt[1] == 'E' || fileExt[1] == 'e') &&
+  //         (fileExt[2] == 'S' || fileExt[2] == 's')) {
+  //       num++;
+  //     }
+  //   }
+  //   loadedFileNames = num;
+  //   file.close();
+  // }
 
-  dirFile.close();
+  // dirFile.close();
 
-  debug("--------------------------------------");
-  debug("Count of loaded File Names: %d\n", loadedFileNames);
+  // debug("--------------------------------------");
+  // debug("Count of loaded File Names: %d\n", loadedFileNames);
 
-  sortStrings(filename, loadedFileNames);
+  // sortStrings(filename, loadedFileNames);
 
-  // DRAW FILENAMES INTO BUFFER
-  uint8_t CURSOR = 0;
-  uint8_t PAGE = 0;
-  bool NamesDisplayed = false;
+  // // DRAW FILENAMES INTO BUFFER
+  // uint8_t CURSOR = 0;
+  // uint8_t PAGE = 0;
+  // bool NamesDisplayed = false;
 
-  while (1) {
-    PAGE = CURSOR / FILESPERPAGE;
-    if (!NamesDisplayed) {
-      nescreen::fillScreen();
-      nescreen::setTextPosition(16, 24);
-      nescreen::drawText(path);
-      nescreen::update();
+  // while (1) {
+  //   PAGE = CURSOR / FILESPERPAGE;
+  //   if (!NamesDisplayed) {
+  //     nescreen::fillScreen();
+  //     nescreen::setTextPosition(16, 24);
+  //     nescreen::drawText(path);
+  //     nescreen::update();
 
-      for (num = PAGE * FILESPERPAGE;
-           num < ((PAGE + 1) * FILESPERPAGE) && num < loadedFileNames; num++) {
-        nescreen::setTextPosition(40, 48 + 20 * (num % FILESPERPAGE));
+  //     for (num = PAGE * FILESPERPAGE;
+  //          num < ((PAGE + 1) * FILESPERPAGE) && num < loadedFileNames;
+  //          num++) {
+  //       nescreen::setTextPosition(40, 48 + 20 * (num % FILESPERPAGE));
 
-        if (filename[num][strlen(filename[num]) - 1] == '/')
-          nescreen::drawText(filename[num], 23);
-        else
-          nescreen::drawText(filename[num], 48);
+  //       if (filename[num][strlen(filename[num]) - 1] == '/')
+  //         nescreen::drawText(filename[num], 23);
+  //       else
+  //         nescreen::drawText(filename[num], 48);
 
-        delay(1);
-      }
-      NamesDisplayed = true;
-    }
+  //       delay(1);
+  //     }
+  //     NamesDisplayed = true;
+  //   }
 
-    // Draw Cursor
-    nescreen::setTextPosition(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
-    nescreen::drawText("->", 48);
-    delay(200);
+  // // Draw Cursor
+  // nescreen::setTextPosition(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
+  // nescreen::drawText("->", 48);
+  // delay(200);
 
-    // todo: recheck and remove
-    //  // PROCESS CURSOR SELECTION
-    //  while (JOY_CROSS == 0 && JOY_SQUARE == 0 && JOY_OPTIONS == 0 &&
-    //         JOY_SHARE == 0 && JOY_UP == 0 && JOY_DOWN == 0 && JOY_LEFT == 0
-    //         && JOY_RIGHT == 0) {
-    //    if (digitalRead(PIN_A) == 1) {
-    //      JOY_CROSS = 1;  // A
-    //      delay(25);
-    //    }
-    //    if (digitalRead(PIN_B) == 1) {
-    //      JOY_SQUARE = 1;  // B
-    //      delay(25);
-    //    }
-    //    if (digitalRead(PIN_SELECT) == 1) {
-    //      JOY_OPTIONS = 1;  // SELECT
-    //      delay(25);
-    //    }
-    //    if (digitalRead(PIN_START) == 1) {
-    //      JOY_SHARE = 1;  // START
-    //      delay(25);
-    //    }
-    //    if (digitalRead(PIN_UP) == 1) {
-    //      JOY_UP = 1;
-    //      delay(25);
-    //    }
-    //    if (digitalRead(PIN_DOWN) == 1) {
-    //      JOY_DOWN = 1;  // DOWN
-    //      delay(25);
-    //    }
-    //    if (digitalRead(PIN_LEFT) == 1) {
-    //      JOY_LEFT = 1;  // LEFT
-    //      delay(25);
-    //    }
-    //    if (digitalRead(PIN_RIGHT) == 1) {
-    //      JOY_RIGHT = 1;  // RIGHT
-    //      delay(25);
-    //    }
-    //  }
+  // // Empty Cursor
+  // nescreen::setTextPosition(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
+  // nescreen::drawText("  ", 48);
 
-    // Empty Cursor
-    nescreen::setTextPosition(16, 48 + (20 * (CURSOR % FILESPERPAGE)));
-    nescreen::drawText("  ", 48);
+  // if (JOY_SHARE == 1 && JOY_OPTIONS == 1) {
+  //   JOY_SHARE = 0;
+  //   JOY_OPTIONS = 0;
+  //   EXIT = true;
+  //   ///         PLAYING=false;
+  //   NES_POWER = 0;
 
-    if (JOY_SHARE == 1 && JOY_OPTIONS == 1) {
-      JOY_SHARE = 0;
-      JOY_OPTIONS = 0;
-      EXIT = true;
-      ///         PLAYING=false;
-      NES_POWER = 0;
+  //   return MAINPATH;
+  // }
 
-      return MAINPATH;
-    }
+  // if (JOY_UP == 1) {
+  //   if (CURSOR % FILESPERPAGE == 0) NamesDisplayed = false;  // changed
+  //   page if (CURSOR == 0 && loadedFileNames > 0)
+  //     CURSOR = loadedFileNames - 1;
+  //   else if (CURSOR > 0 && loadedFileNames > 0)
+  //     CURSOR--;
+  //   JOY_UP = 0;
+  // }
+  // if (JOY_DOWN == 1) {
+  //   if (CURSOR % FILESPERPAGE == FILESPERPAGE - 1 ||
+  //       CURSOR == loadedFileNames - 1)
+  //     NamesDisplayed = false;  // changed page
+  //   if (CURSOR == loadedFileNames - 1 && loadedFileNames > 0)
+  //     CURSOR = 0;
+  //   else if (CURSOR < loadedFileNames - 1 && loadedFileNames > 0)
+  //     CURSOR++;
+  //   JOY_DOWN = 0;
+  // }
+  // if (JOY_LEFT == 1) {
+  //   if (CURSOR > FILESPERPAGE - 1) CURSOR -= FILESPERPAGE;
+  //   NamesDisplayed = false;
+  //   JOY_LEFT = 0;
+  // }
+  // if (JOY_RIGHT == 1) {
+  //   if (CURSOR / FILESPERPAGE < loadedFileNames / FILESPERPAGE)
+  //     CURSOR += FILESPERPAGE;
+  //   if (CURSOR > loadedFileNames - 1) CURSOR = loadedFileNames - 1;
+  //   NamesDisplayed = false;
+  //   JOY_RIGHT = 0;
+  // }
+  // if (JOY_OPTIONS == 1) {
+  //   // do nothing  = unused
+  //   JOY_OPTIONS = 0;
+  // }
+  // if ((JOY_CROSS == 1 || JOY_SHARE == 1) && JOY_OPTIONS == 0) {
+  //   dirFile.close();
+  //   JOY_CROSS = 0;
+  //   JOY_SHARE = 0;
+  //   JOY_OPTIONS = 0;
+  //   delay(25);
 
-    if (JOY_UP == 1) {
-      if (CURSOR % FILESPERPAGE == 0) NamesDisplayed = false;  // changed page
-      if (CURSOR == 0 && loadedFileNames > 0)
-        CURSOR = loadedFileNames - 1;
-      else if (CURSOR > 0 && loadedFileNames > 0)
-        CURSOR--;
-      JOY_UP = 0;
-    }
-    if (JOY_DOWN == 1) {
-      if (CURSOR % FILESPERPAGE == FILESPERPAGE - 1 ||
-          CURSOR == loadedFileNames - 1)
-        NamesDisplayed = false;  // changed page
-      if (CURSOR == loadedFileNames - 1 && loadedFileNames > 0)
-        CURSOR = 0;
-      else if (CURSOR < loadedFileNames - 1 && loadedFileNames > 0)
-        CURSOR++;
-      JOY_DOWN = 0;
-    }
-    if (JOY_LEFT == 1) {
-      if (CURSOR > FILESPERPAGE - 1) CURSOR -= FILESPERPAGE;
-      NamesDisplayed = false;
-      JOY_LEFT = 0;
-    }
-    if (JOY_RIGHT == 1) {
-      if (CURSOR / FILESPERPAGE < loadedFileNames / FILESPERPAGE)
-        CURSOR += FILESPERPAGE;
-      if (CURSOR > loadedFileNames - 1) CURSOR = loadedFileNames - 1;
-      NamesDisplayed = false;
-      JOY_RIGHT = 0;
-    }
-    if (JOY_OPTIONS == 1) {
-      // do nothing  = unused
-      JOY_OPTIONS = 0;
-    }
-    if ((JOY_CROSS == 1 || JOY_SHARE == 1) && JOY_OPTIONS == 0) {
-      dirFile.close();
-      JOY_CROSS = 0;
-      JOY_SHARE = 0;
-      JOY_OPTIONS = 0;
-      delay(25);
+  //   ///         PLAYINGFILE=CURSOR;
+  //   ///         TOTALFILES=loadedFileNames;
 
-      ///         PLAYINGFILE=CURSOR;
-      ///         TOTALFILES=loadedFileNames;
+  //   sprintf(MAINPATH, "%s%s", path, filename[CURSOR]);
+  //   debug(MAINPATH);
+  //   return MAINPATH;  // START //A
+  // }
+  // if ((JOY_SQUARE == 1) && JOY_OPTIONS == 0) {
+  //   dirFile.close();
+  //   JOY_SQUARE = 0;
+  //   JOY_SHARE = 0;
+  //   JOY_OPTIONS = 0;
+  //   delay(25);
 
-      sprintf(MAINPATH, "%s%s", path, filename[CURSOR]);
-      debug(MAINPATH);
-      return MAINPATH;  // START //A
-    }
-    if ((JOY_SQUARE == 1) && JOY_OPTIONS == 0) {
-      dirFile.close();
-      JOY_SQUARE = 0;
-      JOY_SHARE = 0;
-      JOY_OPTIONS = 0;
-      delay(25);
+  //   debug(path);
+  //   debug("%d\n", strlen(path));
 
-      debug(path);
-      debug("%d\n", strlen(path));
+  //   sprintf(MAINPATH, "%s", path);
 
-      sprintf(MAINPATH, "%s", path);
+  //   if (strlen(MAINPATH) > 1) {
+  //     MAINPATH[strlen(MAINPATH) - 1] = '\0';
+  //     for (uint8_t strpos = strlen(MAINPATH) - 1; strpos > 0; strpos--) {
+  //       if (MAINPATH[strpos] == '/') break;
+  //       MAINPATH[strpos] = '\0';
+  //     }
+  //   }
 
-      if (strlen(MAINPATH) > 1) {
-        MAINPATH[strlen(MAINPATH) - 1] = '\0';
-        for (uint8_t strpos = strlen(MAINPATH) - 1; strpos > 0; strpos--) {
-          if (MAINPATH[strpos] == '/') break;
-          MAINPATH[strpos] = '\0';
-        }
-      }
-
-      debug(MAINPATH);
-      debug("%d\n", strlen(MAINPATH));
-      return MAINPATH;
-    }
-  };
+  //   debug(MAINPATH);
+  //   debug("%d\n", strlen(MAINPATH));
+  //   return MAINPATH;
+  // }
+  // };
+  return nullptr;
 }
 // ################################################################################
 //********************************************************************************
-char *NESBrowse(char *path) {
-  if (path[strlen(path) - 1] != '/')
-    if (strlen(path) > 1) {
-      path[strlen(path) - 1] = '\0';
-      for (uint8_t strpos = strlen(path) - 1; strpos > 0; strpos--) {
-        if (path[strpos] == '/') break;
-        path[strpos] = '\0';
-      }
-    }
+// char *NESBrowse(char *path) {
+//   if (path[strlen(path) - 1] != '/')
+//     if (strlen(path) > 1) {
+//       path[strlen(path) - 1] = '\0';
+//       for (uint8_t strpos = strlen(path) - 1; strpos > 0; strpos--) {
+//         if (path[strpos] == '/') break;
+//         path[strpos] = '\0';
+//       }
+//     }
 
-  EXIT = false;
-  //................................................................................
-  while (EXIT == false && path[strlen(path) - 1] == '/') {
-    path = NESEXPLORE(path);
-    debug(path);
-  }
-  return path;
-}
+//   EXIT = false;
+//   //................................................................................
+//   while (EXIT == false && path[strlen(path) - 1] == '/') {
+//     path = NESEXPLORE(path);
+//     debug(path);
+//   }
+//   return path;
+// }
 //________________________________________________________________________________
 
 //--------------------------------------------------------------------------------

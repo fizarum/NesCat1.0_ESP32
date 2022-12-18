@@ -8,4 +8,10 @@ nes_t *createNes();
 
 FileName *getAllNesFiles(const char *path);
 
+void pickRomFile(const char *filepath);
+
+/** callback(percents, isFinished) has percents as an argument and bool flag
+ * indicating is operation finished*/
+bool getRomData(const char *filepath, void (*callback)(uint8_t, bool));
+
 #endif  // nes_wrapper_h
