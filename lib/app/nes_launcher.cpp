@@ -122,24 +122,22 @@ void NesLauncher::onUpdate() {
 
 void NesLauncher::draw() {
   // title
-  nescreen::fillScreen(DARK_GREY);
-  nescreen::drawString(64, 10, this->name, WHITE_COLOR, DARK_GREY);
+  fillScreen(COLOR_DARK_GREY);
+  drawString(64, 20, this->name, COLOR_WHITE);
 
   // file names
   drawFileNames(filenames, 0, this->filesPerPage, this->cursorPos);
   _cursorPosOnScreen = getCursorPosOnScreen(this->cursorPos);
 
   // cursor
-  nescreen::setTextPosition(16, _cursorPosOnScreen);
-  nescreen::drawText(">>", WHITE_COLOR, DARK_GREY);
+  // nescreen::setTextPosition(16, _cursorPosOnScreen);
+  drawString(16, _cursorPosOnScreen, ">>", COLOR_WHITE);
 
   if (this->isLoading == true) {
     sprintf(_loadingTitle, "loaded: %u%%", _loadedInPercents);
-    nescreen::fillRectangle(0, 50, DEFAULT_WIDTH, 40, BLUE_COLOR);
-    nescreen::drawString(75, 60, _loadingTitle, ORANGE_COLOR, BLUE_COLOR);
+    fillRectangle(0, 50, DEFAULT_WIDTH, 40, COLOR_BLUE);
+    drawString(75, 60, _loadingTitle, COLOR_ORANGE);
   }
-
-  nescreen::update();
 }
 
 const char *NesLauncher::selectFile() {
@@ -183,12 +181,7 @@ void drawFileNames(FileName *first, uint16_t offset, uint8_t filesPerPage,
   fileCountOnScreen = 0;
 
   for (uint8_t index = 0; index < filesPerPage; ++index) {
-    nescreen::setTextPosition(40, posOnScreen);
-    if (selectedFileIndex == index) {
-      nescreen::drawText(current->name, DARK_GREY, LIGHT_GREY);
-    } else {
-      nescreen::drawText(current->name, WHITE_COLOR, DARK_GREY);
-    }
+    drawString(40, posOnScreen, current->name, COLOR_WHITE);
 
     current = current->next;
     if (current == nullptr) {

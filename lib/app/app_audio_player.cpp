@@ -25,8 +25,7 @@ void AudioPlayer::onUpdate() {
 }
 
 void AudioPlayer::draw() {
-  nescreen::fillScreen(VIOLET_COLOR);
-  nescreen::drawString(64, 10, this->name, WHITE_COLOR, VIOLET_COLOR);
+  fillScreen(COLOR_VIOLET);
+  drawString(64, 20, this->name, COLOR_WHITE);
   // todo: complete drawing content
-  nescreen::update();
 }

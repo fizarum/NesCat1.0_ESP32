@@ -117,10 +117,9 @@ bool Menu::needsToBeRedrawn() {
 }
 
 void _menuDraw(MenuItem *item) {
-  nescreen::fillScreen(BLUE_COLOR);
-  nescreen::drawString(xPos, yPos, item->title, WHITE_COLOR, BLUE_COLOR);
+  fillScreen(COLOR_BLUE);
+  drawString(xPos, yPos, item->title, COLOR_WHITE);
   debug("menu item: %s", item->title);
-  nescreen::update();
 }
 
 App *pickSelectedApp(uint8_t menuIndex) {
