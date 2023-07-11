@@ -40,8 +40,7 @@ bool FileManager::handle(uint16_t keyState) {
 void FileManager::onUpdate() {}
 
 void FileManager::draw() {
-  nescreen::fillScreen(ORANGE_COLOR);
-  nescreen::drawString(64, 10, this->name, WHITE_COLOR, ORANGE_COLOR);
+  fillScreen(COLOR_ORANGE);
+  drawString(64, 20, this->name, COLOR_WHITE);
   // todo: complete drawing content
-  nescreen::update();
 }

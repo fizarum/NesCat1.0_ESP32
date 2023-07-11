@@ -41,7 +41,7 @@ void setup() {
 
   displayInit();
 
-  initVideo();
+  //initVideo();
 
   // install_timer(60);  // 60Hz
   // getMemoryStatus();

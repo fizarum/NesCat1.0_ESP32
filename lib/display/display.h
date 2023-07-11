@@ -1,84 +1,53 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
-#include "nes_palettes.h"
+#define DEFAULT_WIDTH 320
+#define DEFAULT_HEIGHT 240
 
-#define NES_SCREEN_WIDTH 256
-#define NES_SCREEN_HEIGHT 240
-
-#define DEFAULT_WIDTH NES_SCREEN_WIDTH
-#define DEFAULT_HEIGHT NES_SCREEN_HEIGHT
-
-#define TFT_WIDTH 320
-#define TFT_HEIGHT 240
-
-//********************************************************************************
-/**
- * @brief position of virtual screen (nes) on real screen size
- * x & y should be 0 in ideal case, but aspect ratio of screen is bigger (wider)
- * than emulator one, then: x > 0
- */
-#define X_POS_OF_VIRTUAL_SCREEN (TFT_WIDTH - DEFAULT_WIDTH) / 2
-#define Y_POS_OF_VIRTUAL_SCREEN (TFT_HEIGHT - DEFAULT_HEIGHT) / 2
-
-#define H_CENTER NES_SCREEN_WIDTH / 2
-#define V_CENTER NES_SCREEN_HEIGHT / 2
+#define H_CENTER DEFAULT_WIDTH / 2
+#define V_CENTER DEFAULT_HEIGHT / 2
 
 #include <SPI.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
+// Color definitions
+#define COLOR_BLACK 0x0000        ///<   0,   0,   0
+#define COLOR_NAVY 0x000F         ///<   0,   0, 123
+#define COLOR_DARKGREEN 0x03E0    ///<   0, 125,   0
+#define COLOR_DARKCYAN 0x03EF     ///<   0, 125, 123
+#define COLOR_MAROON 0x7800       ///< 123,   0,   0
+#define COLOR_PURPLE 0x780F       ///< 123,   0, 123
+#define COLOR_OLIVE 0x7BE0        ///< 123, 125,   0
+#define COLOR_LIGHTGREY 0xC618    ///< 198, 195, 198
+#define COLOR_DARKGREY 0x7BEF     ///< 123, 125, 123
+#define COLOR_BLUE 0x001F         ///<   0,   0, 255
+#define COLOR_GREEN 0x07E0        ///<   0, 255,   0
+#define COLOR_CYAN 0x07FF         ///<   0, 255, 255
+#define COLOR_RED 0xF800          ///< 255,   0,   0
+#define COLOR_MAGENTA 0xF81F      ///< 255,   0, 255
+#define COLOR_YELLOW 0xFFE0       ///< 255, 255,   0
+#define COLOR_WHITE 0xFFFF        ///< 255, 255, 255
+#define COLOR_ORANGE 0xFD20       ///< 255, 165,   0
+#define COLOR_GREENYELLOW 0xAFE5  ///< 173, 255,  41
+#define COLOR_PINK 0xFC18         ///< 255, 130, 198
+// custom colors
+#define COLOR_VIOLET 0xEC1D     /// < 238,130,238
+#define COLOR_DARK_GREY 0x632C  /// < 100,100,100
+
 // screen buffer variables:
 extern uint16_t screenBuffer[256];      // 512 bytes
 extern uint8_t *screenMemory[256 + 1];  // 256*256 bytes + 256 offset
 
-extern QueueHandle_t vidQueue;
-
 void displayInit();
 
-void initVideo();
-
-// video memory namespace
-namespace nescreen {
-void update();
-
-void drawPixel(uint8_t X, uint8_t Y, uint8_t colorIndex);
-
-void fillScreen(uint8_t colorIndex = UNIVERSAL_BKG_COLOR);
-
-void writeFrame(const uint16_t x, const uint16_t y,
-                const uint16_t width = DEFAULT_WIDTH,
-                const uint16_t height = DEFAULT_HEIGHT);
-
-void drawLine(int16_t startX, int16_t startY, int16_t endX, int16_t endY,
-              uint8_t color);
-
-void drawHLine(int16_t startX, int16_t startY, int16_t endX, uint8_t color);
-
-void drawVLine(int16_t startX, int16_t startY, int16_t endY, uint8_t color);
-
-void drawRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
-                   uint8_t color);
-
+void fillScreen(int color);
 void fillRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
-                   uint8_t color);
+                   uint16_t color);
 
-uint8_t drawChar(uint16_t Main_x, uint16_t Main_y, char Main_char,
-                 const char *font, uint8_t color, uint8_t bkgColor);
+void drawString(uint8_t x, uint8_t y, const char *c, uint16_t color);
+void drawString(const char *c, uint16_t color);
 
-uint8_t drawString(uint8_t x, uint8_t y, const char *c, uint8_t color,
-                   uint8_t bkgColor);
-
-uint8_t drawString(const char *c, uint8_t color, uint8_t bkgColor);
-
-void drawText(const char *text, uint8_t color = WHITE_COLOR,
-              uint8_t bkgColor = BLUE_COLOR);
-
-void setFont(const char *font);
-
-void setTextPosition(uint8_t x, uint8_t y);
-void setTextNewLine();
-
-};  // namespace nescreen
+void update();
 
 #endif  // DISPLAY_H

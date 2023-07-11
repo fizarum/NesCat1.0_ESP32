@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 // #include <controls.h>
-#include <display.h>
+#include <nes_display.h>
 #include <storage.h>
 #include <utils.h>
 

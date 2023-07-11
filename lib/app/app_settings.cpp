@@ -21,8 +21,7 @@ void Settings::onUpdate() {
 }
 
 void Settings::draw() {
-  nescreen::fillScreen(GREEN_COLOR);
-  nescreen::drawString(64, 10, this->name, WHITE_COLOR, GREEN_COLOR);
+  fillScreen(COLOR_GREEN);
+  drawString(64, 20, this->name, COLOR_WHITE);
   // todo: complete drawing content
-  nescreen::update();
 }
