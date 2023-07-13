@@ -43,12 +43,26 @@ void Menu::init() {
   this->selectedMenu = 0;
 }
 
+void Menu::drawBackground() { fillScreen(COLOR_BLUE); }
+void Menu::drawTitle() {
+  drawString(10, 15, "**debug ver**", COLOR_LIGHTGREY);
+  drawString(190, 15, "78%%", COLOR_LIGHTGREY);
+  // time & battery info here
+  drawString(250, 15, "22:01", COLOR_LIGHTGREY);
+}
+
+void Menu::drawStatusBar() {
+  // some nav hints here
+  drawString(20, 230, "use < > to navigate", COLOR_LIGHTGREY);
+}
+
 void Menu::draw() {
   if (isUserAppActive() == true) {
     app->draw();
   } else {
     MenuItem item = menuItems[selectedMenu];
-    _menuDraw(&item);
+    drawString(xPos, yPos, item.title, COLOR_WHITE);
+    debug("menu item: %s", item.title);
   }
 }
 
@@ -114,12 +128,6 @@ bool Menu::needsToBeRedrawn() {
   } else {
     return this->needsToRedraw;
   }
-}
-
-void _menuDraw(MenuItem *item) {
-  fillScreen(COLOR_BLUE);
-  drawString(xPos, yPos, item->title, COLOR_WHITE);
-  debug("menu item: %s", item->title);
 }
 
 App *pickSelectedApp(uint8_t menuIndex) {

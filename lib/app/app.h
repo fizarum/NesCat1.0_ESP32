@@ -34,8 +34,18 @@ class App {
 
   /** used for updating application state */
   virtual void update() final;
+
+  /* drawing section */
+  /* draw main content */
   virtual void draw() = 0;
+  /* draw background of app */
+  virtual void drawBackground() {}
+  /* draw title bar if its implemented */
+  virtual void drawTitle() {}
+  /* draw status bar if its implemented */
+  virtual void drawStatusBar() {}
   virtual bool needsToBeRedrawn();
+
   /** set flag needsToRedraw to true, on next update it will be redrawn */
   void requestRedraw();
 

@@ -23,6 +23,9 @@ class Menu : public App {
   void init();
 
  protected:
+  void drawBackground();
+  void drawTitle();
+  void drawStatusBar();
   void draw();
 
  public:
