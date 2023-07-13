@@ -32,8 +32,6 @@ void cleanup(FileName *filename) {
   if (filename == nullptr) {
     return;
   }
-  FileName *current = nullptr;
-
   // find last element in list
   FileName *last = getLast(filename);
 

@@ -1,18 +1,13 @@
 #include "nes_wrapper.h"
 
+#include <Esp.h>
 #include <audio.h>
 #include <storage.h>
 #include <string.h>
 #include <utils.h>
 
-#include "NESemulator_part1.h"
-#include "NESemulator_part2.h"
-#include "mappers.h"
-#include "nes/sndinfo_t.h"
-
 #define NES_RAM_SIZE 0x800
-// NTSC = 60Hz, PAL = 50Hz
-#define NES_REFRESH_RATE 50
+#define nullptr NULL
 
 nes_t *instance;
 
@@ -39,7 +34,8 @@ void resetLoadingStats();
 
 nes_t *createNes() {
   if (instance == nullptr) {
-    instance = nes_create();
+    // TODO: complete
+    // instance = nes_create();
   }
   if (instance == nullptr) {
     debug("can not create nes instance");

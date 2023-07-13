@@ -2,7 +2,7 @@
 #define nes_wrapper_h
 
 #include "filename.h"
-#include "nes/nes.h"
+#include "nes/nes/nes.h"
 
 nes_t *createNes();
 

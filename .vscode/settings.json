@@ -4,6 +4,7 @@
         "GPIO",
         "MOSI",
         "nescreen",
+        "Nofrendo",
         "PSRAM",
         "SPITFT",
         "sram",
@@ -38,6 +39,7 @@
         "utility": "cpp",
         "istream": "cpp",
         "ostream": "cpp",
-        "retro8x16.c": "cpp"
+        "retro8x16.c": "cpp",
+        "noftypes.h": "c"
     }
 }
