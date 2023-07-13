@@ -45,9 +45,7 @@ void fillScreen(int color);
 void fillRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
                    uint16_t color);
 
-void drawString(uint8_t x, uint8_t y, const char *c, uint16_t color);
-void drawString(const char *c, uint16_t color);
-
-void update();
-
+void drawString(uint8_t x, uint8_t y, const char *c,
+                uint16_t color = COLOR_WHITE);
+void setFontSize(uint8_t size);
 #endif  // DISPLAY_H

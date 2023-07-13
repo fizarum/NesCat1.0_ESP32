@@ -28,7 +28,6 @@ void prepareVideoMemory();
 static void videoTask(void *arg) {
   while (1) {
     xQueueReceive(vidQueue, &screenMemory, portMAX_DELAY);
-    // TODO: complete
     nescreen::writeFrame(tftPtr, X_POS_OF_VIRTUAL_SCREEN,
                          Y_POS_OF_VIRTUAL_SCREEN);
   }

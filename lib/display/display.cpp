@@ -17,10 +17,6 @@
 
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
-// text position
-uint8_t xPosOfText = 0;
-uint8_t yPosOfText = 0;
-
 void displayInit() {
   tft.begin();
   tft.setRotation(1);
@@ -33,8 +29,6 @@ void displayInit() {
   delay(200);
 }
 
-void update() {}
-
 void fillScreen(int color) { tft.fillScreen(color); }
 void fillRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
                    uint16_t color) {
@@ -43,11 +37,9 @@ void fillRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
 
 void drawString(uint8_t x, uint8_t y, const char *c, uint16_t color) {
   tft.setCursor(x, y);
-  tft.setTextSize(1);
+  // tft.setTextSize(1);
   tft.setTextColor(color);
   tft.printf(c);
 }
 
-void drawString(const char *c, uint16_t color) {
-  return drawString(xPosOfText, yPosOfText, c, color);
-}
+void setFontSize(uint8_t size) { tft.setTextSize(size); }

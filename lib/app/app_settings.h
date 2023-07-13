@@ -10,6 +10,8 @@ class Settings : public App {
   uint8_t powerSaveMode = 3;
 
  protected:
+  void drawBackground();
+  void drawTitle();
   void draw();
   void onUpdate();
 

@@ -1,10 +1,13 @@
 {
     "cSpell.words": [
+        "DARKGREEN",
+        "GPIO",
         "MOSI",
-        "VSPI",
         "nescreen",
         "PSRAM",
-        "sram"
+        "SPITFT",
+        "sram",
+        "VSPI"
     ],
     "cSpell.customDictionaries": {
         "custom-dictionary-workspace": {

@@ -29,6 +29,9 @@ void App::update() {
   onUpdate();
 
   if (this->needsToBeRedrawn() == true) {
+    drawBackground();
+    drawTitle();
+    drawStatusBar();
     draw();
     this->needsToRedraw = false;
   }
