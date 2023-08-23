@@ -61,7 +61,7 @@ bool NesLauncher::handle(uint16_t keyState) {
     return true;
   }
 
-  if (isUpPressed(keyState)) {
+  if (isUpPressed()) {
     this->cursorPos -= 1;
     if (this->cursorPos < 0) {
       this->cursorPos = fileCountOnScreen;
@@ -69,7 +69,7 @@ bool NesLauncher::handle(uint16_t keyState) {
     requestRedraw();
   }
 
-  if (isDownPressed(keyState)) {
+  if (isDownPressed()) {
     this->cursorPos += 1;
     if (this->cursorPos > fileCountOnScreen) {
       this->cursorPos = 0;
@@ -77,7 +77,7 @@ bool NesLauncher::handle(uint16_t keyState) {
     requestRedraw();
   }
 
-  if (isCrossPressed(keyState)) {
+  if (isXPressed()) {
     resetLoadingStats(true);
 
     // get selected filename
@@ -97,7 +97,7 @@ bool NesLauncher::handle(uint16_t keyState) {
     requestRedraw();
   }
 
-  if (isStartPressed(keyState) || isSelectPressed(keyState)) {
+  if (isStartPressed() || isSelectPressed()) {
     close();
   }
   return true;

@@ -9,11 +9,11 @@ bool AudioPlayer::handle(uint16_t keyState) {
     return false;
   }
 
-  if (isUpPressed(keyState)) {
+  if (isUpPressed()) {
     requestRedraw();
   }
 
-  if (isCirclePressed(keyState)) {
+  if (isBPressed()) {
     debug("audio player handles circle button - closing app");
     close();
   }

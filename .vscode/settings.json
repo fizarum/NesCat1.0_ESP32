@@ -2,6 +2,9 @@
     "cSpell.words": [
         "DARKGREEN",
         "GPIO",
+        "GPIOA",
+        "GPIOB",
+        "IPOL",
         "MOSI",
         "nescreen",
         "Nofrendo",
@@ -40,6 +43,7 @@
         "istream": "cpp",
         "ostream": "cpp",
         "retro8x16.c": "cpp",
-        "noftypes.h": "c"
+        "noftypes.h": "c",
+        "type_traits": "cpp"
     }
 }

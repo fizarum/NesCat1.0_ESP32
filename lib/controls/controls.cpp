@@ -1,8 +1,10 @@
 #include "controls.h"
 
-#include <PCF8575.h>
+#include <MCP23017.h>
 #include <esp32-hal-adc.h>
 #include <utils.h>
+
+#include "keymap.h"
 
 #define JOY_MAX_VAL 4096
 // normal position of joystick - no keys pressed
@@ -10,55 +12,42 @@
 // minimal step for joystick to register press event
 #define JOY_THRESHOLD JOY_MAX_VAL / 10
 
-PCF8575 *pcf8575 = nullptr;
+MCP23017 *mcp = nullptr;
 uint8_t i2cAddress;
 bool initialized = false;
 
+// make sure that last 3 bits not used (they are disabled)
+#define GPIO_KEYS_MASK 0xFFF8
+
 /**
- * @brief all input joy/keys are represented as uint16_t value
- * keymap is next:
- * [0..3] - x/y information of joystick
- * [4   ] select button
- * [5   ] start button
- * [6   ] A (triangle) button
- * [7   ] B (circle) button
- * [8   ] C (cross) button
- * [9   ] D (square) button
- * [10  ] joystick middle
+ * @brief keymap used for storing input data:
+ * [0  ] - left arrow bit of joystick
+ * [1  ] - right arrow bit of joystick
+ * [2  ] - up arrow bit of joystick
+ * [3  ] - down arrow bit of joystick
  *
- * !!!Important to remember!!!
- * map of IO ports (on GPIO expander) is next:
- * 0 - triangle
- * 1 - circle
- * 2 - cross
- * 3 - square
- * 4 - options (select)
- * 5 - start
+ * menu keys:
+ * [4  ] select button
+ * [5  ] start button
+ * [6  ] menu button
+ *
+ * [7  ] A (triangle) button
+ * [8  ] B (circle) button
+ * [9  ] X (cross) button
+ * [10 ] Y (square) button
+ *
+ * [11 ] left trigger
+ * [12 ] right trigger
  */
-#define SELECT_BUTTON_BIT 4
-#define START_BUTTON_BIT 5
-#define TRIANGLE_BUTTON_BIT 6
-#define CIRCLE_BUTTON_BIT 7
-#define CROSS_BUTTON_BIT 8
-#define SQUARE_BUTTON_BIT 9
+uint16_t keymap = 0;
 
-#define PIN_JOY_UP 32
-#define PIN_JOY_LEFT 33
-
-// make sure that first 7 bits are only used
-#define GPIO_KEYS_MASK 127
-
-// bits from 4 to 10 (check description above) should be
-// reset before apply new values from hardware
-#define KEYS_MASK 63503
-
-uint16_t inputState;
+/** cached flag if input changed*/
 bool isInputChanged = false;
+
+bool bindKeymap(uint16_t gpioMap);
+
 // callback for input event
 void (*inputHandlerPtr)(uint16_t);
-
-void isPressedStateForButtonSet(uint8_t bitPosInKeyState,
-                                uint8_t bitPosOfButton);
 
 unsigned long now;
 
@@ -72,7 +61,6 @@ unsigned long lastRequestedTimeOfJoystick = 0;
 
 // request keys state: A,B,C,D
 void requestKeysState();
-void requestJoystickStateByPullMethod();
 
 /**
  * @brief should be called inside of setup() function
@@ -84,19 +72,25 @@ void controlsInit(void (*onInputCallbackPtr)(uint16_t)) {
   if (i2cAddress == 0) {
     debug("error during initializing keyboard!");
     initialized = false;
+    debug("init keyboard... error");
     return;
   }
   debug("found device on port: %x", i2cAddress);
-  pcf8575 = new PCF8575(i2cAddress);
-  pcf8575->begin(SDA, SCL);
+  mcp = new MCP23017(i2cAddress, Wire);
+  mcp->init();
 
-  if (pcf8575->isConnected()) {
-    debug("init pcf8575... ok");
-  } else {
-    debug("init pcf8575... error");
-    initialized = false;
-    return;
-  }
+  // Port A & B as output
+  mcp->portMode(MCP23017Port::A, 0xFF);
+  mcp->portMode(MCP23017Port::B, 0xFF);
+
+  // Reset port A & B values
+  mcp->writeRegister(MCP23017Register::GPIO_A, 0x00);
+  mcp->writeRegister(MCP23017Register::GPIO_B, 0x00);
+
+  // GPIO_A $ GPIO_B reflects the opposite logic of all pins state
+  mcp->writeRegister(MCP23017Register::IPOL_A, 0xFF);
+  mcp->writeRegister(MCP23017Register::IPOL_B, 0xFF);
+  debug("init keyboard... ok");
 
   inputHandlerPtr = onInputCallbackPtr;
   initialized = true;
@@ -111,134 +105,62 @@ void controlsUpdate() {
   }
   now = millis();
   requestKeysState();
-  requestJoystickStateByPullMethod();
 }
 
-uint16_t keyState = 0;
 uint16_t lastReadKeyState = 0;
 bool isKeySet = false;
+uint16_t gpioKeymap = 0;
 
 void requestKeysState() {
   if (now >= keyRequestedAt + delayBetweenKeyRequests) {
     keyRequestedAt = now;
+    gpioKeymap = mcp->read();
 
-    keyState = ~(pcf8575->read16());
-    keyState &= GPIO_KEYS_MASK;
-
-    if (lastReadKeyState == keyState) {
+    gpioKeymap &= GPIO_KEYS_MASK;
+    if (lastReadKeyState == gpioKeymap) {
       return;
     }
-    isInputChanged = false;
 
-    // reset key state of all non joystick related buttons
-    inputState &= KEYS_MASK;
-
-    isPressedStateForButtonSet(0, TRIANGLE_BUTTON_BIT);
-    isPressedStateForButtonSet(1, CIRCLE_BUTTON_BIT);
-    isPressedStateForButtonSet(2, CROSS_BUTTON_BIT);
-    isPressedStateForButtonSet(3, SQUARE_BUTTON_BIT);
-    isPressedStateForButtonSet(4, SELECT_BUTTON_BIT);
-    isPressedStateForButtonSet(5, START_BUTTON_BIT);
+    bindKeymap(gpioKeymap);
 
     if (isInputChanged == true) {
-      debug("triggered keymap change: %u", inputState);
-      inputHandlerPtr(inputState);
+      debug("triggered keymap change: %u", keymap);
+      inputHandlerPtr(keymap);
     }
 
-    lastReadKeyState = keyState;
+    lastReadKeyState = keymap;
   }
 }
 
 uint16_t hPos, vPos;
-// currently implemented analog joystick but later it should be replaced to
-// "button" like one
-void requestJoystickStateByPullMethod() {
-  if (now >= lastRequestedTimeOfJoystick + delayBetweenRequestsOfJoystick) {
-    // default range is from 0 to 4096
-    hPos = analogRead(PIN_JOY_LEFT);
-    vPos = analogRead(PIN_JOY_UP);
-    isInputChanged = false;
 
-    // left
-    if (hPos <= JOY_NORMAL_VAL - JOY_THRESHOLD) {
-      inputState = bit::setBit16(inputState, 0);
-      // reset flag of right button state
-      inputState = bit::resetBit(inputState, 1);
-      isInputChanged = true;
-    }
+bool isLeftPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_LEFT); }
+bool isRightPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_RIGHT); }
+bool isDownPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_DOWN); }
+bool isUpPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_UP); }
 
-    // right
-    if (hPos >= JOY_NORMAL_VAL + JOY_THRESHOLD) {
-      inputState = bit::setBit16(inputState, 1);
-      // reset flag of left button state
-      inputState = bit::resetBit(inputState, 0);
-      isInputChanged = true;
-    }
+bool isSelectPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_SELECT); }
+bool isStartPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_START); }
+bool isMenuPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_MENU); }
 
-    // down
-    if (vPos <= JOY_NORMAL_VAL - JOY_THRESHOLD) {
-      inputState = bit::setBit16(inputState, 2);
-      // reset flag of top button state
-      inputState = bit::resetBit(inputState, 3);
-      isInputChanged = true;
-    }
+bool isAPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_A); }
+bool isBPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_B); }
+bool isXPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_X); }
+bool isYPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_Y); }
 
-    // up
-    if (vPos >= JOY_NORMAL_VAL + JOY_THRESHOLD) {
-      inputState = bit::setBit16(inputState, 3);
-      // reset flag of bottom button state
-      inputState = bit::resetBit(inputState, 2);
-      isInputChanged = true;
-    }
-
-    if (isInputChanged == true) {
-      inputHandlerPtr(inputState);
-    }
-    inputState = 0;
-
-    lastRequestedTimeOfJoystick = now;
-  }
+bool isLeftTriggerPressed() { return bit::isBitSet(keymap, GPIO_TRIGGER_LEFT); }
+bool isRightTriggerPressed() {
+  return bit::isBitSet(keymap, GPIO_TRIGGER_RIGHT);
 }
-
-bool isTrianglePressed(uint16_t state) {
-  return bit::isBitSet(state, TRIANGLE_BUTTON_BIT);
-}
-bool isCirclePressed(uint16_t state) {
-  return bit::isBitSet(state, CIRCLE_BUTTON_BIT);
-}
-bool isCrossPressed(uint16_t state) {
-  return bit::isBitSet(state, CROSS_BUTTON_BIT);
-}
-bool isSquarePressed(uint16_t state) {
-  return bit::isBitSet(state, SQUARE_BUTTON_BIT);
-}
-
-bool isSelectPressed(uint16_t state) {
-  return bit::isBitSet(state, SELECT_BUTTON_BIT);
-}
-bool isStartPressed(uint16_t state) {
-  return bit::isBitSet(state, START_BUTTON_BIT);
-}
-
-bool isLeftPressed(uint16_t state) { return bit::isBitSet(state, 0); }
-bool isRightPressed(uint16_t state) { return bit::isBitSet(state, 1); }
-bool isDownPressed(uint16_t state) { return bit::isBitSet(state, 2); }
-bool isUpPressed(uint16_t state) { return bit::isBitSet(state, 3); }
 
 /**
- * @brief update key press state according to keyState
- * @param bitPosInKeyState bit position (came from GPIO expander)
- * in keyState which is used to update key
- * @param bitPosOfButton position in output map (inputState) of key.
- * !important!
- * bitPosInKeyState != bitPosOfButton, check description on the top
- * of this file
+ * @brief update key press state according to gpio map
+ * @param gpioMap bit map from gpio expander
+ * @returns if keymap has been updated
  */
-void isPressedStateForButtonSet(uint8_t bitPosInKeyState,
-                                uint8_t bitPosOfButton) {
-  isKeySet = bit::isBitSet(keyState, bitPosInKeyState);
-  if (isKeySet == true) {
-    isInputChanged = true;
-  }
-  inputState = bit::setBit16(inputState, bitPosOfButton, isKeySet);
+bool bindKeymap(uint16_t gpioMap) {
+  isInputChanged = gpioMap != keymap;
+  keymap = gpioMap;
+
+  return isInputChanged;
 }
