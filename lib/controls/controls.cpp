@@ -1,6 +1,6 @@
 #include "controls.h"
 
-#include <PCF8575.h>
+#include <MCP23017.h>
 #include <esp32-hal-adc.h>
 #include <utils.h>
 
@@ -10,7 +10,7 @@
 // minimal step for joystick to register press event
 #define JOY_THRESHOLD JOY_MAX_VAL / 10
 
-PCF8575 *pcf8575 = nullptr;
+MCP23017 *mcp = nullptr;
 uint8_t i2cAddress;
 bool initialized = false;
 
@@ -35,6 +35,9 @@ bool initialized = false;
  * 4 - options (select)
  * 5 - start
  */
+#define LEFT_TRIGGER_BIT 8
+#define RIGHT_TRIGGER_BIT 7
+// TODO: rework
 #define SELECT_BUTTON_BIT 4
 #define START_BUTTON_BIT 5
 #define TRIANGLE_BUTTON_BIT 6
@@ -45,12 +48,8 @@ bool initialized = false;
 #define PIN_JOY_UP 32
 #define PIN_JOY_LEFT 33
 
-// make sure that first 7 bits are only used
-#define GPIO_KEYS_MASK 127
-
-// bits from 4 to 10 (check description above) should be
-// reset before apply new values from hardware
-#define KEYS_MASK 63503
+// make sure that last 3 bits not used (they are disabled)
+#define GPIO_KEYS_MASK 0xFFF8
 
 uint16_t inputState;
 bool isInputChanged = false;
@@ -84,19 +83,25 @@ void controlsInit(void (*onInputCallbackPtr)(uint16_t)) {
   if (i2cAddress == 0) {
     debug("error during initializing keyboard!");
     initialized = false;
+    debug("init keyboard... error");
     return;
   }
   debug("found device on port: %x", i2cAddress);
-  pcf8575 = new PCF8575(i2cAddress);
-  pcf8575->begin(SDA, SCL);
+  mcp = new MCP23017(i2cAddress, Wire);
+  mcp->init();
 
-  if (pcf8575->isConnected()) {
-    debug("init pcf8575... ok");
-  } else {
-    debug("init pcf8575... error");
-    initialized = false;
-    return;
-  }
+  // Port A & B as output
+  mcp->portMode(MCP23017Port::A, 0xFF);
+  mcp->portMode(MCP23017Port::B, 0xFF);
+
+  // Reset port A & B values
+  mcp->writeRegister(MCP23017Register::GPIO_A, 0x00);
+  mcp->writeRegister(MCP23017Register::GPIO_B, 0x00);
+
+  // GPIO_A $ GPIO_B reflects the opposite logic of all pins state
+  mcp->writeRegister(MCP23017Register::IPOL_A, 0xFF);
+  mcp->writeRegister(MCP23017Register::IPOL_B, 0xFF);
+  debug("init keyboard... ok");
 
   inputHandlerPtr = onInputCallbackPtr;
   initialized = true;
@@ -121,17 +126,16 @@ bool isKeySet = false;
 void requestKeysState() {
   if (now >= keyRequestedAt + delayBetweenKeyRequests) {
     keyRequestedAt = now;
+    keyState = mcp->read();
 
-    keyState = ~(pcf8575->read16());
     keyState &= GPIO_KEYS_MASK;
-
     if (lastReadKeyState == keyState) {
       return;
     }
     isInputChanged = false;
-
-    // reset key state of all non joystick related buttons
-    inputState &= KEYS_MASK;
+    debug("==> key state: %u", keyState);
+    // reset key state of all buttons
+    inputState &= GPIO_KEYS_MASK;
 
     isPressedStateForButtonSet(0, TRIANGLE_BUTTON_BIT);
     isPressedStateForButtonSet(1, CIRCLE_BUTTON_BIT);
@@ -142,7 +146,7 @@ void requestKeysState() {
 
     if (isInputChanged == true) {
       debug("triggered keymap change: %u", inputState);
-      inputHandlerPtr(inputState);
+      // inputHandlerPtr(inputState);
     }
 
     lastReadKeyState = keyState;
@@ -192,7 +196,7 @@ void requestJoystickStateByPullMethod() {
     }
 
     if (isInputChanged == true) {
-      inputHandlerPtr(inputState);
+      // inputHandlerPtr(inputState);
     }
     inputState = 0;
 

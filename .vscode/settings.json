@@ -2,6 +2,9 @@
     "cSpell.words": [
         "DARKGREEN",
         "GPIO",
+        "GPIOA",
+        "GPIOB",
+        "IPOL",
         "MOSI",
         "nescreen",
         "Nofrendo",
