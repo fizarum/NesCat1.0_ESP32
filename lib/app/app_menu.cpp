@@ -71,7 +71,7 @@ bool Menu::handle(uint16_t keyState) {
     return true;
   }
 
-  if (isLeftPressed(keyState)) {
+  if (isLeftPressed()) {
     debug("menu: left key pressed: %u", keyState);
     this->selectedMenu -= 1;
     if (this->selectedMenu < 0) {
@@ -80,7 +80,7 @@ bool Menu::handle(uint16_t keyState) {
     requestRedraw();
     return true;
   }
-  if (isRightPressed(keyState)) {
+  if (isRightPressed()) {
     debug("menu: right key pressed: %u", keyState);
     this->selectedMenu += 1;
     if (this->selectedMenu >= totalMenuItems) {
@@ -90,7 +90,7 @@ bool Menu::handle(uint16_t keyState) {
     return true;
   }
 
-  if (isCrossPressed(keyState)) {
+  if (isXPressed()) {
     debug("menu: is cross key pressed: %u", keyState);
     app = pickSelectedApp(selectedMenu);
     if (app != nullptr) {

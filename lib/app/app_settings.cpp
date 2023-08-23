@@ -14,7 +14,7 @@ bool Settings::handle(uint16_t keyState) {
     return false;
   }
 
-  if (isCirclePressed(keyState)) {
+  if (isBPressed()) {
     debug("settings handles circle button - closing app");
     close();
   }

@@ -11,7 +11,7 @@ bool FileManager::handle(uint16_t keyState) {
     return false;
   }
 
-  if (isUpPressed(keyState)) {
+  if (isUpPressed()) {
     debug("fm handles up button");
     selectedMenu--;
     if (selectedMenu < 0) {
@@ -20,7 +20,7 @@ bool FileManager::handle(uint16_t keyState) {
     requestRedraw();
   }
 
-  if (isDownPressed(keyState)) {
+  if (isDownPressed()) {
     debug("fm handles down button");
     selectedMenu++;
     if (selectedMenu > 3) {
@@ -29,7 +29,7 @@ bool FileManager::handle(uint16_t keyState) {
     requestRedraw();
   }
 
-  if (isCirclePressed(keyState)) {
+  if (isBPressed()) {
     debug("fm handles circle button - closing app");
     close();
   }
