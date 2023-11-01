@@ -1,8 +1,8 @@
 #include "app_file_manager.h"
 
-#include <controls.h>
+#include <controls/controls.h>
 #include <display.h>
-#include <utils.h>
+#include <log.h>
 
 int selectedMenu = 0;
 

@@ -1,13 +1,13 @@
 #include "app_menu.h"
 
-#include <controls.h>
+#include <controls/controls.h>
+#include <log.h>
 
 #include "app_audio_player.h"
 #include "app_file_manager.h"
 #include "app_settings.h"
 #include "display.h"
 #include "nes_launcher.h"
-#include "utils.h"
 
 // position of menu
 const uint8_t xPos = 64;

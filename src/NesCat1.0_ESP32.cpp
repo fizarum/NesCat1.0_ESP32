@@ -21,13 +21,15 @@
 //********************************************************************************
 #include <Arduino.h>
 #include <app_menu.h>
-#include <audio.h>
-#include <controls.h>
+#include <controls/controls.h>
+#include <device_manager.h>
 #include <display.h>
 #include <utils.h>
 
 // start app - menu
 Menu menu;
+
+DeviceManager dm;
 
 void onAppClosedCallback();
 void onInputTriggered(uint16_t keyMap);
@@ -41,7 +43,7 @@ void setup() {
 
   displayInit();
 
-  //initVideo();
+  dm.init();
 
   // install_timer(60);  // 60Hz
   // getMemoryStatus();
@@ -51,6 +53,7 @@ void setup() {
 
 void loop() {
   controlsUpdate();
+  dm.update();
   menu.update();
 }
 

@@ -3,11 +3,6 @@
 
 #include <stdint.h>
 
-void debug(const char *message);
-void debug(const char *templateString, uint32_t value);
-void debug(const char *templateString, const char *value);
-void debug(const char *templateString, const void *value);
-
 namespace bit {
 uint8_t setBit(uint8_t source, uint8_t position);
 uint8_t resetBit(uint8_t source, uint8_t position);

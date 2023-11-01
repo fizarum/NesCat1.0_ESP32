@@ -1,7 +1,7 @@
 #include "nes_display.h"
 
 #include <esp_task_wdt.h>
-#include <utils.h>
+#include <log.h>
 
 #include <queue>
 
