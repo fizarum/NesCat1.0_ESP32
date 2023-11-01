@@ -2,6 +2,7 @@
 
 #include <Esp.h>
 #include <audio.h>
+#include <log.h>
 #include <storage.h>
 #include <string.h>
 #include <utils.h>

@@ -1,9 +1,9 @@
 #include "app_settings.h"
 
 #include <ESP.h>
-#include <controls.h>
+#include <controls/controls.h>
 #include <display.h>
-#include <utils.h>
+#include <log.h>
 
 #include "soc/rtc.h"
 

@@ -1,7 +1,8 @@
 #include "nes_launcher.h"
 
-#include <controls.h>
+#include <controls/controls.h>
 #include <display.h>
+#include <log.h>
 #include <string.h>
 #include <utils.h>
 
@@ -22,6 +23,8 @@ bool _requestedForNextRead = false;
 uint8_t _loadedInPercents = 0;
 char _loadingTitle[16];
 
+bool _started = false;
+
 NesLauncher *_launcher;
 
 void onFileLoafingListener(uint8_t percents, bool isLast);
@@ -37,12 +40,12 @@ void NesLauncher::init() {
   getMemoryStatus();
 
   // init nes
-  debug("[nes] create nes");
-  this->nes = createNes();
-  if (this->nes == nullptr) {
-    debug("E [nes] can not create nes instance");
-    return;
-  }
+  // debug("[nes] create nes");
+  // this->nes = createNes();
+  // if (this->nes == nullptr) {
+  //   debug("E [nes] can not create nes instance");
+  //   return;
+  // }
   // fetch *nes files on FS
   debug("[nes] fetching filenames");
   filenames = getAllNesFiles(this->path);
@@ -78,6 +81,9 @@ bool NesLauncher::handle(uint16_t keyState) {
   }
 
   if (isXPressed()) {
+    if (_started == true) return true;
+    _started = true;
+
     resetLoadingStats(true);
 
     // get selected filename
@@ -97,7 +103,7 @@ bool NesLauncher::handle(uint16_t keyState) {
     requestRedraw();
   }
 
-  if (isStartPressed() || isSelectPressed()) {
+  if (isMenuPressed()) {
     close();
   }
   return true;

@@ -1,7 +1,7 @@
 #include "controls.h"
 
 #include <MCP23017.h>
-#include <esp32-hal-adc.h>
+#include <log.h>
 #include <utils.h>
 
 #include "keymap.h"
@@ -67,7 +67,6 @@ void requestKeysState();
  */
 void controlsInit(void (*onInputCallbackPtr)(uint16_t)) {
   Wire.begin();
-  debug("scanning i2c bus...");
   i2cAddress = findI2CDevice();
   if (i2cAddress == 0) {
     debug("error during initializing keyboard!");
@@ -75,7 +74,7 @@ void controlsInit(void (*onInputCallbackPtr)(uint16_t)) {
     debug("init keyboard... error");
     return;
   }
-  debug("found device on port: %x", i2cAddress);
+  debug("found keyboard on port: %x", i2cAddress);
   mcp = new MCP23017(i2cAddress, Wire);
   mcp->init();
 
@@ -131,8 +130,6 @@ void requestKeysState() {
     lastReadKeyState = keymap;
   }
 }
-
-uint16_t hPos, vPos;
 
 bool isLeftPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_LEFT); }
 bool isRightPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_RIGHT); }

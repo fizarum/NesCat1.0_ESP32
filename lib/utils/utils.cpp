@@ -1,62 +1,10 @@
 #include "utils.h"
 
-#include <Arduino.h>
+#include <Esp.h>
 #include <Wire.h>
-
-// comment to disable logs
-#define DEBUG
+#include <log.h>
 
 #define MAXFILENAME_LENGTH 64
-
-const uint8_t buffMaxLen = 30;
-
-char debugBuff[buffMaxLen];
-
-void debug(const char *message) {
-#ifdef DEBUG
-  Serial.println(message);
-#endif
-}
-
-void debug(const char *templateString, uint32_t value) {
-  int len = strlen(templateString);
-  if (len >= buffMaxLen) {
-    sprintf(debugBuff, "value: %u", value);
-  } else {
-    sprintf(debugBuff, templateString, value);
-  }
-  debug(debugBuff);
-}
-
-void debug(const char *templateString, uint8_t value) {
-  int len = strlen(templateString);
-  if (len >= buffMaxLen) {
-    sprintf(debugBuff, "value: %d", value);
-  } else {
-    sprintf(debugBuff, templateString, value);
-  }
-  debug(debugBuff);
-}
-
-void debug(const char *templateString, const char *value) {
-  int len = strlen(templateString);
-  if (len >= buffMaxLen) {
-    sprintf(debugBuff, "value: %s", value);
-  } else {
-    sprintf(debugBuff, templateString, value);
-  }
-  debug(debugBuff);
-}
-
-void debug(const char *templateString, const void *value) {
-  int len = strlen(templateString);
-  if (len >= buffMaxLen) {
-    sprintf(debugBuff, "value: %p", value);
-  } else {
-    sprintf(debugBuff, templateString, value);
-  }
-  debug(debugBuff);
-}
 
 /**
  * @brief Set (to 1) the bit in byte

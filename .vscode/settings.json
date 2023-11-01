@@ -1,6 +1,10 @@
 {
     "cSpell.words": [
+        "BCLK",
+        "CIPO",
+        "COPI",
         "DARKGREEN",
+        "DOUT",
         "GPIO",
         "GPIOA",
         "GPIOB",
@@ -8,6 +12,7 @@
         "MOSI",
         "nescreen",
         "Nofrendo",
+        "Pinout",
         "PSRAM",
         "SPITFT",
         "sram",

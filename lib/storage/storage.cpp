@@ -3,6 +3,7 @@
 #include <SD.h>
 #include <SPI.h>
 #include <esp_spi_flash.h>
+#include <log.h>
 #include <utils.h>
 
 // SD module uses VSPI pins on NodeMCU ESP32S, same as for display
