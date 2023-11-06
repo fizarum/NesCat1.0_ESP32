@@ -1,7 +1,6 @@
 #include "app_file_manager.h"
 
 #include <controls/controls.h>
-#include <display.h>
 #include <log.h>
 
 int selectedMenu = 0;
@@ -39,8 +38,8 @@ bool FileManager::handle(uint16_t keyState) {
 
 void FileManager::onUpdate() {}
 
-void FileManager::draw() {
-  fillScreen(COLOR_ORANGE);
-  drawString(64, 20, this->name, COLOR_WHITE);
-  // todo: complete drawing content
+void FileManager::onDraw(DisplayDevice *display) {
+  display->fillScreen(COLOR_ORANGE);
+  display->drawString(64, 20, this->name, COLOR_WHITE);
+  // TODO: complete drawing content
 }

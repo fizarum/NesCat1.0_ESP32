@@ -28,6 +28,7 @@ class BaseDevice {
   }
 
   long id() { return this->_id; }
+  bool enabled() { return this->_enabled; }
 
   virtual void onInit() = 0;
   virtual void onUpdate() = 0;

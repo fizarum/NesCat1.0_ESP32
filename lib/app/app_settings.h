@@ -10,10 +10,10 @@ class Settings : public App {
   uint8_t powerSaveMode = 3;
 
  protected:
-  void drawBackground();
-  void drawTitle();
-  void draw();
   void onUpdate();
+  void onDraw(DisplayDevice *display);
+  void drawBackground(DisplayDevice *display);
+  void drawTitle(DisplayDevice *display);
 
  public:
   Settings() {

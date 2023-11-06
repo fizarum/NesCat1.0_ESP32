@@ -7,9 +7,6 @@
 #define I2S_BCLK 27
 #define I2S_LRC 26
 
-#define SOUND_ENABLED true
-#define DEFAULT_SAMPLE_RATE 24000
-
 Audio *audio = nullptr;
 
 void AudioDevice::onInit() {

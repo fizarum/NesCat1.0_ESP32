@@ -3,15 +3,11 @@
 #include <controls/controls.h>
 #include <log.h>
 
+#include "../device/display/display.h"
 #include "app_audio_player.h"
 #include "app_file_manager.h"
 #include "app_settings.h"
-#include "display.h"
 #include "nes_launcher.h"
-
-// position of menu
-const uint8_t xPos = 64;
-const uint8_t yPos = V_CENTER - 24;
 
 FileManager fileManager;
 Settings settings;
@@ -41,29 +37,6 @@ void Menu::init() {
   this->items = menuItems;
   this->totalItems = totalMenuItems;
   this->selectedMenu = 0;
-}
-
-void Menu::drawBackground() { fillScreen(COLOR_BLUE); }
-void Menu::drawTitle() {
-  drawString(10, 15, "**debug ver**", COLOR_LIGHTGREY);
-  drawString(190, 15, "78%%", COLOR_LIGHTGREY);
-  // time & battery info here
-  drawString(250, 15, "22:01", COLOR_LIGHTGREY);
-}
-
-void Menu::drawStatusBar() {
-  // some nav hints here
-  drawString(20, 230, "use < > to navigate", COLOR_LIGHTGREY);
-}
-
-void Menu::draw() {
-  if (isUserAppActive() == true) {
-    app->draw();
-  } else {
-    MenuItem item = menuItems[selectedMenu];
-    drawString(xPos, yPos, item.title, COLOR_WHITE);
-    debug("menu item: %s", item.title);
-  }
 }
 
 bool Menu::handle(uint16_t keyState) {
@@ -114,6 +87,31 @@ void Menu::onUpdate() {
   } else {
     // update menu...
   }
+}
+
+void Menu::onDraw(DisplayDevice *display) {
+  if (isUserAppActive() == true) {
+    app->draw(display);
+  } else {
+    MenuItem item = menuItems[selectedMenu];
+    display->drawString(H_CENTER, V_CENTER, item.title, COLOR_WHITE, MC_DATUM);
+    debug("menu item: %s", item.title);
+  }
+}
+
+void Menu::drawBackground(DisplayDevice *display) {
+  display->fillScreen(COLOR_BLUE);
+}
+void Menu::drawTitle(DisplayDevice *display) {
+  display->drawString(10, 10, "**debug ver**", COLOR_LIGHTGREY);
+  display->drawString(190, 10, "78%", COLOR_LIGHTGREY);
+  // time & battery info here
+  display->drawString(250, 10, "22:01", COLOR_LIGHTGREY);
+}
+
+void Menu::drawStatusBar(DisplayDevice *display) {
+  // some nav hints here
+  display->drawString(20, 210, "use < > to navigate", COLOR_LIGHTGREY);
 }
 
 void Menu::closeUserApp() {

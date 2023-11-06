@@ -1,9 +1,8 @@
-#ifndef PALETTE_H
-#define PALETTE_H
-// NES PALETTES 32bit & 16bit:
+#ifndef NES_PALETTE_H
+#define NES_PALETTE_H
 
 #include <stdint.h>
-
+// NES PALETTES 32bit:
 const uint32_t nes_32bit[64] = {
     // 4colors Green-Yellow-Red-Blue
     0x2D253469, 0x000000D9, 0x000000A1, 0x0F111CA1, 0x001F3F70, 0x0024491C,
@@ -18,7 +17,7 @@ const uint32_t nes_32bit[64] = {
     0x4E48699A, 0x544B6C93, 0x514A6C69, 0x5D465E69, 0x5D3F50A1, 0x5D3F50BD,
     0x5D1700D9, 0x514A6CD9, 0x14141414, 0x14141414,
 };
-
+// NES PALETTES 16bit:
 const uint16_t nes_16bit[64] = {
     0x7BEF, 0x001F, 0x0017, 0x4157, 0x9010, 0xA804, 0xA880, 0x88A0,
     0x5180, 0x03C0, 0x0340, 0x02C0, 0x020B, 0x0000, 0x0000, 0x0000,
@@ -44,4 +43,4 @@ const uint16_t nes_16bit[64] = {
 #define MID_GREY 0x2d
 #define LIGHT_GREY 0x3d
 
-#endif  // PALETTE_H
+#endif  // NES_PALETTE_H

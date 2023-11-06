@@ -2,8 +2,7 @@
 
 #include <esp_task_wdt.h>
 #include <log.h>
-
-#include <queue>
+#include <string.h>
 
 #include "Retro8x16.c"
 
@@ -11,10 +10,10 @@
 
 QueueHandle_t vidQueue;
 
-Adafruit_SPITFT *tftPtr = nullptr;
-
-uint16_t screenBuffer[NES_SCREEN_WIDTH];
-uint8_t *screenMemory[256 + 1];
+// Adafruit_SPITFT *tftPtr = nullptr;
+// screen buffer variables:
+uint16_t screenBuffer[NES_SCREEN_WIDTH];  // 512 bytes
+uint8_t *screenMemory[256 + 1];           // 256*256 bytes + 256 offset
 
 // font
 const char *displayFontSet = NULL;
@@ -28,13 +27,12 @@ void prepareVideoMemory();
 static void videoTask(void *arg) {
   while (1) {
     xQueueReceive(vidQueue, &screenMemory, portMAX_DELAY);
-    nescreen::writeFrame(tftPtr, X_POS_OF_VIRTUAL_SCREEN,
-                         Y_POS_OF_VIRTUAL_SCREEN);
+    nescreen::writeFrame(X_POS_OF_VIRTUAL_SCREEN, Y_POS_OF_VIRTUAL_SCREEN);
   }
 }
 
-void nescreen::initVideo(Adafruit_SPITFT *tft) {
-  tftPtr = tft;
+void nescreen::initVideo(/*Adafruit_SPITFT *tft*/) {
+  // tftPtr = tft;
   prepareVideoMemory();
 
   nescreen::setFont(Retro8x16);
@@ -63,9 +61,8 @@ void nescreen::fillScreen(uint8_t colorIndex) {
     }
 }
 
-void nescreen::writeFrame(Adafruit_SPITFT *tft, const uint16_t x,
-                          const uint16_t y, const uint16_t width,
-                          const uint16_t height) {
+void nescreen::writeFrame(const uint16_t x, const uint16_t y,
+                          const uint16_t width, const uint16_t height) {
   uint8_t index;
   int16_t absYPos;
 
@@ -77,13 +74,14 @@ void nescreen::writeFrame(Adafruit_SPITFT *tft, const uint16_t x,
 
     /// PAL optimalisation in this case:
     absYPos = y + hLineIndex;
-    if (tftPtr != nullptr) {
-      tftPtr->drawRGBBitmap(x + 0, absYPos, screenBuffer, 48, 1);
-      tftPtr->drawRGBBitmap(x + 48, absYPos, screenBuffer + 48, 48, 1);
-      tftPtr->drawRGBBitmap(x + 96, absYPos, screenBuffer + 96, 48, 1);
-      tftPtr->drawRGBBitmap(x + 144, absYPos, screenBuffer + 144, 48, 1);
-      tftPtr->drawRGBBitmap(x + 192, absYPos, screenBuffer + 192, 48, 1);
-    }
+    // TODO: create displayDevice class and use it here
+    // if (tftPtr != nullptr) {
+    //   tftPtr->drawRGBBitmap(x + 0, absYPos, screenBuffer, 48, 1);
+    //   tftPtr->drawRGBBitmap(x + 48, absYPos, screenBuffer + 48, 48, 1);
+    //   tftPtr->drawRGBBitmap(x + 96, absYPos, screenBuffer + 96, 48, 1);
+    //   tftPtr->drawRGBBitmap(x + 144, absYPos, screenBuffer + 144, 48, 1);
+    //   tftPtr->drawRGBBitmap(x + 192, absYPos, screenBuffer + 192, 48, 1);
+    // }
   }
 }
 

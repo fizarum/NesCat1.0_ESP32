@@ -23,13 +23,14 @@
 #include <app_menu.h>
 #include <controls/controls.h>
 #include <device_manager.h>
-#include <display.h>
 #include <utils.h>
 
 // start app - menu
 Menu menu;
 
 DeviceManager dm;
+
+DisplayDevice *displayDevice = nullptr;
 
 void onAppClosedCallback();
 void onInputTriggered(uint16_t keyMap);
@@ -39,11 +40,11 @@ void setup() {
   while (!Serial) {
     // wait for serial completion init
   }
-  controlsInit(&onInputTriggered);
-
-  displayInit();
 
   dm.init();
+  displayDevice = (DisplayDevice *)dm.get(DISPLAY_DEVICE);
+
+  controlsInit(&onInputTriggered);
 
   // install_timer(60);  // 60Hz
   // getMemoryStatus();
@@ -54,7 +55,9 @@ void setup() {
 void loop() {
   controlsUpdate();
   dm.update();
+
   menu.update();
+  menu.draw(displayDevice);
 }
 
 void onAppClosedCallback() { menu.closeUserApp(); }

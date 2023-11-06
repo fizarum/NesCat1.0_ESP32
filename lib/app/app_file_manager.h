@@ -5,8 +5,8 @@
 
 class FileManager : public App {
  protected:
-  void draw();
   void onUpdate();
+  void onDraw(DisplayDevice *display);
 
  public:
   FileManager() {

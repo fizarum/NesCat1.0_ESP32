@@ -1,7 +1,8 @@
 #ifndef NES_DISPLAY_H
 #define NES_DISPLAY_H
 
-#include <Adafruit_SPITFT.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
 
 #include "display.h"
 #include "nes_palettes.h"
@@ -22,14 +23,14 @@ extern QueueHandle_t vidQueue;
 
 namespace nescreen {
 
-void initVideo(Adafruit_SPITFT *tft);
+void initVideo(/*Adafruit_SPITFT *tft*/);
 void update();
 
 void drawPixel(uint8_t X, uint8_t Y, uint8_t colorIndex);
 
 void fillScreen(uint8_t colorIndex = UNIVERSAL_BKG_COLOR);
 
-void writeFrame(Adafruit_SPITFT *tft, const uint16_t x, const uint16_t y,
+void writeFrame(const uint16_t x, const uint16_t y,
                 const uint16_t width = DEFAULT_WIDTH,
                 const uint16_t height = DEFAULT_HEIGHT);
 
