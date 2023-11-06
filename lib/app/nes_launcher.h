@@ -19,7 +19,7 @@ class NesLauncher : public App {
   const char *selectFile();
 
  protected:
-  void draw();
+  void onDraw(DisplayDevice *display);
   void onUpdate();
 
  public:

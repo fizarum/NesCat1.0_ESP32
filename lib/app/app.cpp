@@ -27,14 +27,18 @@ void App::close() {
 void App::update() {
   if (this->running == false) return;
   onUpdate();
+}
 
-  if (this->needsToBeRedrawn() == true) {
-    drawBackground();
-    drawTitle();
-    drawStatusBar();
-    draw();
-    this->needsToRedraw = false;
-  }
+void App::draw(DisplayDevice *display) {
+  if (this->running == false) return;
+  if (this->needsToBeRedrawn() == false) return;
+  if (display == nullptr) return;
+
+  drawBackground(display);
+  drawTitle(display);
+  drawStatusBar(display);
+  onDraw(display);
+  this->needsToRedraw = false;
 }
 
 void App::requestRedraw() { this->needsToRedraw = true; }

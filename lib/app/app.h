@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "../device/display/display.h"
 #include "apps_registry.h"
 
 class App {
@@ -24,6 +25,9 @@ class App {
   /** app specific implementation of update */
   virtual void onUpdate() = 0;
 
+  /** app specific implementation of draw */
+  virtual void onDraw(DisplayDevice *display) = 0;
+
  public:
   int getId();
   const char *getName();
@@ -35,15 +39,15 @@ class App {
   /** used for updating application state */
   virtual void update() final;
 
-  /* drawing section */
   /* draw main content */
-  virtual void draw() = 0;
+  virtual void draw(DisplayDevice *display) final;
   /* draw background of app */
-  virtual void drawBackground() {}
+  virtual void drawBackground(DisplayDevice *display) {}
   /* draw title bar if its implemented */
-  virtual void drawTitle() {}
+  virtual void drawTitle(DisplayDevice *display) {}
   /* draw status bar if its implemented */
-  virtual void drawStatusBar() {}
+  virtual void drawStatusBar(DisplayDevice *display) {}
+
   virtual bool needsToBeRedrawn();
 
   /** set flag needsToRedraw to true, on next update it will be redrawn */

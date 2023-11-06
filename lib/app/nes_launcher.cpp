@@ -1,7 +1,7 @@
 #include "nes_launcher.h"
 
 #include <controls/controls.h>
-#include <display.h>
+// #include <display.h>
 #include <log.h>
 #include <string.h>
 #include <utils.h>
@@ -30,8 +30,8 @@ NesLauncher *_launcher;
 void onFileLoafingListener(uint8_t percents, bool isLast);
 
 void printFileNames(FileName *first, uint16_t count);
-void drawFileNames(FileName *first, uint16_t offset, uint8_t filesPerPage,
-                   uint8_t selectedFileIndex);
+void drawFileNames(DisplayDevice *display, FileName *first, uint16_t offset,
+                   uint8_t filesPerPage, uint8_t selectedFileIndex);
 uint16_t getCursorPosOnScreen(uint8_t cursorPos);
 
 void NesLauncher::init() {
@@ -126,23 +126,23 @@ void NesLauncher::onUpdate() {
   }
 }
 
-void NesLauncher::draw() {
+void NesLauncher::onDraw(DisplayDevice *display) {
   // title
-  fillScreen(COLOR_DARK_GREY);
-  drawString(64, 20, this->name, COLOR_WHITE);
+  display->fillScreen(COLOR_DARKGREY);
+  display->drawString(64, 20, this->name, COLOR_WHITE);
 
   // file names
-  drawFileNames(filenames, 0, this->filesPerPage, this->cursorPos);
+  drawFileNames(display, filenames, 0, this->filesPerPage, this->cursorPos);
   _cursorPosOnScreen = getCursorPosOnScreen(this->cursorPos);
 
   // cursor
   // nescreen::setTextPosition(16, _cursorPosOnScreen);
-  drawString(16, _cursorPosOnScreen, ">>", COLOR_WHITE);
+  display->drawString(16, _cursorPosOnScreen, ">>", COLOR_WHITE);
 
   if (this->isLoading == true) {
     sprintf(_loadingTitle, "loaded: %u%%", _loadedInPercents);
-    fillRectangle(0, 50, DEFAULT_WIDTH, 40, COLOR_BLUE);
-    drawString(75, 60, _loadingTitle, COLOR_ORANGE);
+    display->fillRectangle(0, 50, DEFAULT_WIDTH, 40, COLOR_BLUE);
+    display->drawString(75, 60, _loadingTitle, COLOR_ORANGE);
   }
 }
 
@@ -177,8 +177,8 @@ void onFileLoafingListener(uint8_t percents, bool isFinished) {
   }
 }
 
-void drawFileNames(FileName *first, uint16_t offset, uint8_t filesPerPage,
-                   uint8_t selectedFileIndex) {
+void drawFileNames(DisplayDevice *display, FileName *first, uint16_t offset,
+                   uint8_t filesPerPage, uint8_t selectedFileIndex) {
   FileName *current = seek(first, offset);
   if (current == nullptr) {
     return;
@@ -187,7 +187,7 @@ void drawFileNames(FileName *first, uint16_t offset, uint8_t filesPerPage,
   fileCountOnScreen = 0;
 
   for (uint8_t index = 0; index < filesPerPage; ++index) {
-    drawString(40, posOnScreen, current->name, COLOR_WHITE);
+    display->drawString(40, posOnScreen, current->name, COLOR_WHITE);
 
     current = current->next;
     if (current == nullptr) {

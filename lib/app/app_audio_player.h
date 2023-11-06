@@ -5,7 +5,7 @@
 
 class AudioPlayer : public App {
  protected:
-  void draw();
+  void onDraw(DisplayDevice *display);
   void onUpdate();
 
  public:

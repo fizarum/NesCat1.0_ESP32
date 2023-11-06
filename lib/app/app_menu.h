@@ -23,10 +23,9 @@ class Menu : public App {
   void init();
 
  protected:
-  void drawBackground();
-  void drawTitle();
-  void drawStatusBar();
-  void draw();
+  void drawBackground(DisplayDevice *display);
+  void drawTitle(DisplayDevice *display);
+  void drawStatusBar(DisplayDevice *display);
 
  public:
   Menu() {
@@ -37,6 +36,7 @@ class Menu : public App {
 
   bool handle(uint16_t keyState);
   void onUpdate();
+  void onDraw(DisplayDevice *display);
   void closeUserApp();
   bool needsToBeRedrawn();
 };

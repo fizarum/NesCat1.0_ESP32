@@ -1,7 +1,6 @@
 #include "app_audio_player.h"
 
 #include <controls/controls.h>
-#include <display.h>
 #include <log.h>
 
 void testSound();
@@ -30,11 +29,11 @@ void AudioPlayer::onUpdate() {
   //
 }
 
-void AudioPlayer::draw() {
-  fillScreen(COLOR_VIOLET);
-  drawString(64, 20, this->name, COLOR_WHITE);
-  drawString(10, 60, "press \"A\" to play");
-  // todo: complete drawing content
+void AudioPlayer::onDraw(DisplayDevice *display) {
+  display->fillScreen(COLOR_VIOLET);
+  display->drawString(64, 20, this->name, COLOR_WHITE);
+  display->drawString(10, 60, "press \"A\" to play");
+  // TODO: complete drawing content
 }
 
 // String ssid = "----";
