@@ -22,7 +22,7 @@ class Settings : public App {
     this->running = false;
   }
 
-  bool handle(uint16_t keyState);
+  bool handle(JoystickDevice *joystick);
 };
 
 #endif  // app_settings_h

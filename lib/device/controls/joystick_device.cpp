@@ -1,4 +1,4 @@
-#include "controls.h"
+#include "joystick_device.h"
 
 #include <MCP23017.h>
 #include <log.h>
@@ -47,7 +47,7 @@ bool isInputChanged = false;
 bool bindKeymap(uint16_t gpioMap);
 
 // callback for input event
-void (*inputHandlerPtr)(uint16_t);
+void (*inputHandlerPtr)(void);
 
 unsigned long now;
 
@@ -62,10 +62,7 @@ unsigned long lastRequestedTimeOfJoystick = 0;
 // request keys state: A,B,C,D
 void requestKeysState();
 
-/**
- * @brief should be called inside of setup() function
- */
-void controlsInit(void (*onInputCallbackPtr)(uint16_t)) {
+void JoystickDevice::onInit() {
   Wire.begin();
   i2cAddress = findI2CDevice();
   if (i2cAddress == 0) {
@@ -91,19 +88,19 @@ void controlsInit(void (*onInputCallbackPtr)(uint16_t)) {
   mcp->writeRegister(MCP23017Register::IPOL_B, 0xFF);
   debug("init keyboard... ok");
 
-  inputHandlerPtr = onInputCallbackPtr;
   initialized = true;
 }
 
-/**
- * @brief should be called inside of loop() function
- */
-void controlsUpdate() {
+void JoystickDevice::onUpdate() {
   if (initialized == false) {
     return;
   }
   now = millis();
   requestKeysState();
+}
+
+void JoystickDevice::setCallback(void (*onInputCallbackPtr)(void)) {
+  inputHandlerPtr = onInputCallbackPtr;
 }
 
 uint16_t lastReadKeyState = 0;
@@ -124,31 +121,57 @@ void requestKeysState() {
 
     if (isInputChanged == true) {
       debug("triggered keymap change: %u", keymap);
-      inputHandlerPtr(keymap);
+      inputHandlerPtr();
     }
 
     lastReadKeyState = keymap;
   }
 }
 
-bool isLeftPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_LEFT); }
-bool isRightPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_RIGHT); }
-bool isDownPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_DOWN); }
-bool isUpPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_UP); }
+bool JoystickDevice::isLeftPressed() {
+  return bit::isBitSet(keymap, GPIO_BUTTON_LEFT);
+}
+bool JoystickDevice::isRightPressed() {
+  return bit::isBitSet(keymap, GPIO_BUTTON_RIGHT);
+}
+bool JoystickDevice::isDownPressed() {
+  return bit::isBitSet(keymap, GPIO_BUTTON_DOWN);
+}
+bool JoystickDevice::isUpPressed() {
+  return bit::isBitSet(keymap, GPIO_BUTTON_UP);
+}
 
-bool isSelectPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_SELECT); }
-bool isStartPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_START); }
-bool isMenuPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_MENU); }
+bool JoystickDevice::isSelectPressed() {
+  return bit::isBitSet(keymap, GPIO_BUTTON_SELECT);
+}
+bool JoystickDevice::isStartPressed() {
+  return bit::isBitSet(keymap, GPIO_BUTTON_START);
+}
+bool JoystickDevice::isMenuPressed() {
+  return bit::isBitSet(keymap, GPIO_BUTTON_MENU);
+}
 
-bool isAPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_A); }
-bool isBPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_B); }
-bool isXPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_X); }
-bool isYPressed() { return bit::isBitSet(keymap, GPIO_BUTTON_Y); }
+bool JoystickDevice::isAPressed() {
+  return bit::isBitSet(keymap, GPIO_BUTTON_A);
+}
+bool JoystickDevice::isBPressed() {
+  return bit::isBitSet(keymap, GPIO_BUTTON_B);
+}
+bool JoystickDevice::isXPressed() {
+  return bit::isBitSet(keymap, GPIO_BUTTON_X);
+}
+bool JoystickDevice::isYPressed() {
+  return bit::isBitSet(keymap, GPIO_BUTTON_Y);
+}
 
-bool isLeftTriggerPressed() { return bit::isBitSet(keymap, GPIO_TRIGGER_LEFT); }
-bool isRightTriggerPressed() {
+bool JoystickDevice::isLeftTriggerPressed() {
+  return bit::isBitSet(keymap, GPIO_TRIGGER_LEFT);
+}
+bool JoystickDevice::isRightTriggerPressed() {
   return bit::isBitSet(keymap, GPIO_TRIGGER_RIGHT);
 }
+
+uint16_t JoystickDevice::keysState() { return keymap; }
 
 /**
  * @brief update key press state according to gpio map

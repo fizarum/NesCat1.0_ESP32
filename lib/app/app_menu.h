@@ -34,7 +34,7 @@ class Menu : public App {
     this->running = false;
   }
 
-  bool handle(uint16_t keyState);
+  bool handle(JoystickDevice *joystick);
   void onUpdate();
   void onDraw(DisplayDevice *display);
   void closeUserApp();

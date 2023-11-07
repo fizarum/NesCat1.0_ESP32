@@ -1,19 +1,19 @@
 #include "app_settings.h"
 
 #include <ESP.h>
-#include <controls/controls.h>
 #include <log.h>
 
+#include "../device/controls/joystick_device.h"
 #include "soc/rtc.h"
 
 char buff[24];
 
-bool Settings::handle(uint16_t keyState) {
+bool Settings::handle(JoystickDevice *joystick) {
   if (this->running == false) {
     return false;
   }
 
-  if (isBPressed()) {
+  if (joystick->isBPressed()) {
     debug("settings handles circle button - closing app");
     close();
   }

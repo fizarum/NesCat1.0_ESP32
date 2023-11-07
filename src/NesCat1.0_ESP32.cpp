@@ -21,9 +21,10 @@
 //********************************************************************************
 #include <Arduino.h>
 #include <app_menu.h>
-#include <controls/controls.h>
 #include <device_manager.h>
 #include <utils.h>
+
+#include "../device/controls/joystick_device.h"
 
 // start app - menu
 Menu menu;
@@ -31,9 +32,10 @@ Menu menu;
 DeviceManager dm;
 
 DisplayDevice *displayDevice = nullptr;
+JoystickDevice *joystick = nullptr;
 
 void onAppClosedCallback();
-void onInputTriggered(uint16_t keyMap);
+void onInputTriggered();
 
 void setup() {
   Serial.begin(115200);
@@ -43,17 +45,13 @@ void setup() {
 
   dm.init();
   displayDevice = (DisplayDevice *)dm.get(DISPLAY_DEVICE);
-
-  controlsInit(&onInputTriggered);
-
-  // install_timer(60);  // 60Hz
-  // getMemoryStatus();
+  joystick = (JoystickDevice *)dm.get(JOYSTICK_DEVICE);
+  joystick->setCallback(&onInputTriggered);
 
   menu.open(&onAppClosedCallback);
 }
 
 void loop() {
-  controlsUpdate();
   dm.update();
 
   menu.update();
@@ -62,8 +60,8 @@ void loop() {
 
 void onAppClosedCallback() { menu.closeUserApp(); }
 
-void onInputTriggered(uint16_t keyMap) {
-  if (menu.handle(keyMap) == false) {
+void onInputTriggered() {
+  if (menu.handle(joystick) == false) {
     // print warning if its required
   }
 }

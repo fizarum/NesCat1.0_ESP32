@@ -1,4 +1,4 @@
-#include "display.h"
+#include "display_device.h"
 
 #include <log.h>
 

@@ -30,7 +30,7 @@ class NesLauncher : public App {
     this->fullPathToSelectedNes = new char[256];
   }
 
-  bool handle(uint16_t keyState);
+  bool handle(JoystickDevice *joystick);
   void resetLoadingStats(bool startLoading = false);
 };
 

@@ -4,7 +4,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
-#include "display.h"
+#include "display_device.h"
 #include "nes_palettes.h"
 
 #define NES_SCREEN_WIDTH 256

@@ -30,6 +30,7 @@ class BaseDevice {
   long id() { return this->_id; }
   bool enabled() { return this->_enabled; }
 
+  // TODO: this func should return bool status if init completed ok
   virtual void onInit() = 0;
   virtual void onUpdate() = 0;
   virtual void onEnabled(bool enabled){};

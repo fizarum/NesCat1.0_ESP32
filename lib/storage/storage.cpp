@@ -6,12 +6,19 @@
 #include <log.h>
 #include <utils.h>
 
-// SD module uses VSPI pins on NodeMCU ESP32S, same as for display
-#define SD_CS_PIN 34
+// SD module uses HSPI pins, except GPIO12(HSPI_MISO) - its used
+// by system flash so its remapped to GPIO32
+#define HSPI_MISO 32
+#define HSPI_MOSI 13
+#define HSPI_SCLK 14
+#define HSPI_CS 15
+
 #define SD_FAT_TYPE 1
 
 // 0x00300000 working (empty flash area)
 #define SPI_FLASH_ADDRESS 0x00300000
+
+SPIClass hspi = SPIClass(HSPI);
 
 File home;
 File tempFile;
@@ -34,7 +41,9 @@ uint8_t _file_buff[hugeBufferSize];
 spi_flash_mmap_handle_t spiFlashMmapHandle;
 
 void storageInit() {
-  if (!SD.begin(SD_CS_PIN)) {
+  hspi.begin(HSPI_SCLK, HSPI_MISO, HSPI_MOSI, HSPI_CS);
+
+  if (!SD.begin(HSPI_CS, hspi)) {
     debug("SD error!");
   } else {
     debug("SD OK.");
