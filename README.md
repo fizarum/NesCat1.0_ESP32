@@ -36,10 +36,10 @@ Used libraries:
 
 ### SD
 
-- SD_CS 34
-- SD_CLK 18
-- SD_COPI 23
-- SD_CIPO 19
+- SD_CS 15
+- SD_CLK 14
+- SD_COPI 13
+- SD_CIPO 32
 
 ### Keyboard
 

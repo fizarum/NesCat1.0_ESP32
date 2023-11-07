@@ -1,9 +1,9 @@
 #include "app_menu.h"
 
-#include <controls/controls.h>
 #include <log.h>
 
-#include "../device/display/display.h"
+#include "../device/controls/joystick_device.h"
+#include "../device/display/display_device.h"
 #include "app_audio_player.h"
 #include "app_file_manager.h"
 #include "app_settings.h"
@@ -39,13 +39,13 @@ void Menu::init() {
   this->selectedMenu = 0;
 }
 
-bool Menu::handle(uint16_t keyState) {
-  if (isUserAppActive() == true && app->handle(keyState) == true) {
+bool Menu::handle(JoystickDevice *joystick) {
+  if (isUserAppActive() == true && app->handle(joystick) == true) {
     return true;
   }
 
-  if (isLeftPressed()) {
-    debug("menu: left key pressed: %u", keyState);
+  if (joystick->isLeftPressed()) {
+    debug("menu: left key pressed: %u", joystick->keysState());
     this->selectedMenu -= 1;
     if (this->selectedMenu < 0) {
       this->selectedMenu = totalMenuItems - 1;
@@ -53,8 +53,8 @@ bool Menu::handle(uint16_t keyState) {
     requestRedraw();
     return true;
   }
-  if (isRightPressed()) {
-    debug("menu: right key pressed: %u", keyState);
+  if (joystick->isRightPressed()) {
+    debug("menu: right key pressed: %u", joystick->keysState());
     this->selectedMenu += 1;
     if (this->selectedMenu >= totalMenuItems) {
       this->selectedMenu = 0;
@@ -63,8 +63,8 @@ bool Menu::handle(uint16_t keyState) {
     return true;
   }
 
-  if (isXPressed()) {
-    debug("menu: is cross key pressed: %u", keyState);
+  if (joystick->isXPressed()) {
+    debug("menu: is cross key pressed: %u", joystick->keysState());
     app = pickSelectedApp(selectedMenu);
     if (app != nullptr) {
       debug("menu: opening %s", app->getName());

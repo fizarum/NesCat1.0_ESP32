@@ -1,10 +1,10 @@
 #include "nes_launcher.h"
 
-#include <controls/controls.h>
-// #include <display.h>
 #include <log.h>
 #include <string.h>
 #include <utils.h>
+
+#include "../device/controls/joystick_device.h"
 
 FileName *filenames = nullptr;
 // total count of files
@@ -53,7 +53,7 @@ void NesLauncher::init() {
   printFileNames(filenames, fileCount);
 }
 
-bool NesLauncher::handle(uint16_t keyState) {
+bool NesLauncher::handle(JoystickDevice *joystick) {
   if (this->running == false) {
     return false;
   }
@@ -64,7 +64,7 @@ bool NesLauncher::handle(uint16_t keyState) {
     return true;
   }
 
-  if (isUpPressed()) {
+  if (joystick->isUpPressed()) {
     this->cursorPos -= 1;
     if (this->cursorPos < 0) {
       this->cursorPos = fileCountOnScreen;
@@ -72,7 +72,7 @@ bool NesLauncher::handle(uint16_t keyState) {
     requestRedraw();
   }
 
-  if (isDownPressed()) {
+  if (joystick->isDownPressed()) {
     this->cursorPos += 1;
     if (this->cursorPos > fileCountOnScreen) {
       this->cursorPos = 0;
@@ -80,7 +80,7 @@ bool NesLauncher::handle(uint16_t keyState) {
     requestRedraw();
   }
 
-  if (isXPressed()) {
+  if (joystick->isXPressed()) {
     if (_started == true) return true;
     _started = true;
 
@@ -103,7 +103,7 @@ bool NesLauncher::handle(uint16_t keyState) {
     requestRedraw();
   }
 
-  if (isMenuPressed()) {
+  if (joystick->isMenuPressed()) {
     close();
   }
   return true;

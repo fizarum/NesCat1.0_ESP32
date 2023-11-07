@@ -1,16 +1,17 @@
 #include "app_file_manager.h"
 
-#include <controls/controls.h>
 #include <log.h>
+
+#include "../device/controls/joystick_device.h"
 
 int selectedMenu = 0;
 
-bool FileManager::handle(uint16_t keyState) {
+bool FileManager::handle(JoystickDevice *joystick) {
   if (this->running == false) {
     return false;
   }
 
-  if (isUpPressed()) {
+  if (joystick->isUpPressed()) {
     debug("fm handles up button");
     selectedMenu--;
     if (selectedMenu < 0) {
@@ -19,7 +20,7 @@ bool FileManager::handle(uint16_t keyState) {
     requestRedraw();
   }
 
-  if (isDownPressed()) {
+  if (joystick->isDownPressed()) {
     debug("fm handles down button");
     selectedMenu++;
     if (selectedMenu > 3) {
@@ -28,7 +29,7 @@ bool FileManager::handle(uint16_t keyState) {
     requestRedraw();
   }
 
-  if (isBPressed()) {
+  if (joystick->isBPressed()) {
     debug("fm handles circle button - closing app");
     close();
   }

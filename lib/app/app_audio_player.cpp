@@ -1,25 +1,26 @@
 #include "app_audio_player.h"
 
-#include <controls/controls.h>
 #include <log.h>
+
+#include "../device/controls/joystick_device.h"
 
 void testSound();
 
-bool AudioPlayer::handle(uint16_t keyState) {
+bool AudioPlayer::handle(JoystickDevice *joystick) {
   if (this->running == false) {
     return false;
   }
 
-  if (isUpPressed()) {
+  if (joystick->isUpPressed()) {
     requestRedraw();
   }
 
-  if (isBPressed()) {
+  if (joystick->isBPressed()) {
     debug("audio player handles circle button - closing app");
     close();
   }
 
-  if (isAPressed()) {
+  if (joystick->isAPressed()) {
     testSound();
   }
   return true;

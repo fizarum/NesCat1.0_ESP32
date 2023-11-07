@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 
-#include "../device/display/display.h"
+#include "../device/controls/joystick_device.h"
+#include "../device/display/display_device.h"
 #include "apps_registry.h"
 
 class App {
@@ -59,7 +60,7 @@ class App {
   false if it's not accepted by application
   and can be processed by someone else
   */
-  virtual bool handle(uint16_t keyState) = 0;
+  virtual bool handle(JoystickDevice *joystick) = 0;
 
   virtual ~App() {}
 };

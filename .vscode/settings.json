@@ -13,6 +13,7 @@
         "GPIOA",
         "GPIOB",
         "GREENYELLOW",
+        "HSPI",
         "IPOL",
         "MOSI",
         "nescreen",

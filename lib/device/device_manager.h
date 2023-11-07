@@ -6,7 +6,8 @@
 #include "base_device.h"
 
 const long DISPLAY_DEVICE = 100L;
-const long AUDIO_DEVICE = 1000L;
+const long AUDIO_DEVICE = 101L;
+const long JOYSTICK_DEVICE = 102L;
 
 class DeviceManager {
  private:
