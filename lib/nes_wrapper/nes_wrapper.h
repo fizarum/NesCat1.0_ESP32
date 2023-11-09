@@ -12,7 +12,7 @@ void pickRomFile(const char *filepath);
 
 /** callback(percents, isFinished) has percents as an argument and bool flag
  * indicating is operation finished*/
-bool getRomData(const char *filepath, void (*callback)(uint8_t, bool));
+// bool getRomData(const char *filepath, void (*callback)(uint8_t, bool));
 
 /** untested */
 void preparePsRam();

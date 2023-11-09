@@ -6,11 +6,7 @@
 
 void testSound();
 
-bool AudioPlayer::handle(JoystickDevice *joystick) {
-  if (this->running == false) {
-    return false;
-  }
-
+bool AudioPlayer::onHandleInput(JoystickDevice *joystick) {
   if (joystick->isUpPressed()) {
     requestRedraw();
   }

@@ -2,11 +2,11 @@
 #define nes_launcher_h
 
 #include <app.h>
-#include <nes_wrapper.h>
+// #include <nes_wrapper.h>
 
 class NesLauncher : public App {
  private:
-  nes_t *nes;
+  // nes_t *nes;
 
   const char *path = "/nes";
   const uint8_t filesPerPage = 8;
@@ -21,6 +21,7 @@ class NesLauncher : public App {
  protected:
   void onDraw(DisplayDevice *display);
   void onUpdate();
+  bool onHandleInput(JoystickDevice *joystick);
 
  public:
   NesLauncher() {
@@ -30,7 +31,6 @@ class NesLauncher : public App {
     this->fullPathToSelectedNes = new char[256];
   }
 
-  bool handle(JoystickDevice *joystick);
   void resetLoadingStats(bool startLoading = false);
 };
 

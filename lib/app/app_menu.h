@@ -26,6 +26,10 @@ class Menu : public App {
   void drawBackground(DisplayDevice *display);
   void drawTitle(DisplayDevice *display);
   void drawStatusBar(DisplayDevice *display);
+  void onUpdate();
+  void onDraw(DisplayDevice *display);
+  bool onHandleInput(JoystickDevice *joystick);
+  bool needsToBeRedrawn();
 
  public:
   Menu() {
@@ -33,12 +37,7 @@ class Menu : public App {
     this->name = menuTitle;
     this->running = false;
   }
-
-  bool handle(JoystickDevice *joystick);
-  void onUpdate();
-  void onDraw(DisplayDevice *display);
   void closeUserApp();
-  bool needsToBeRedrawn();
 };
 
 #endif  // app_menu_h

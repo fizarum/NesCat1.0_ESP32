@@ -18,6 +18,7 @@ void App::open(void (*listener)()) {
 void App::close() {
   if (this->running == false) return;
   this->running = false;
+  this->onClose();
   if (this->onCloseListener != nullptr) {
     this->onCloseListener();
   }
@@ -44,3 +45,10 @@ void App::draw(DisplayDevice *display) {
 void App::requestRedraw() { this->needsToRedraw = true; }
 
 bool App::needsToBeRedrawn() { return this->needsToRedraw; }
+
+bool App::handle(JoystickDevice *joystick) {
+  if (isRunning() == false) {
+    return false;
+  }
+  return onHandleInput(joystick);
+}

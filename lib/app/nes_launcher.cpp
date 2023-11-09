@@ -4,9 +4,9 @@
 #include <string.h>
 #include <utils.h>
 
-#include "../device/controls/joystick_device.h"
+// #include "../device/controls/joystick_device.h"
 
-FileName *filenames = nullptr;
+// FileName *filenames = nullptr;
 // total count of files
 uint16_t fileCount = 0;
 // indicates count of files shown on screen
@@ -29,14 +29,14 @@ NesLauncher *_launcher;
 
 void onFileLoafingListener(uint8_t percents, bool isLast);
 
-void printFileNames(FileName *first, uint16_t count);
-void drawFileNames(DisplayDevice *display, FileName *first, uint16_t offset,
-                   uint8_t filesPerPage, uint8_t selectedFileIndex);
-uint16_t getCursorPosOnScreen(uint8_t cursorPos);
+// void printFileNames(FileName *first, uint16_t count);
+// void drawFileNames(DisplayDevice *display, FileName *first, uint16_t offset,
+//  uint8_t filesPerPage, uint8_t selectedFileIndex);
+// uint16_t getCursorPosOnScreen(uint8_t cursorPos);
 
 void NesLauncher::init() {
   _launcher = this;
-  preparePsRam();
+  // preparePsRam();
   getMemoryStatus();
 
   // init nes
@@ -48,16 +48,12 @@ void NesLauncher::init() {
   // }
   // fetch *nes files on FS
   debug("[nes] fetching filenames");
-  filenames = getAllNesFiles(this->path);
-  fileCount = getSize(filenames);
-  printFileNames(filenames, fileCount);
+  // filenames = getAllNesFiles(this->path);
+  // fileCount = getSize(filenames);
+  // printFileNames(filenames, fileCount);
 }
 
-bool NesLauncher::handle(JoystickDevice *joystick) {
-  if (this->running == false) {
-    return false;
-  }
-
+bool NesLauncher::onHandleInput(JoystickDevice *joystick) {
   // if app in process of loading rom - skip handling buttons for a while
   if (this->isLoading == true) {
     debug("[nes] still loading...");
@@ -94,12 +90,12 @@ bool NesLauncher::handle(JoystickDevice *joystick) {
       return true;
     }
 
-    pickRomFile(filepath);
+    // pickRomFile(filepath);
 
-    if (getRomData(filepath, onFileLoafingListener) == false) {
-      debug("E can't read data!");
-      resetLoadingStats();
-    }
+    // if (getRomData(filepath, onFileLoafingListener) == false) {
+    //   debug("E can't read data!");
+    //   resetLoadingStats();
+    // }
     requestRedraw();
   }
 
@@ -118,45 +114,46 @@ void NesLauncher::onUpdate() {
   if (_readyForNextRead == true && _requestedForNextRead == false) {
     _requestedForNextRead = true;
     // read next portion of data
-    if (getRomData(fullPathToSelectedNes, onFileLoafingListener) == false) {
-      debug("E can't read data!");
-      resetLoadingStats();
-    }
+    // if (getRomData(fullPathToSelectedNes, onFileLoafingListener) == false) {
+    //   debug("E can't read data!");
+    //   resetLoadingStats();
+    // }
     requestRedraw();
   }
 }
 
 void NesLauncher::onDraw(DisplayDevice *display) {
   // title
-  display->fillScreen(COLOR_DARKGREY);
-  display->drawString(64, 20, this->name, COLOR_WHITE);
+  // display->fillScreen(COLOR_DARKGREY);
+  // display->drawString(64, 20, this->name, COLOR_WHITE);
 
-  // file names
-  drawFileNames(display, filenames, 0, this->filesPerPage, this->cursorPos);
-  _cursorPosOnScreen = getCursorPosOnScreen(this->cursorPos);
+  // // file names
+  // drawFileNames(display, filenames, 0, this->filesPerPage, this->cursorPos);
+  // _cursorPosOnScreen = getCursorPosOnScreen(this->cursorPos);
 
-  // cursor
-  // nescreen::setTextPosition(16, _cursorPosOnScreen);
-  display->drawString(16, _cursorPosOnScreen, ">>", COLOR_WHITE);
+  // // cursor
+  // // nescreen::setTextPosition(16, _cursorPosOnScreen);
+  // display->drawString(16, _cursorPosOnScreen, ">>", COLOR_WHITE);
 
-  if (this->isLoading == true) {
-    sprintf(_loadingTitle, "loaded: %u%%", _loadedInPercents);
-    display->fillRectangle(0, 50, DEFAULT_WIDTH, 40, COLOR_BLUE);
-    display->drawString(75, 60, _loadingTitle, COLOR_ORANGE);
-  }
+  // if (this->isLoading == true) {
+  //   sprintf(_loadingTitle, "loaded: %u%%", _loadedInPercents);
+  //   display->fillRectangle(0, 50, DEFAULT_WIDTH, 40, COLOR_BLUE);
+  //   display->drawString(75, 60, _loadingTitle, COLOR_ORANGE);
+  // }
 }
 
 const char *NesLauncher::selectFile() {
-  FileName *file = seek(filenames, pageCount * filesPerPage + cursorPos);
-  if (file == nullptr || file->name == nullptr) {
-    return nullptr;
-  }
-  memset(fullPathToSelectedNes, 0, 256);
-  strcat(fullPathToSelectedNes, path);
-  strcat(fullPathToSelectedNes, "/");
-  strcat(fullPathToSelectedNes, file->name);
+  // FileName *file = seek(filenames, pageCount * filesPerPage + cursorPos);
+  // if (file == nullptr || file->name == nullptr) {
+  //   return nullptr;
+  // }
+  // memset(fullPathToSelectedNes, 0, 256);
+  // strcat(fullPathToSelectedNes, path);
+  // strcat(fullPathToSelectedNes, "/");
+  // strcat(fullPathToSelectedNes, file->name);
 
-  return fullPathToSelectedNes;
+  // return fullPathToSelectedNes;
+  return nullptr;
 }
 
 void NesLauncher::resetLoadingStats(bool startLoading) {
@@ -177,41 +174,41 @@ void onFileLoafingListener(uint8_t percents, bool isFinished) {
   }
 }
 
-void drawFileNames(DisplayDevice *display, FileName *first, uint16_t offset,
-                   uint8_t filesPerPage, uint8_t selectedFileIndex) {
-  FileName *current = seek(first, offset);
-  if (current == nullptr) {
-    return;
-  }
-  uint8_t posOnScreen = startPosOnScreenForContent;
-  fileCountOnScreen = 0;
+// void drawFileNames(DisplayDevice *display, FileName *first, uint16_t offset,
+//                    uint8_t filesPerPage, uint8_t selectedFileIndex) {
+//   // FileName *current = seek(first, offset);
+//   // if (current == nullptr) {
+//   //   return;
+//   // }
+//   // uint8_t posOnScreen = startPosOnScreenForContent;
+//   // fileCountOnScreen = 0;
 
-  for (uint8_t index = 0; index < filesPerPage; ++index) {
-    display->drawString(40, posOnScreen, current->name, COLOR_WHITE);
+//   // for (uint8_t index = 0; index < filesPerPage; ++index) {
+//   //   display->drawString(40, posOnScreen, current->name, COLOR_WHITE);
 
-    current = current->next;
-    if (current == nullptr) {
-      break;
-    }
-    posOnScreen += elementHeight;
-    fileCountOnScreen++;
-  }
-}
+//   //   current = current->next;
+//   //   if (current == nullptr) {
+//   //     break;
+//   //   }
+//   //   posOnScreen += elementHeight;
+//   //   fileCountOnScreen++;
+//   // }
+// }
 
-uint16_t getCursorPosOnScreen(uint8_t cursorPos) {
-  return startPosOnScreenForContent + cursorPos * elementHeight;
-}
+// uint16_t getCursorPosOnScreen(uint8_t cursorPos) {
+//   return startPosOnScreenForContent + cursorPos * elementHeight;
+// }
 
 // test function
-void printFileNames(FileName *first, uint16_t count) {
-  if (first == nullptr) {
-    return;
-  }
+// void printFileNames(FileName *first, uint16_t count) {
+//   // if (first == nullptr) {
+//   //   return;
+//   // }
 
-  FileName *p = first;
-  while (p != nullptr) {
-    printf("%s\n", p->name);
-    p = p->next;
-  }
-  printf("total %u files\n", count);
-}
+//   // FileName *p = first;
+//   // while (p != nullptr) {
+//   //   printf("%s\n", p->name);
+//   //   p = p->next;
+//   // }
+//   // printf("total %u files\n", count);
+// }

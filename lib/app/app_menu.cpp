@@ -39,7 +39,7 @@ void Menu::init() {
   this->selectedMenu = 0;
 }
 
-bool Menu::handle(JoystickDevice *joystick) {
+bool Menu::onHandleInput(JoystickDevice *joystick) {
   if (isUserAppActive() == true && app->handle(joystick) == true) {
     return true;
   }

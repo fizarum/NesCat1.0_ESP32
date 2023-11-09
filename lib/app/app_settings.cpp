@@ -10,11 +10,7 @@
 
 char buff[24];
 
-bool Settings::handle(JoystickDevice *joystick) {
-  if (this->running == false) {
-    return false;
-  }
-
+bool Settings::onHandleInput(JoystickDevice *joystick) {
   if (joystick->isBPressed()) {
     debug("settings handles circle button - closing app");
     close();

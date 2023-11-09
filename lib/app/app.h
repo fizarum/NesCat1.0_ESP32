@@ -29,6 +29,11 @@ class App {
   /** app specific implementation of draw */
   virtual void onDraw(DisplayDevice *display) = 0;
 
+  virtual bool onHandleInput(JoystickDevice *joystick) = 0;
+
+  /** app specific implementation of event before app closing */
+  virtual void onClose() {}
+
  public:
   int getId();
   const char *getName();
@@ -60,7 +65,7 @@ class App {
   false if it's not accepted by application
   and can be processed by someone else
   */
-  virtual bool handle(JoystickDevice *joystick) = 0;
+  virtual bool handle(JoystickDevice *joystick) final;
 
   virtual ~App() {}
 };
