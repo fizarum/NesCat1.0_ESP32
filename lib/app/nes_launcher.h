@@ -2,11 +2,11 @@
 #define nes_launcher_h
 
 #include <app.h>
-// #include <nes_wrapper.h>
+#include <nes_wrapper.h>
 
 class NesLauncher : public App {
  private:
-  // nes_t *nes;
+  nes_t *nes;
 
   const char *path = "/nes";
   const uint8_t filesPerPage = 8;

@@ -5,7 +5,6 @@
 
 #include <vector>
 
-#include "../device/controls/joystick_device.h"
 #include "../device/device_manager.h"
 #include "../device/storage/storage_device.h"
 
@@ -74,7 +73,11 @@ void FileManager::drawBackground(DisplayDevice *display) {
   display->fillScreen(COLOR_OLIVE);
 }
 
-void FileManager::onClose() { _filenames.clear(); }
+void FileManager::onClose() {
+  _filenames.clear();
+  cursorPosOnScreen = 0;
+  cursorPos = 0;
+}
 
 void _onFileFoundCallback(const char *fname) {
   _filenames.push_back(new FileName(fname));

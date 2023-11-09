@@ -4,7 +4,6 @@
 #include <log.h>
 #include <soc/rtc.h>
 
-#include "../device/controls/joystick_device.h"
 #include "../device/device_manager.h"
 #include "../device/storage/storage_device.h"
 

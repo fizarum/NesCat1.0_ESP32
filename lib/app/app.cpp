@@ -46,9 +46,18 @@ void App::requestRedraw() { this->needsToRedraw = true; }
 
 bool App::needsToBeRedrawn() { return this->needsToRedraw; }
 
-bool App::handle(JoystickDevice *joystick) {
+bool App::handleInput(JoystickDevice *joystick) {
   if (isRunning() == false) {
     return false;
   }
+  // TODO: move menu app to app container and make it
+  // similar to other apps
+
+  // exit from any app by pressing on menu button
+  // if (joystick->isMenuPressed()) {
+  //   close();
+  //   return true;
+  // }
+
   return onHandleInput(joystick);
 }

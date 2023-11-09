@@ -4,8 +4,6 @@
 #include <string.h>
 #include <utils.h>
 
-// #include "../device/controls/joystick_device.h"
-
 // FileName *filenames = nullptr;
 // total count of files
 uint16_t fileCount = 0;

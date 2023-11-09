@@ -61,7 +61,7 @@ void loop() {
 void onAppClosedCallback() { menu.closeUserApp(); }
 
 void onInputTriggered() {
-  if (menu.handle(joystick) == false) {
+  if (menu.handleInput(joystick) == false) {
     // print warning if its required
   }
 }

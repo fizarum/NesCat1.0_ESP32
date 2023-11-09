@@ -2,8 +2,6 @@
 
 #include <log.h>
 
-#include "../device/controls/joystick_device.h"
-
 void testSound();
 
 bool AudioPlayer::onHandleInput(JoystickDevice *joystick) {
