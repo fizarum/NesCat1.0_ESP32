@@ -14,6 +14,7 @@ class Settings : public App {
   void onDraw(DisplayDevice *display);
   void drawBackground(DisplayDevice *display);
   void drawTitle(DisplayDevice *display);
+  bool onHandleInput(JoystickDevice *joystick);
 
  public:
   Settings() {
@@ -21,8 +22,6 @@ class Settings : public App {
     this->name = userSettingsTitle;
     this->running = false;
   }
-
-  bool handle(JoystickDevice *joystick);
 };
 
 #endif  // app_settings_h

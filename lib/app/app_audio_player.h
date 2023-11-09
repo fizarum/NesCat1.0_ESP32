@@ -7,6 +7,7 @@ class AudioPlayer : public App {
  protected:
   void onDraw(DisplayDevice *display);
   void onUpdate();
+  bool onHandleInput(JoystickDevice *joystick);
 
  public:
   AudioPlayer() {
@@ -14,8 +15,6 @@ class AudioPlayer : public App {
     this->name = audioPlayerTitle;
     this->running = false;
   }
-
-  bool handle(JoystickDevice *joystick);
 };
 
 #endif  // app_audio_player_h

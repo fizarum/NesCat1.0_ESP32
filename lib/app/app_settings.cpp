@@ -4,17 +4,12 @@
 #include <log.h>
 #include <soc/rtc.h>
 
-#include "../device/controls/joystick_device.h"
 #include "../device/device_manager.h"
 #include "../device/storage/storage_device.h"
 
 char buff[24];
 
-bool Settings::handle(JoystickDevice *joystick) {
-  if (this->running == false) {
-    return false;
-  }
-
+bool Settings::onHandleInput(JoystickDevice *joystick) {
   if (joystick->isBPressed()) {
     debug("settings handles circle button - closing app");
     close();

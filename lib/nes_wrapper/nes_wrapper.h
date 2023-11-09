@@ -1,7 +1,8 @@
 #ifndef nes_wrapper_h
 #define nes_wrapper_h
 
-#include "filename.h"
+#include <filename.h>
+
 #include "nes/nes/nes.h"
 
 nes_t *createNes();
@@ -12,7 +13,7 @@ void pickRomFile(const char *filepath);
 
 /** callback(percents, isFinished) has percents as an argument and bool flag
  * indicating is operation finished*/
-bool getRomData(const char *filepath, void (*callback)(uint8_t, bool));
+// bool getRomData(const char *filepath, void (*callback)(uint8_t, bool));
 
 /** untested */
 void preparePsRam();

@@ -1,30 +1,49 @@
 #include "app_file_manager.h"
 
+#include <filename.h>
 #include <log.h>
 
-#include "../device/controls/joystick_device.h"
+#include <vector>
 
-int selectedMenu = 0;
+#include "../device/device_manager.h"
+#include "../device/storage/storage_device.h"
 
-bool FileManager::handle(JoystickDevice *joystick) {
-  if (this->running == false) {
-    return false;
-  }
+void _onFileFoundCallback(const char *fname);
+void _drawFileNames(DisplayDevice *display, uint16_t offset,
+                    uint8_t filesPerPage, uint8_t selectedFileIndex);
+uint16_t _getCursorPosOnScreen(uint8_t cursorPos);
 
+// one element height
+const uint8_t elementHeight = 20;
+// start y position on screen for content
+const uint8_t startPosOnScreenForContent = 48;
+const uint8_t filesPerPage = 8;
+
+// indicates count of files shown on screen
+uint8_t _fileCountOnScreen = 0;
+
+// list of filenames
+std::vector<FileName *> _filenames = {};
+
+void FileManager::init() {
+  StorageDevice *storage = (StorageDevice *)DeviceManager::get(STORAGE_DEVICE);
+  storage->getFilenames("/", _onFileFoundCallback);
+}
+
+bool FileManager::onHandleInput(JoystickDevice *joystick) {
   if (joystick->isUpPressed()) {
-    debug("fm handles up button");
-    selectedMenu--;
-    if (selectedMenu < 0) {
-      selectedMenu = 3;
+    this->cursorPos -= 1;
+    if (this->cursorPos < 0) {
+      this->cursorPos = _fileCountOnScreen - 1;
     }
+
     requestRedraw();
   }
 
   if (joystick->isDownPressed()) {
-    debug("fm handles down button");
-    selectedMenu++;
-    if (selectedMenu > 3) {
-      selectedMenu = 0;
+    this->cursorPos += 1;
+    if (this->cursorPos >= _fileCountOnScreen) {
+      this->cursorPos = 0;
     }
     requestRedraw();
   }
@@ -40,7 +59,47 @@ bool FileManager::handle(JoystickDevice *joystick) {
 void FileManager::onUpdate() {}
 
 void FileManager::onDraw(DisplayDevice *display) {
-  display->fillScreen(COLOR_ORANGE);
   display->drawString(64, 20, this->name, COLOR_WHITE);
-  // TODO: complete drawing content
+
+  // file names
+  _drawFileNames(display, 0, filesPerPage, this->cursorPos);
+  this->cursorPosOnScreen = _getCursorPosOnScreen(this->cursorPos);
+
+  // cursor
+  display->drawString(16, this->cursorPosOnScreen, ">>", COLOR_WHITE);
+}
+
+void FileManager::drawBackground(DisplayDevice *display) {
+  display->fillScreen(COLOR_OLIVE);
+}
+
+void FileManager::onClose() {
+  _filenames.clear();
+  cursorPosOnScreen = 0;
+  cursorPos = 0;
+}
+
+void _onFileFoundCallback(const char *fname) {
+  _filenames.push_back(new FileName(fname));
+}
+
+void _drawFileNames(DisplayDevice *display, uint16_t offset,
+                    uint8_t filesPerPage, uint8_t selectedFileIndex) {
+  if (offset >= _filenames.size()) return;
+
+  uint8_t posOnScreen = startPosOnScreenForContent;
+  uint8_t drawnFilesOnScreen = 0;
+
+  for (auto it = _filenames.begin() + offset; it != _filenames.end(); ++it) {
+    FileName *filename = *it;
+    display->drawString(40, posOnScreen, filename->getName(), COLOR_WHITE);
+    posOnScreen += elementHeight;
+    drawnFilesOnScreen++;
+    if (drawnFilesOnScreen > filesPerPage) break;
+  }
+  _fileCountOnScreen = drawnFilesOnScreen;
+}
+
+uint16_t _getCursorPosOnScreen(uint8_t cursorPos) {
+  return startPosOnScreenForContent + cursorPos * elementHeight;
 }

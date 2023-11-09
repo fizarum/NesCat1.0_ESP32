@@ -4,9 +4,17 @@
 #include "app.h"
 
 class FileManager : public App {
+ private:
+  uint16_t cursorPosOnScreen;
+  int8_t cursorPos = 0;
+
  protected:
+  void init();
   void onUpdate();
   void onDraw(DisplayDevice *display);
+  void drawBackground(DisplayDevice *display);
+  bool onHandleInput(JoystickDevice *joystick);
+  void onClose();
 
  public:
   FileManager() {
@@ -14,8 +22,6 @@ class FileManager : public App {
     this->name = fileManagerTitle;
     this->running = false;
   }
-
-  bool handle(JoystickDevice *joystick);
 };
 
 #endif  // app_file_manager_h

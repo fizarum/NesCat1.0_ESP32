@@ -21,6 +21,7 @@ class NesLauncher : public App {
  protected:
   void onDraw(DisplayDevice *display);
   void onUpdate();
+  bool onHandleInput(JoystickDevice *joystick);
 
  public:
   NesLauncher() {
@@ -30,7 +31,6 @@ class NesLauncher : public App {
     this->fullPathToSelectedNes = new char[256];
   }
 
-  bool handle(JoystickDevice *joystick);
   void resetLoadingStats(bool startLoading = false);
 };
 

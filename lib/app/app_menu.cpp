@@ -2,8 +2,6 @@
 
 #include <log.h>
 
-#include "../device/controls/joystick_device.h"
-#include "../device/display/display_device.h"
 #include "app_audio_player.h"
 #include "app_file_manager.h"
 #include "app_settings.h"
@@ -27,9 +25,7 @@ MenuItem menuItems[] = {
 };
 
 /// function declarations
-void _menuDraw(MenuItem *item);
 App *pickSelectedApp(uint8_t menuIndex);
-void onUserAppClosedCallback();
 
 bool isUserAppActive() { return app != nullptr && app->isRunning(); }
 
@@ -39,8 +35,8 @@ void Menu::init() {
   this->selectedMenu = 0;
 }
 
-bool Menu::handle(JoystickDevice *joystick) {
-  if (isUserAppActive() == true && app->handle(joystick) == true) {
+bool Menu::onHandleInput(JoystickDevice *joystick) {
+  if (isUserAppActive() == true && app->handleInput(joystick) == true) {
     return true;
   }
 

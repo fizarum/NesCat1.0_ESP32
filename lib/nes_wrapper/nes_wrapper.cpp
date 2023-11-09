@@ -79,14 +79,14 @@ void prepareFlash(size_t sizeToPrepare) {
 }
 
 /** void (*callback)(uint8_t) has percents as an argument */
-bool getRomData(const char *filepath, void (*callback)(uint8_t, bool)) {
-  // onFileLoadingCallback = callback;
-  // bool result = readFile(filepath, onFileLoafingListener);
-  // if (result == false) {
-  //   resetLoadingStats();
-  // }
-  // return result;
-}
+// bool getRomData(const char *filepath, void (*callback)(uint8_t, bool)) {
+//   // onFileLoadingCallback = callback;
+//   // bool result = readFile(filepath, onFileLoafingListener);
+//   // if (result == false) {
+//   //   resetLoadingStats();
+//   // }
+//   // return result;
+// }
 
 bool storeRomDataOnFlash(uint8_t *block, uint16_t blockSize,
                          uint16_t blockIndex) {
@@ -94,15 +94,15 @@ bool storeRomDataOnFlash(uint8_t *block, uint16_t blockSize,
 }
 
 void onNewFileFoundCallback(const char *fname) {
-  FileName *f = createFileName(fname);
-  if (_first == nullptr) {
-    _first = f;
-    _last = f;
-    return;
-  }
-  _last->next = f;
-  f->prev = _last;
-  _last = f;
+  // FileName *f = new FileName(fname);
+  // if (_first == nullptr) {
+  //   _first = f;
+  //   _last = f;
+  //   return;
+  // }
+  // _last->next = f;
+  // f->prev = _last;
+  // _last = f;
 }
 
 void onFileLoafingListener(uint8_t *block, uint16_t blockLength,

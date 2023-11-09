@@ -18,6 +18,7 @@ void App::open(void (*listener)()) {
 void App::close() {
   if (this->running == false) return;
   this->running = false;
+  this->onClose();
   if (this->onCloseListener != nullptr) {
     this->onCloseListener();
   }
@@ -44,3 +45,19 @@ void App::draw(DisplayDevice *display) {
 void App::requestRedraw() { this->needsToRedraw = true; }
 
 bool App::needsToBeRedrawn() { return this->needsToRedraw; }
+
+bool App::handleInput(JoystickDevice *joystick) {
+  if (isRunning() == false) {
+    return false;
+  }
+  // TODO: move menu app to app container and make it
+  // similar to other apps
+
+  // exit from any app by pressing on menu button
+  // if (joystick->isMenuPressed()) {
+  //   close();
+  //   return true;
+  // }
+
+  return onHandleInput(joystick);
+}
