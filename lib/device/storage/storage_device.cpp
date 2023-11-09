@@ -1,4 +1,4 @@
-#include "storage.h"
+#include "storage_device.h"
 
 #include <SD.h>
 #include <SPI.h>
@@ -17,6 +17,8 @@
 
 // 0x00300000 working (empty flash area)
 #define SPI_FLASH_ADDRESS 0x00300000
+
+#define BYTES_IN_MBYTE 1048576
 
 SPIClass hspi = SPIClass(HSPI);
 
@@ -40,18 +42,29 @@ uint8_t _file_buff[hugeBufferSize];
 // used for spi_flash_mmap
 spi_flash_mmap_handle_t spiFlashMmapHandle;
 
-void storageInit() {
+bool StorageDevice::onInit() {
   hspi.begin(HSPI_SCLK, HSPI_MISO, HSPI_MOSI, HSPI_CS);
-
-  if (!SD.begin(HSPI_CS, hspi)) {
-    debug("SD error!");
-  } else {
-    debug("SD OK.");
-  }
+  return SD.begin(HSPI_CS, hspi);
 }
 
-void getFilenames(const char* path, void (*callback)(const char*),
-                  const char* extension) {
+void StorageDevice::onUpdate() {
+  // do nothing
+}
+
+void StorageDevice::onEnabled(bool enabled) {
+  // do nothing as well
+}
+
+uint32_t StorageDevice::totalMBytes() {
+  return (uint32_t)(SD.totalBytes() / BYTES_IN_MBYTE);
+}
+uint32_t StorageDevice::usedMBytes() {
+  return (uint32_t)(SD.usedBytes() / BYTES_IN_MBYTE);
+}
+
+void StorageDevice::getFilenames(const char* path,
+                                 void (*callback)(const char*),
+                                 const char* extension) {
   home = SD.open(path);
   while (true) {
     tempFile = home.openNextFile();
@@ -86,7 +99,8 @@ void getFilenames(const char* path, void (*callback)(const char*),
   home.close();
 }
 
-bool hasSuchExtension(const char* filename, const char* extension) {
+bool StorageDevice::hasSuchExtension(const char* filename,
+                                     const char* extension) {
   if (filename == nullptr || extension == nullptr) {
     return false;
   }
@@ -113,7 +127,7 @@ bool hasSuchExtension(const char* filename, const char* extension) {
   return strstr(_temp_str, _small_buffer) != nullptr;
 }
 
-size_t getFileSize(const char* filepath) {
+size_t StorageDevice::getFileSize(const char* filepath) {
   tempFile = SD.open(filepath);
   if (!tempFile) {
     debug("E can not open file: %s", filepath);
@@ -125,9 +139,10 @@ size_t getFileSize(const char* filepath) {
 }
 
 uint16_t _blockIndex = 0;
-bool readFile(const char* filepath,
-              void (*callback)(uint8_t*, uint16_t, uint16_t, bool),
-              uint32_t start) {
+bool StorageDevice::readFile(const char* filepath,
+                             void (*callback)(uint8_t*, uint16_t, uint16_t,
+                                              bool),
+                             uint32_t start) {
   if (filepath == nullptr) {
     return false;
   }
@@ -172,7 +187,7 @@ bool readFile(const char* filepath,
   return true;
 }
 
-bool eraseFlash(size_t fileSize) {
+bool StorageDevice::eraseFlash(size_t fileSize) {
   // adjust size to be aligned to hugeBufferSize (4kb)
   size_t areaToErase = alignTo(fileSize, hugeBufferSize);
   debug("area to erase: %u", areaToErase);
@@ -180,15 +195,15 @@ bool eraseFlash(size_t fileSize) {
   return spi_flash_erase_range(SPI_FLASH_ADDRESS, areaToErase) == ESP_OK;
 }
 
-bool savePortionToFlash(uint8_t* block, uint16_t blockLength,
-                        uint16_t blockIndex) {
+bool StorageDevice::savePortionToFlash(uint8_t* block, uint16_t blockLength,
+                                       uint16_t blockIndex) {
   size_t address = SPI_FLASH_ADDRESS;
   address += blockIndex * hugeBufferSize;
   debug("writing block %u to flash", blockIndex);
   return spi_flash_write(address, block, blockLength) == ESP_OK;
 }
 
-uint8_t* getSavedDataOnFlash(size_t romSize) {
+uint8_t* StorageDevice::getSavedDataOnFlash(size_t romSize) {
   const void* rom;
   esp_err_t result =
       spi_flash_mmap(SPI_FLASH_ADDRESS, romSize, SPI_FLASH_MMAP_DATA, &rom,

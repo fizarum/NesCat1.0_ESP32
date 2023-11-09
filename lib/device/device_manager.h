@@ -4,32 +4,30 @@
 #include <map>
 
 #include "base_device.h"
-
-const long DISPLAY_DEVICE = 100L;
-const long AUDIO_DEVICE = 101L;
-const long JOYSTICK_DEVICE = 102L;
+const uint8_t DISPLAY_DEVICE = 100;
+const uint8_t AUDIO_DEVICE = 101;
+const uint8_t JOYSTICK_DEVICE = 102;
+const uint8_t STORAGE_DEVICE = 103;
 
 class DeviceManager {
  private:
-  std::map<long, BaseDevice *> devices = {};
+  std::map<uint8_t, BaseDevice *> devices = {};
 
  public:
   void init();
 
   void update() {
     for (const auto &kv : devices) {
-      kv.second->update();
+      BaseDevice *device = kv.second;
+      if (device->enabled()) {
+        device->update();
+      }
     }
   }
 
-  void add(long id, BaseDevice *device) {
-    devices[id] = device;
-    if (device != nullptr) {
-      device->init(id);
-    }
-  }
+  void add(uint8_t id, BaseDevice *device);
 
-  BaseDevice *get(long id) { return devices[id]; }
+  static BaseDevice *get(uint8_t id);
 };
 
 #endif  // DEVICE_MANAGER_H
