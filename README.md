@@ -18,7 +18,6 @@ Planned changes:
 Used libraries:
 
 - TFT_eSPI <https://github.com/Bodmer/TFT_eSPI.git>
-- ~~SdFat <https://github.com/greiman/SdFat>~~
 - ~~arduinoFFT <https://github.com/kosme/arduinoFFT>~~
 - ESP32-audioI2S <https://github.com/schreibfaul1/ESP32-audioI2S>
 - arduino-mcp23017 <https://github.com/blemasle/arduino-mcp23017.git>

@@ -5,7 +5,7 @@
 
 class AudioDevice : public BaseDevice {
  public:
-  void onInit();
+  bool onInit();
   void onUpdate();
   void onEnabled(bool enabled);
 };

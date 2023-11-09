@@ -7,7 +7,7 @@
 #include "keymap.h"
 
 class JoystickDevice : public BaseDevice {
-  void onInit();
+  bool onInit();
   void onUpdate();
 
  public:

@@ -3,7 +3,6 @@
 #include <Esp.h>
 #include <audio.h>
 #include <log.h>
-#include <storage.h>
 #include <string.h>
 #include <utils.h>
 
@@ -48,13 +47,13 @@ FileName *_first = nullptr;
 FileName *_last = nullptr;
 
 FileName *getAllNesFiles(const char *path) {
-  cleanup(_first);
-  _first = nullptr;
-  _last = nullptr;
-  storageInit();
+  // cleanup(_first);
+  // _first = nullptr;
+  // _last = nullptr;
+  // storageInit();
 
-  getFilenames(path, onNewFileFoundCallback, "nes");
-  return _first;
+  // getFilenames(path, onNewFileFoundCallback, "nes");
+  // return _first;
 }
 
 void pickRomFile(const char *filepath) {
@@ -65,29 +64,33 @@ void pickRomFile(const char *filepath) {
   prepareFlash(_totalBytes);
 }
 
-size_t getRomFileSize(const char *filepath) { return getFileSize(filepath); }
+size_t getRomFileSize(const char *filepath) {
+  // return getFileSize(filepath);
+  // TODO: rework
+  return 0;
+}
 
 void prepareFlash(size_t sizeToPrepare) {
-  if (eraseFlash(sizeToPrepare) == true) {
-    debug("flash erased!");
-  } else {
-    debug("E can't prepare flash!");
-  }
+  // if (eraseFlash(sizeToPrepare) == true) {
+  //   debug("flash erased!");
+  // } else {
+  //   debug("E can't prepare flash!");
+  // }
 }
 
 /** void (*callback)(uint8_t) has percents as an argument */
 bool getRomData(const char *filepath, void (*callback)(uint8_t, bool)) {
-  onFileLoadingCallback = callback;
-  bool result = readFile(filepath, onFileLoafingListener);
-  if (result == false) {
-    resetLoadingStats();
-  }
-  return result;
+  // onFileLoadingCallback = callback;
+  // bool result = readFile(filepath, onFileLoafingListener);
+  // if (result == false) {
+  //   resetLoadingStats();
+  // }
+  // return result;
 }
 
 bool storeRomDataOnFlash(uint8_t *block, uint16_t blockSize,
                          uint16_t blockIndex) {
-  return savePortionToFlash(block, blockSize, blockIndex);
+  // return savePortionToFlash(block, blockSize, blockIndex);
 }
 
 void onNewFileFoundCallback(const char *fname) {

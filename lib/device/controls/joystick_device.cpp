@@ -6,12 +6,6 @@
 
 #include "keymap.h"
 
-#define JOY_MAX_VAL 4096
-// normal position of joystick - no keys pressed
-#define JOY_NORMAL_VAL JOY_MAX_VAL / 2
-// minimal step for joystick to register press event
-#define JOY_THRESHOLD JOY_MAX_VAL / 10
-
 MCP23017 *mcp = nullptr;
 uint8_t i2cAddress;
 bool initialized = false;
@@ -62,16 +56,15 @@ unsigned long lastRequestedTimeOfJoystick = 0;
 // request keys state: A,B,C,D
 void requestKeysState();
 
-void JoystickDevice::onInit() {
+bool JoystickDevice::onInit() {
   Wire.begin();
   i2cAddress = findI2CDevice();
   if (i2cAddress == 0) {
-    debug("error during initializing keyboard!");
+    debug("error during initializing device!");
     initialized = false;
-    debug("init keyboard... error");
-    return;
+    return false;
   }
-  debug("found keyboard on port: %x", i2cAddress);
+  debug("found device on port: %x", i2cAddress);
   mcp = new MCP23017(i2cAddress, Wire);
   mcp->init();
 
@@ -86,9 +79,9 @@ void JoystickDevice::onInit() {
   // GPIO_A $ GPIO_B reflects the opposite logic of all pins state
   mcp->writeRegister(MCP23017Register::IPOL_A, 0xFF);
   mcp->writeRegister(MCP23017Register::IPOL_B, 0xFF);
-  debug("init keyboard... ok");
 
   initialized = true;
+  return true;
 }
 
 void JoystickDevice::onUpdate() {

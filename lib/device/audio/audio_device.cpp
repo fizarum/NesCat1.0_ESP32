@@ -9,17 +9,17 @@
 
 Audio *audio = nullptr;
 
-void AudioDevice::onInit() {
+bool AudioDevice::onInit() {
   audio = new Audio();
   bool isSet = audio->setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT);
 
   if (isSet == true) {
-    debug("init sound... ok");
     audio->setVolume(0);
     audio->forceMono(true);
-    debug("volume set to: %d\n", audio->getVolume());
+    debug("volume set to: %d", audio->getVolume());
+    return true;
   } else {
-    debug("init sound... error!");
+    return false;
   }
 }
 

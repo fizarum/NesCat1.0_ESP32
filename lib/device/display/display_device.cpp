@@ -11,7 +11,7 @@
 
 TFT_eSPI tft = TFT_eSPI();
 
-void DisplayDevice::onInit() {
+bool DisplayDevice::onInit() {
   tft.init();
   // landscape
   tft.setRotation(1);
@@ -19,6 +19,7 @@ void DisplayDevice::onInit() {
   tft.setTextColor(COLOR_WHITE);
   tft.fillScreen(COLOR_BLACK);
   tft.println("loading...");
+  return true;
 }
 
 void DisplayDevice::onUpdate() {

@@ -2,9 +2,11 @@
 
 #include <ESP.h>
 #include <log.h>
+#include <soc/rtc.h>
 
 #include "../device/controls/joystick_device.h"
-#include "soc/rtc.h"
+#include "../device/device_manager.h"
+#include "../device/storage/storage_device.h"
 
 char buff[24];
 
@@ -69,4 +71,21 @@ void Settings::onDraw(DisplayDevice *display) {
   display->drawString(firstOffset, lineYPos, "RAM: ");
   sprintf(buff, "%d/%d Kb", ESP.getFreeHeap() / 1024, ESP.getHeapSize() / 1024);
   display->drawString(secondOffset, lineYPos, buff);
+  lineYPos += 20;
+
+  StorageDevice *storage = (StorageDevice *)DeviceManager::get(STORAGE_DEVICE);
+  if (storage != nullptr) {
+    uint32_t total = storage->totalMBytes();
+    uint32_t used = storage->usedMBytes();
+    float occupied = (float)used / (float)total;
+
+    display->drawString(firstOffset, lineYPos, "SD size: ");
+    sprintf(buff, "%u Mb", total);
+    display->drawString(secondOffset, lineYPos, buff);
+    lineYPos += 20;
+
+    display->drawString(firstOffset, lineYPos, "SD used: ");
+    sprintf(buff, "%2.2f %%", occupied);
+    display->drawString(secondOffset, lineYPos, buff);
+  }
 }
