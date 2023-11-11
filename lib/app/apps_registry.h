@@ -11,7 +11,6 @@ const uint8_t audioPlayerId = 102;
 const uint8_t userSettingsId = 103;
 
 const char *const menuTitle = "Menu";
-
 const char *const fileManagerTitle = "File Manager";
 const char *const emulatorTitle = "NES Emulator";
 const char *const audioPlayerTitle = "Audio Player";

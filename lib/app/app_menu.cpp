@@ -2,18 +2,6 @@
 
 #include <log.h>
 
-#include "app_audio_player.h"
-#include "app_file_manager.h"
-#include "app_settings.h"
-#include "nes_launcher.h"
-
-FileManager fileManager;
-Settings settings;
-AudioPlayer audioPlayer;
-NesLauncher nesLauncher;
-
-App *app = nullptr;
-
 uint8_t totalMenuItems = 4;
 
 // menu items
@@ -24,10 +12,8 @@ MenuItem menuItems[] = {
     MenuItem(userSettingsId, userSettingsTitle),
 };
 
-/// function declarations
-App *pickSelectedApp(uint8_t menuIndex);
-
-bool isUserAppActive() { return app != nullptr && app->isRunning(); }
+void (*onMenuSelectedCallback)(uint8_t appId);
+uint8_t getAppIdByPosition(uint8_t menuIndex);
 
 void Menu::init() {
   this->items = menuItems;
@@ -36,10 +22,6 @@ void Menu::init() {
 }
 
 bool Menu::onHandleInput(JoystickDevice *joystick) {
-  if (isUserAppActive() == true && app->handleInput(joystick) == true) {
-    return true;
-  }
-
   if (joystick->isLeftPressed()) {
     debug("menu: left key pressed: %u", joystick->keysState());
     this->selectedMenu -= 1;
@@ -61,38 +43,22 @@ bool Menu::onHandleInput(JoystickDevice *joystick) {
 
   if (joystick->isXPressed()) {
     debug("menu: is cross key pressed: %u", joystick->keysState());
-    app = pickSelectedApp(selectedMenu);
-    if (app != nullptr) {
-      debug("menu: opening %s", app->getName());
-      app->open(this->onCloseListener);
-    }
-    requestRedraw();
+    uint8_t appId = getAppIdByPosition(selectedMenu);
+    onMenuSelectedCallback(appId);
     return true;
   }
 
   return false;
 }
 
-void Menu::onUpdate() {
-  if (isUserAppActive() == true) {
-    if (needsToBeRedrawn() == true) {
-      requestRedraw();
-    }
-
-    app->update();
-  } else {
-    // update menu...
-  }
+void Menu::onDraw(DisplayDevice *display) {
+  MenuItem item = menuItems[selectedMenu];
+  display->drawString(H_CENTER, V_CENTER, item.title, COLOR_WHITE, MC_DATUM);
+  debug("menu item: %s", item.title);
 }
 
-void Menu::onDraw(DisplayDevice *display) {
-  if (isUserAppActive() == true) {
-    app->draw(display);
-  } else {
-    MenuItem item = menuItems[selectedMenu];
-    display->drawString(H_CENTER, V_CENTER, item.title, COLOR_WHITE, MC_DATUM);
-    debug("menu item: %s", item.title);
-  }
+void Menu::attachOnMenuSelectedCallback(void (*callback)(uint8_t)) {
+  onMenuSelectedCallback = callback;
 }
 
 void Menu::drawBackground(DisplayDevice *display) {
@@ -110,31 +76,17 @@ void Menu::drawStatusBar(DisplayDevice *display) {
   display->drawString(20, 210, "use < > to navigate", COLOR_LIGHTGREY);
 }
 
-void Menu::closeUserApp() {
-  debug("app is closed, going to menu");
-  app = nullptr;
-  requestRedraw();
-}
-
-bool Menu::needsToBeRedrawn() {
-  if (isUserAppActive() == true) {
-    return app->needsToBeRedrawn();
-  } else {
-    return this->needsToRedraw;
-  }
-}
-
-App *pickSelectedApp(uint8_t menuIndex) {
+uint8_t getAppIdByPosition(uint8_t menuIndex) {
   switch (menuIndex) {
     case 0:
-      return &fileManager;
+      return fileManagerId;
     case 1:
-      return &nesLauncher;
+      return nesEmulatorId;
     case 2:
-      return &audioPlayer;
+      return audioPlayerId;
     case 3:
-      return &settings;
+      return userSettingsId;
     default:
-      return nullptr;
+      return menuId;
   }
 }

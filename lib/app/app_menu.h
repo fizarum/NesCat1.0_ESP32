@@ -26,10 +26,9 @@ class Menu : public App {
   void drawBackground(DisplayDevice *display);
   void drawTitle(DisplayDevice *display);
   void drawStatusBar(DisplayDevice *display);
-  void onUpdate();
+  void onUpdate() {}
   void onDraw(DisplayDevice *display);
   bool onHandleInput(JoystickDevice *joystick);
-  bool needsToBeRedrawn();
 
  public:
   Menu() {
@@ -37,7 +36,8 @@ class Menu : public App {
     this->name = menuTitle;
     this->running = false;
   }
-  void closeUserApp();
+  // callback has uint8_t parameter - application id
+  void attachOnMenuSelectedCallback(void (*callback)(uint8_t));
 };
 
 #endif  // app_menu_h
