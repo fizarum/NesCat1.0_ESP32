@@ -20,21 +20,17 @@
 //*
 //********************************************************************************
 #include <Arduino.h>
-#include <app_menu.h>
+#include <app_container.h>
 #include <device_manager.h>
-#include <utils.h>
 
 #include "../device/controls/joystick_device.h"
 
-// start app - menu
-Menu menu;
-
 DeviceManager dm;
+AppContainer appContainer;
 
 DisplayDevice *displayDevice = nullptr;
 JoystickDevice *joystick = nullptr;
 
-void onAppClosedCallback();
 void onInputTriggered();
 
 void setup() {
@@ -48,20 +44,15 @@ void setup() {
   joystick = (JoystickDevice *)dm.get(JOYSTICK_DEVICE);
   joystick->setCallback(&onInputTriggered);
 
-  menu.open(&onAppClosedCallback);
+  appContainer.init();
+  appContainer.start();
 }
 
 void loop() {
   dm.update();
 
-  menu.update();
-  menu.draw(displayDevice);
+  appContainer.update();
+  appContainer.draw(displayDevice);
 }
 
-void onAppClosedCallback() { menu.closeUserApp(); }
-
-void onInputTriggered() {
-  if (menu.handleInput(joystick) == false) {
-    // print warning if its required
-  }
-}
+void onInputTriggered() { appContainer.handleInput(joystick); }
