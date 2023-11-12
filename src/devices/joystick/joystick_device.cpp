@@ -1,13 +1,11 @@
 #include "joystick_device.h"
 
 #include <MCP23017.h>
-#include <log.h>
 #include <utils.h>
 
 #include "keymap.h"
 
 MCP23017 *mcp = nullptr;
-uint8_t i2cAddress;
 bool initialized = false;
 
 // make sure that last 3 bits not used (they are disabled)
@@ -56,15 +54,15 @@ unsigned long lastRequestedTimeOfJoystick = 0;
 // request keys state: A,B,C,D
 void requestKeysState();
 
+const char *const JoystickDevice::getName() { return "joystick"; }
+
 bool JoystickDevice::onInit() {
   Wire.begin();
-  i2cAddress = findI2CDevice();
+  uint8_t i2cAddress = findI2CDevice();
   if (i2cAddress == 0) {
-    debug("error during initializing device!");
     initialized = false;
     return false;
   }
-  debug("found device on port: %x", i2cAddress);
   mcp = new MCP23017(i2cAddress, Wire);
   mcp->init();
 
@@ -113,7 +111,6 @@ void requestKeysState() {
     bindKeymap(gpioKeymap);
 
     if (isInputChanged == true) {
-      debug("triggered keymap change: %u", keymap);
       inputHandlerPtr();
     }
 

@@ -29,7 +29,7 @@ class Menu : public App {
   void onDraw(DisplayDevice *display);
 
   bool preventClosingByUser() { return true; }
-  bool onHandleInput(JoystickDevice *joystick);
+  bool onHandleInput(InputDevice *inputDevice);
 
  public:
   Menu() {

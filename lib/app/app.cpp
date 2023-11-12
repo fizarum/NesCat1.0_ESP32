@@ -46,18 +46,18 @@ void App::requestRedraw() { this->needsToRedraw = true; }
 
 bool App::needsToBeRedrawn() { return this->needsToRedraw; }
 
-bool App::handleInput(JoystickDevice *joystick) {
+bool App::handleInput(InputDevice *inputDevice) {
   if (isRunning() == false) {
     return false;
   }
 
   if (preventClosingByUser() == false) {
-    if (joystick->isMenuPressed()) {
+    if (inputDevice->isMenuPressed()) {
       this->close();
       this->requestRedraw();
       return true;
     }
   }
 
-  return onHandleInput(joystick);
+  return onHandleInput(inputDevice);
 }

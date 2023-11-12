@@ -26,12 +26,13 @@ uint8_t _fileCountOnScreen = 0;
 std::vector<FileName *> _filenames = {};
 
 void FileManager::init() {
-  StorageDevice *storage = (StorageDevice *)DeviceManager::get(STORAGE_DEVICE);
+  StorageDevice *storage =
+      (StorageDevice *)DeviceManager::get(DEVICE_STORAGE_ID);
   storage->getFilenames("/", _onFileFoundCallback);
 }
 
-bool FileManager::onHandleInput(JoystickDevice *joystick) {
-  if (joystick->isUpPressed()) {
+bool FileManager::onHandleInput(InputDevice *inputDevice) {
+  if (inputDevice->isUpPressed()) {
     this->cursorPos -= 1;
     if (this->cursorPos < 0) {
       this->cursorPos = _fileCountOnScreen - 1;
@@ -40,7 +41,7 @@ bool FileManager::onHandleInput(JoystickDevice *joystick) {
     requestRedraw();
   }
 
-  if (joystick->isDownPressed()) {
+  if (inputDevice->isDownPressed()) {
     this->cursorPos += 1;
     if (this->cursorPos >= _fileCountOnScreen) {
       this->cursorPos = 0;

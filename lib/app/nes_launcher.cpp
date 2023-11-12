@@ -51,14 +51,14 @@ void NesLauncher::init() {
   // printFileNames(filenames, fileCount);
 }
 
-bool NesLauncher::onHandleInput(JoystickDevice *joystick) {
+bool NesLauncher::onHandleInput(InputDevice *inputDevice) {
   // if app in process of loading rom - skip handling buttons for a while
   if (this->isLoading == true) {
     debug("[nes] still loading...");
     return true;
   }
 
-  if (joystick->isUpPressed()) {
+  if (inputDevice->isUpPressed()) {
     this->cursorPos -= 1;
     if (this->cursorPos < 0) {
       this->cursorPos = fileCountOnScreen;
@@ -66,7 +66,7 @@ bool NesLauncher::onHandleInput(JoystickDevice *joystick) {
     requestRedraw();
   }
 
-  if (joystick->isDownPressed()) {
+  if (inputDevice->isDownPressed()) {
     this->cursorPos += 1;
     if (this->cursorPos > fileCountOnScreen) {
       this->cursorPos = 0;
@@ -74,7 +74,7 @@ bool NesLauncher::onHandleInput(JoystickDevice *joystick) {
     requestRedraw();
   }
 
-  if (joystick->isXPressed()) {
+  if (inputDevice->isXPressed()) {
     if (_started == true) return true;
     _started = true;
 

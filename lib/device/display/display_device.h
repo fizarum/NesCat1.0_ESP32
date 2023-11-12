@@ -14,6 +14,7 @@
 
 class DisplayDevice : public BaseDevice {
  public:
+  const char* const getName();
   bool onInit();
   void onUpdate();
   void onEnabled(bool enabled);

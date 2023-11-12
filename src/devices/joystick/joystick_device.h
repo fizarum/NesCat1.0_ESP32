@@ -1,16 +1,17 @@
-#ifndef CONTROLS_H
-#define CONTROLS_H
+#ifndef JOYSTICK_DEVICE_H
+#define JOYSTICK_DEVICE_H
 
+#include <input_device/input_device.h>
 #include <stdint.h>
 
-#include "base_device.h"
 #include "keymap.h"
 
-class JoystickDevice : public BaseDevice {
+class JoystickDevice : public InputDevice {
   bool onInit();
   void onUpdate();
 
  public:
+  const char *const getName();
   void setCallback(void (*onInputCallbackPtr)(void));
   bool isLeftPressed();
   bool isRightPressed();
@@ -32,4 +33,4 @@ class JoystickDevice : public BaseDevice {
   uint16_t keysState();
 };
 
-#endif  // CONTROLS_H
+#endif  // JOYSTICK_DEVICE_H
