@@ -20,6 +20,8 @@ class NesLauncher : public App {
 
  protected:
   void onDraw(DisplayDevice *display);
+  void drawBackground(DisplayDevice *display);
+  void drawTitle(DisplayDevice *display);
   void onUpdate();
   bool onHandleInput(JoystickDevice *joystick);
 

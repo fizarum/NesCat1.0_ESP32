@@ -9,17 +9,7 @@
 
 char buff[24];
 
-bool Settings::onHandleInput(JoystickDevice *joystick) {
-  if (joystick->isBPressed()) {
-    debug("settings handles circle button - closing app");
-    close();
-  }
-  return true;
-}
-
-void Settings::onUpdate() {
-  //
-}
+bool Settings::onHandleInput(JoystickDevice *joystick) { return false; }
 
 uint8_t const firstOffset = 30;
 uint8_t const secondOffset = 160;

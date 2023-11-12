@@ -6,7 +6,8 @@
 class AudioPlayer : public App {
  protected:
   void onDraw(DisplayDevice *display);
-  void onUpdate();
+  void drawBackground(DisplayDevice *display);
+  void drawTitle(DisplayDevice *display);
   bool onHandleInput(JoystickDevice *joystick);
 
  public:

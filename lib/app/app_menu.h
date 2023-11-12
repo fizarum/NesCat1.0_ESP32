@@ -26,8 +26,9 @@ class Menu : public App {
   void drawBackground(DisplayDevice *display);
   void drawTitle(DisplayDevice *display);
   void drawStatusBar(DisplayDevice *display);
-  void onUpdate() {}
   void onDraw(DisplayDevice *display);
+
+  bool preventClosingByUser() { return true; }
   bool onHandleInput(JoystickDevice *joystick);
 
  public:

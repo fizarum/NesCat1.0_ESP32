@@ -48,19 +48,10 @@ bool FileManager::onHandleInput(JoystickDevice *joystick) {
     requestRedraw();
   }
 
-  if (joystick->isBPressed()) {
-    debug("fm handles circle button - closing app");
-    close();
-  }
-
   return true;
 }
 
-void FileManager::onUpdate() {}
-
 void FileManager::onDraw(DisplayDevice *display) {
-  display->drawString(64, 20, this->name, COLOR_WHITE);
-
   // file names
   _drawFileNames(display, 0, filesPerPage, this->cursorPos);
   this->cursorPosOnScreen = _getCursorPosOnScreen(this->cursorPos);
@@ -71,6 +62,10 @@ void FileManager::onDraw(DisplayDevice *display) {
 
 void FileManager::drawBackground(DisplayDevice *display) {
   display->fillScreen(COLOR_OLIVE);
+}
+
+void FileManager::drawTitle(DisplayDevice *display) {
+  display->drawString(64, 20, this->name, COLOR_WHITE);
 }
 
 void FileManager::onClose() {

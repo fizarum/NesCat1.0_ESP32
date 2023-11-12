@@ -97,9 +97,6 @@ bool NesLauncher::onHandleInput(JoystickDevice *joystick) {
     requestRedraw();
   }
 
-  if (joystick->isMenuPressed()) {
-    close();
-  }
   return true;
 }
 
@@ -121,10 +118,6 @@ void NesLauncher::onUpdate() {
 }
 
 void NesLauncher::onDraw(DisplayDevice *display) {
-  // title
-  // display->fillScreen(COLOR_DARKGREY);
-  // display->drawString(64, 20, this->name, COLOR_WHITE);
-
   // // file names
   // drawFileNames(display, filenames, 0, this->filesPerPage, this->cursorPos);
   // _cursorPosOnScreen = getCursorPosOnScreen(this->cursorPos);
@@ -138,6 +131,14 @@ void NesLauncher::onDraw(DisplayDevice *display) {
   //   display->fillRectangle(0, 50, DEFAULT_WIDTH, 40, COLOR_BLUE);
   //   display->drawString(75, 60, _loadingTitle, COLOR_ORANGE);
   // }
+}
+
+void NesLauncher::drawBackground(DisplayDevice *display) {
+  display->fillScreen(COLOR_DARKGREY);
+}
+
+void NesLauncher::drawTitle(DisplayDevice *display) {
+  display->drawString(64, 20, this->name, COLOR_WHITE);
 }
 
 const char *NesLauncher::selectFile() {
