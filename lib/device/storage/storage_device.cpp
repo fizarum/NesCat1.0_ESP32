@@ -42,6 +42,8 @@ uint8_t _file_buff[hugeBufferSize];
 // used for spi_flash_mmap
 spi_flash_mmap_handle_t spiFlashMmapHandle;
 
+const char* const StorageDevice::getName() { return "storage"; }
+
 bool StorageDevice::onInit() {
   hspi.begin(HSPI_SCLK, HSPI_MISO, HSPI_MOSI, HSPI_CS);
   return SD.begin(HSPI_CS, hspi);

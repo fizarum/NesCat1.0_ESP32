@@ -3,10 +3,10 @@
 
 #include <app.h>
 #include <app_menu.h>
+#include <input_device/input_device.h>  //"../device/controls/joystick_device.h"
 
 #include <vector>
 
-#include "../device/controls/joystick_device.h"
 #include "../device/display/display_device.h"
 
 class AppContainer {
@@ -20,7 +20,7 @@ class AppContainer {
   void start();
   void update();
   void draw(DisplayDevice *display);
-  void handleInput(JoystickDevice *joystick);
+  void handleInput(InputDevice *inputDevice);
   App *getAppById(uint8_t appId);
   void selectApp(App *app);
   void selectMenuApp();

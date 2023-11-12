@@ -1,9 +1,9 @@
 #ifndef app_h
 #define app_h
 
+#include <input_device/input_device.h>
 #include <stdint.h>
 
-#include "../device/controls/joystick_device.h"
 #include "../device/display/display_device.h"
 #include "apps_registry.h"
 
@@ -30,7 +30,7 @@ class App {
   virtual void onDraw(DisplayDevice *display) = 0;
 
   /** app specific implementation of input handling */
-  virtual bool onHandleInput(JoystickDevice *joystick) = 0;
+  virtual bool onHandleInput(InputDevice *inputDevice) = 0;
 
   /** app specific implementation of event before app closing */
   virtual void onClose() {}
@@ -80,7 +80,7 @@ class App {
    * false if it's not accepted by application
    * and can be processed by someone else
    */
-  virtual bool handleInput(JoystickDevice *joystick) final;
+  virtual bool handleInput(InputDevice *inputDevice) final;
 
   virtual ~App() {}
 };

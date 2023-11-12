@@ -33,8 +33,8 @@ void AppContainer::update() { this->activeApp->update(); }
 void AppContainer::draw(DisplayDevice *display) {
   this->activeApp->draw(display);
 }
-void AppContainer::handleInput(JoystickDevice *joystick) {
-  this->activeApp->handleInput(joystick);
+void AppContainer::handleInput(InputDevice *inputDevice) {
+  this->activeApp->handleInput(inputDevice);
 }
 
 App *AppContainer::getAppById(uint8_t appId) {

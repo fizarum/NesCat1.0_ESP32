@@ -1,6 +1,8 @@
 #ifndef BASE_DEVICE_H
 #define BASE_DEVICE_H
 
+#include <configurator.h>
+
 class BaseDevice {
  private:
   long _id;
@@ -34,6 +36,7 @@ class BaseDevice {
   long id() { return this->_id; }
   bool enabled() { return this->_enabled; }
 
+  virtual const char *const getName() = 0;
   virtual bool onInit() = 0;
   virtual void onUpdate() = 0;
   virtual void onEnabled(bool enabled){};

@@ -86,9 +86,11 @@ uint8_t findI2CDevice(const uint8_t startAddress) {
     response = Wire.endTransmission();
 
     if (response == 0) {
+      debug("found device on port: %x", address);
       return address;
     }
   }
+  debug("device not found in i2c port");
   return 0;
 }
 

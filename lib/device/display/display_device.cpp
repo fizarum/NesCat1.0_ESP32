@@ -11,6 +11,8 @@
 
 TFT_eSPI tft = TFT_eSPI();
 
+const char* const DisplayDevice::getName() { return "display"; }
+
 bool DisplayDevice::onInit() {
   tft.init();
   // landscape

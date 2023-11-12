@@ -21,11 +21,15 @@
 //********************************************************************************
 #include <Arduino.h>
 #include <app_container.h>
+#include <configurator.h>
 #include <device_manager.h>
+#include <display/display_device.h>
+#include <storage/storage_device.h>
 
-#include "../device/controls/joystick_device.h"
+#include "devices/audio/audio_device.h"
+#include "devices/joystick/joystick_device.h"
 
-DeviceManager dm;
+DeviceManager deviceManager;
 AppContainer appContainer;
 
 DisplayDevice *displayDevice = nullptr;
@@ -38,18 +42,33 @@ void setup() {
   while (!Serial) {
     // wait for serial completion init
   }
+  deviceManager.init();
 
-  dm.init();
-  displayDevice = (DisplayDevice *)dm.get(DISPLAY_DEVICE);
-  joystick = (JoystickDevice *)dm.get(JOYSTICK_DEVICE);
+#ifdef DISPLAY_ON
+  displayDevice = new DisplayDevice();
+  deviceManager.add(DEVICE_DISPLAY_ID, displayDevice);
+#endif
+
+#ifdef JOYSTICK_ON
+  joystick = new JoystickDevice();
   joystick->setCallback(&onInputTriggered);
+  deviceManager.add(DEVICE_JOYSTICK_ID, joystick);
+#endif
+
+#ifdef AUDIO_ON
+  deviceManager.add(DEVICE_AUDIO_ID, new AudioDevice());
+#endif
+
+#ifdef STORAGE_ON
+  deviceManager.add(DEVICE_STORAGE_ID, new StorageDevice());
+#endif
 
   appContainer.init();
   appContainer.start();
 }
 
 void loop() {
-  dm.update();
+  deviceManager.update();
 
   appContainer.update();
   appContainer.draw(displayDevice);

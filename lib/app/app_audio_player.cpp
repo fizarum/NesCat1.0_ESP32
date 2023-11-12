@@ -4,8 +4,8 @@
 
 void testSound();
 
-bool AudioPlayer::onHandleInput(JoystickDevice *joystick) {
-  if (joystick->isAPressed()) {
+bool AudioPlayer::onHandleInput(InputDevice *inputDevice) {
+  if (inputDevice->isAPressed()) {
     testSound();
   }
   return true;

@@ -8,7 +8,7 @@ class AudioPlayer : public App {
   void onDraw(DisplayDevice *display);
   void drawBackground(DisplayDevice *display);
   void drawTitle(DisplayDevice *display);
-  bool onHandleInput(JoystickDevice *joystick);
+  bool onHandleInput(InputDevice *inputDevice);
 
  public:
   AudioPlayer() {

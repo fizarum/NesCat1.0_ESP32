@@ -9,7 +9,7 @@
 
 char buff[24];
 
-bool Settings::onHandleInput(JoystickDevice *joystick) { return false; }
+bool Settings::onHandleInput(InputDevice *inputDevice) { return false; }
 
 uint8_t const firstOffset = 30;
 uint8_t const secondOffset = 160;
@@ -58,7 +58,8 @@ void Settings::onDraw(DisplayDevice *display) {
   display->drawString(secondOffset, lineYPos, buff);
   lineYPos += 20;
 
-  StorageDevice *storage = (StorageDevice *)DeviceManager::get(STORAGE_DEVICE);
+  StorageDevice *storage =
+      (StorageDevice *)DeviceManager::get(DEVICE_STORAGE_ID);
   if (storage != nullptr) {
     uint32_t total = storage->totalMBytes();
     uint32_t used = storage->usedMBytes();

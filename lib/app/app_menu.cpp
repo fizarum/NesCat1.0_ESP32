@@ -21,9 +21,9 @@ void Menu::init() {
   this->selectedMenu = 0;
 }
 
-bool Menu::onHandleInput(JoystickDevice *joystick) {
-  if (joystick->isLeftPressed()) {
-    debug("menu: left key pressed: %u", joystick->keysState());
+bool Menu::onHandleInput(InputDevice *inputDevice) {
+  if (inputDevice->isLeftPressed()) {
+    debug("menu: left key pressed: %u", inputDevice->keysState());
     this->selectedMenu -= 1;
     if (this->selectedMenu < 0) {
       this->selectedMenu = totalMenuItems - 1;
@@ -31,8 +31,8 @@ bool Menu::onHandleInput(JoystickDevice *joystick) {
     requestRedraw();
     return true;
   }
-  if (joystick->isRightPressed()) {
-    debug("menu: right key pressed: %u", joystick->keysState());
+  if (inputDevice->isRightPressed()) {
+    debug("menu: right key pressed: %u", inputDevice->keysState());
     this->selectedMenu += 1;
     if (this->selectedMenu >= totalMenuItems) {
       this->selectedMenu = 0;
@@ -41,8 +41,8 @@ bool Menu::onHandleInput(JoystickDevice *joystick) {
     return true;
   }
 
-  if (joystick->isXPressed()) {
-    debug("menu: is cross key pressed: %u", joystick->keysState());
+  if (inputDevice->isXPressed()) {
+    debug("menu: is cross key pressed: %u", inputDevice->keysState());
     uint8_t appId = getAppIdByPosition(selectedMenu);
     onMenuSelectedCallback(appId);
     return true;

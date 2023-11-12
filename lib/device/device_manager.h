@@ -4,10 +4,6 @@
 #include <map>
 
 #include "base_device.h"
-const uint8_t DISPLAY_DEVICE = 100;
-const uint8_t AUDIO_DEVICE = 101;
-const uint8_t JOYSTICK_DEVICE = 102;
-const uint8_t STORAGE_DEVICE = 103;
 
 class DeviceManager {
  private:

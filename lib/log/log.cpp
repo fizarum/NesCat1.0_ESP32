@@ -1,6 +1,6 @@
 #include "log.h"
 
-#include "../config.h"
+#include <configurator.h>
 
 #ifdef DEBUG_ON
 #include <HardwareSerial.h>
