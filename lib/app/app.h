@@ -24,7 +24,7 @@ class App {
   void (*onCloseListener)() = nullptr;
 
   /** app specific implementation of update */
-  virtual void onUpdate() = 0;
+  virtual void onUpdate(){};
 
   /** app specific implementation of draw */
   virtual void onDraw(DisplayDevice *display) = 0;
@@ -61,11 +61,25 @@ class App {
   void requestRedraw();
 
   /**
-  handles user input, returns:
-  true if command is consumed and can't be feed to another part
-  false if it's not accepted by application
-  and can be processed by someone else
-  */
+   * @brief By default, app should be closed by pressing "menu" button.
+   * This flag allows to prevent such behavior and application won't be closed
+   * in such cases. Its useful for some special app - menu, for example.
+   * If application has preventClosing = true, then it should call close()
+   * manually.
+   *
+   *
+   * @return true if application should behave as normal one
+   * @return false for cases when handling "menu" button should be avoided
+   */
+  virtual bool preventClosingByUser() { return false; }
+
+  /**
+   * @brief handles user input
+   *
+   * @returns true if command is consumed and can't be feed to another part
+   * false if it's not accepted by application
+   * and can be processed by someone else
+   */
   virtual bool handleInput(JoystickDevice *joystick) final;
 
   virtual ~App() {}

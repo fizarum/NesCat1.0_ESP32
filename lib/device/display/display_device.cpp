@@ -30,18 +30,18 @@ void DisplayDevice::onEnabled(bool enabled) {
   // TODO: implement backlight control
 }
 
-void DisplayDevice::fillScreen(uint32_t color) {
+void DisplayDevice::fillScreen(uint16_t color) {
   if (this->enabled() == false) return;
   tft.fillScreen(color);
 }
 void DisplayDevice::fillRectangle(int16_t x, int16_t y, int16_t width,
-                                  int16_t height, uint32_t color) {
+                                  int16_t height, uint16_t color) {
   if (this->enabled() == false) return;
   tft.fillRect(x, y, width, height, color);
 }
 
-void DisplayDevice::drawString(uint8_t x, uint8_t y, const char *c,
-                               uint32_t color, uint8_t textPivot) {
+void DisplayDevice::drawString(uint8_t x, uint8_t y, const char* c,
+                               uint16_t color, uint8_t textPivot) {
   if (this->enabled() == false) return;
 
   tft.setFreeFont(MAIN_FONT);

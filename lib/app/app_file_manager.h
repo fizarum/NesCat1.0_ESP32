@@ -10,9 +10,9 @@ class FileManager : public App {
 
  protected:
   void init();
-  void onUpdate();
   void onDraw(DisplayDevice *display);
   void drawBackground(DisplayDevice *display);
+  void drawTitle(DisplayDevice *display);
   bool onHandleInput(JoystickDevice *joystick);
   void onClose();
 

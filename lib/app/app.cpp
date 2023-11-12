@@ -50,14 +50,14 @@ bool App::handleInput(JoystickDevice *joystick) {
   if (isRunning() == false) {
     return false;
   }
-  // TODO: move menu app to app container and make it
-  // similar to other apps
 
-  // exit from any app by pressing on menu button
-  // if (joystick->isMenuPressed()) {
-  //   close();
-  //   return true;
-  // }
+  if (preventClosingByUser() == false) {
+    if (joystick->isMenuPressed()) {
+      this->close();
+      this->requestRedraw();
+      return true;
+    }
+  }
 
   return onHandleInput(joystick);
 }

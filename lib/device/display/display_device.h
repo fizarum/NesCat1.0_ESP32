@@ -18,12 +18,12 @@ class DisplayDevice : public BaseDevice {
   void onUpdate();
   void onEnabled(bool enabled);
 
-  void fillScreen(uint32_t color);
+  void fillScreen(uint16_t color);
   void fillRectangle(int16_t x, int16_t y, int16_t width, int16_t height,
-                     uint32_t color);
+                     uint16_t color);
 
-  void drawString(uint8_t x, uint8_t y, const char *c,
-                  uint32_t color = COLOR_WHITE, uint8_t textPivot = TL_DATUM);
+  void drawString(uint8_t x, uint8_t y, const char* c,
+                  uint16_t color = COLOR_WHITE, uint8_t textPivot = TL_DATUM);
   void setFontSize(uint8_t size);
 };
 

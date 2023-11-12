@@ -5,30 +5,23 @@
 void testSound();
 
 bool AudioPlayer::onHandleInput(JoystickDevice *joystick) {
-  if (joystick->isUpPressed()) {
-    requestRedraw();
-  }
-
-  if (joystick->isBPressed()) {
-    debug("audio player handles circle button - closing app");
-    close();
-  }
-
   if (joystick->isAPressed()) {
     testSound();
   }
   return true;
 }
 
-void AudioPlayer::onUpdate() {
-  //
-}
-
 void AudioPlayer::onDraw(DisplayDevice *display) {
-  display->fillScreen(COLOR_VIOLET);
-  display->drawString(64, 20, this->name, COLOR_WHITE);
   display->drawString(10, 60, "press \"A\" to play");
   // TODO: complete drawing content
+}
+
+void AudioPlayer::drawBackground(DisplayDevice *display) {
+  display->fillScreen(COLOR_VIOLET);
+}
+
+void AudioPlayer::drawTitle(DisplayDevice *display) {
+  display->drawString(64, 20, this->name, COLOR_WHITE);
 }
 
 // String ssid = "----";

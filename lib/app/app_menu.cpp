@@ -64,6 +64,7 @@ void Menu::attachOnMenuSelectedCallback(void (*callback)(uint8_t)) {
 void Menu::drawBackground(DisplayDevice *display) {
   display->fillScreen(COLOR_BLUE);
 }
+
 void Menu::drawTitle(DisplayDevice *display) {
   display->drawString(10, 10, "**debug ver**", COLOR_LIGHTGREY);
   display->drawString(190, 10, "78%", COLOR_LIGHTGREY);
