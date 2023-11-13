@@ -1,23 +1,29 @@
 #include "app.h"
 
-int App::getId() { return this->id; }
+void App::init(int id, const char *name) {
+  this->_id = id;
+  this->_name = name;
+  this->_running = false;
+}
 
-const char *App::getName() { return this->name; }
+int App::getId() { return this->_id; }
 
-bool App::isRunning() { return this->running; }
+const char *App::getName() { return this->_name; }
+
+bool App::isRunning() { return this->_running; }
 
 void App::open(void (*listener)()) {
-  if (this->running == true) return;
+  if (this->_running == true) return;
 
   this->onCloseListener = listener;
-  this->running = true;
+  this->_running = true;
   this->needsToRedraw = true;
-  init();
+  onOpen();
 }
 
 void App::close() {
-  if (this->running == false) return;
-  this->running = false;
+  if (this->_running == false) return;
+  this->_running = false;
   this->onClose();
   if (this->onCloseListener != nullptr) {
     this->onCloseListener();
@@ -26,12 +32,12 @@ void App::close() {
 }
 
 void App::update() {
-  if (this->running == false) return;
+  if (this->_running == false) return;
   onUpdate();
 }
 
 void App::draw(DisplayDevice *display) {
-  if (this->running == false) return;
+  if (this->_running == false) return;
   if (this->needsToBeRedrawn() == false) return;
   if (display == nullptr) return;
 

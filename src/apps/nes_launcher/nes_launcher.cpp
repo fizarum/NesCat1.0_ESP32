@@ -32,7 +32,7 @@ void onFileLoafingListener(uint8_t percents, bool isLast);
 //  uint8_t filesPerPage, uint8_t selectedFileIndex);
 // uint16_t getCursorPosOnScreen(uint8_t cursorPos);
 
-void NesLauncher::init() {
+void NesLauncher::onOpen() {
   _launcher = this;
   // preparePsRam();
   getMemoryStatus();
@@ -138,7 +138,7 @@ void NesLauncher::drawBackground(DisplayDevice *display) {
 }
 
 void NesLauncher::drawTitle(DisplayDevice *display) {
-  display->drawString(64, 20, this->name, COLOR_WHITE);
+  display->drawString(64, 20, getName(), COLOR_WHITE);
 }
 
 const char *NesLauncher::selectFile() {

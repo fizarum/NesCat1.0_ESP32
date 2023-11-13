@@ -1,12 +1,12 @@
 #include "app_file_manager.h"
 
+#include <device_manager.h>
 #include <filename.h>
 #include <log.h>
 
 #include <vector>
 
-#include "../device/device_manager.h"
-#include "../device/storage/storage_device.h"
+#include "devices/storage/storage_device.h"
 
 void _onFileFoundCallback(const char *fname);
 void _drawFileNames(DisplayDevice *display, uint16_t offset,
@@ -25,7 +25,7 @@ uint8_t _fileCountOnScreen = 0;
 // list of filenames
 std::vector<FileName *> _filenames = {};
 
-void FileManager::init() {
+void FileManager::onOpen() {
   StorageDevice *storage =
       (StorageDevice *)DeviceManager::get(DEVICE_STORAGE_ID);
   storage->getFilenames("/", _onFileFoundCallback);
@@ -66,7 +66,7 @@ void FileManager::drawBackground(DisplayDevice *display) {
 }
 
 void FileManager::drawTitle(DisplayDevice *display) {
-  display->drawString(64, 20, this->name, COLOR_WHITE);
+  display->drawString(64, 20, getName(), COLOR_WHITE);
 }
 
 void FileManager::onClose() {

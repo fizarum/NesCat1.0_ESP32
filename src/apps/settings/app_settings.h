@@ -1,7 +1,7 @@
 #ifndef app_settings_h
 #define app_settings_h
 
-#include "app.h"
+#include <app.h>
 
 class Settings : public App {
  private:
@@ -10,17 +10,11 @@ class Settings : public App {
   uint8_t powerSaveMode = 3;
 
  protected:
+  void onOpen();
   void onDraw(DisplayDevice *display);
   void drawBackground(DisplayDevice *display);
   void drawTitle(DisplayDevice *display);
   bool onHandleInput(InputDevice *inputDevice);
-
- public:
-  Settings() {
-    this->id = userSettingsId;
-    this->name = userSettingsTitle;
-    this->running = false;
-  }
 };
 
 #endif  // app_settings_h

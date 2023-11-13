@@ -21,7 +21,7 @@ void AudioPlayer::drawBackground(DisplayDevice *display) {
 }
 
 void AudioPlayer::drawTitle(DisplayDevice *display) {
-  display->drawString(64, 20, this->name, COLOR_WHITE);
+  display->drawString(64, 20, getName(), COLOR_WHITE);
 }
 
 // String ssid = "----";

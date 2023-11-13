@@ -20,17 +20,24 @@
 //*
 //********************************************************************************
 #include <Arduino.h>
-#include <app_container.h>
+#include <app_launcher.h>
 #include <configurator.h>
 #include <device_manager.h>
-#include <storage/storage_device.h>
 
+// apps
+#include "apps/fm/app_file_manager.h"
+#include "apps/nes_launcher/nes_launcher.h"
+#include "apps/player/app_audio_player.h"
+#include "apps/settings/app_settings.h"
+
+// devices
 #include "devices/audio/audio_device.h"
 #include "devices/display/ili9341_display.h"
 #include "devices/joystick/joystick_device.h"
+#include "devices/storage/storage_device.h"
 
 DeviceManager deviceManager;
-AppContainer appContainer;
+AppLauncher appLauncher;
 
 ILI9341Display *display = nullptr;
 JoystickDevice *joystick = nullptr;
@@ -63,15 +70,22 @@ void setup() {
   deviceManager.add(DEVICE_STORAGE_ID, new StorageDevice());
 #endif
 
-  appContainer.init();
-  appContainer.start();
+  appLauncher.init();
+
+  // add user apps
+  appLauncher.add(new FileManager(), "File Manager");
+  appLauncher.add(new Settings(), "Settings");
+  appLauncher.add(new AudioPlayer(), "Audio Player");
+  appLauncher.add(new NesLauncher(), "NES Emulator");
+
+  appLauncher.start();
 }
 
 void loop() {
   deviceManager.update();
 
-  appContainer.update();
-  appContainer.draw(display);
+  appLauncher.update();
+  appLauncher.draw(display);
 }
 
-void onInputTriggered() { appContainer.handleInput(joystick); }
+void onInputTriggered() { appLauncher.handleInput(joystick); }
