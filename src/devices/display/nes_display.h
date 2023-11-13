@@ -1,10 +1,11 @@
 #ifndef NES_DISPLAY_H
 #define NES_DISPLAY_H
 
+#include <configurator.h>
+#include <display_device/display_device.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
-#include "display_device.h"
 #include "nes_palettes.h"
 
 #define NES_SCREEN_WIDTH 256
@@ -16,8 +17,8 @@
  * x & y should be 0 in ideal case, but aspect ratio of screen is bigger (wider)
  * than emulator one, then: x > 0
  */
-#define X_POS_OF_VIRTUAL_SCREEN (DEFAULT_WIDTH - NES_SCREEN_WIDTH) / 2
-#define Y_POS_OF_VIRTUAL_SCREEN (DEFAULT_HEIGHT - NES_SCREEN_HEIGHT) / 2
+#define X_POS_OF_VIRTUAL_SCREEN (DISPLAY_WIDTH - NES_SCREEN_WIDTH) / 2
+#define Y_POS_OF_VIRTUAL_SCREEN (DISPLAY_HEIGHT - NES_SCREEN_HEIGHT) / 2
 
 extern QueueHandle_t vidQueue;
 
@@ -30,9 +31,8 @@ void drawPixel(uint8_t X, uint8_t Y, uint8_t colorIndex);
 
 void fillScreen(uint8_t colorIndex = UNIVERSAL_BKG_COLOR);
 
-void writeFrame(const uint16_t x, const uint16_t y,
-                const uint16_t width = DEFAULT_WIDTH,
-                const uint16_t height = DEFAULT_HEIGHT);
+void writeFrame(uint16_t x, uint16_t y, uint16_t width = DISPLAY_WIDTH,
+                uint16_t height = DISPLAY_HEIGHT);
 
 void drawLine(int16_t startX, int16_t startY, int16_t endX, int16_t endY,
               uint8_t color);

@@ -1,10 +1,10 @@
 #ifndef app_h
 #define app_h
 
+#include <display_device/display_device.h>
 #include <input_device/input_device.h>
 #include <stdint.h>
 
-#include "../device/display/display_device.h"
 #include "apps_registry.h"
 
 class App {

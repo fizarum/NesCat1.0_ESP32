@@ -1,20 +1,10 @@
-#ifndef DISPLAY_H
-#define DISPLAY_H
+#ifndef ILI9341_DISPLAY_H
+#define ILI9341_DISPLAY_H
 
-#define DEFAULT_WIDTH 320
-#define DEFAULT_HEIGHT 240
+#include <display_device/display_device.h>
 
-#define H_CENTER DEFAULT_WIDTH / 2
-#define V_CENTER DEFAULT_HEIGHT / 2
-
-#include <TFT_eSPI.h>
-
-#include "../base_device.h"
-#include "palette.h"
-
-class DisplayDevice : public BaseDevice {
+class ILI9341Display : public DisplayDevice {
  public:
-  const char* const getName();
   bool onInit();
   void onUpdate();
   void onEnabled(bool enabled);
@@ -28,4 +18,4 @@ class DisplayDevice : public BaseDevice {
   void setFontSize(uint8_t size);
 };
 
-#endif  // DISPLAY_H
+#endif  // ILI9341_DISPLAY_H
