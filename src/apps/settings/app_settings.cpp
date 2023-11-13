@@ -1,26 +1,30 @@
 #include "app_settings.h"
 
 #include <ESP.h>
+#include <device_manager.h>
 #include <log.h>
 #include <soc/rtc.h>
 
-#include "../device/device_manager.h"
-#include "../device/storage/storage_device.h"
+#include "devices/storage/storage_device.h"
 
 char buff[24];
-
-bool Settings::onHandleInput(InputDevice *inputDevice) { return false; }
-
+StorageDevice *_storage = nullptr;
 uint8_t const firstOffset = 30;
 uint8_t const secondOffset = 160;
 uint8_t lineYPos = 50;
+
+bool Settings::onHandleInput(InputDevice *inputDevice) { return false; }
+
+void Settings::onOpen() {
+  _storage = (StorageDevice *)DeviceManager::get(DEVICE_STORAGE_ID);
+}
 
 void Settings::drawBackground(DisplayDevice *display) {
   display->fillScreen(COLOR_DARKGREEN);
 }
 
 void Settings::drawTitle(DisplayDevice *display) {
-  display->drawString(64, 20, this->name);
+  display->drawString(64, 20, getName());
 }
 
 void Settings::onDraw(DisplayDevice *display) {
@@ -58,11 +62,9 @@ void Settings::onDraw(DisplayDevice *display) {
   display->drawString(secondOffset, lineYPos, buff);
   lineYPos += 20;
 
-  StorageDevice *storage =
-      (StorageDevice *)DeviceManager::get(DEVICE_STORAGE_ID);
-  if (storage != nullptr) {
-    uint32_t total = storage->totalMBytes();
-    uint32_t used = storage->usedMBytes();
+  if (_storage != nullptr) {
+    uint32_t total = _storage->totalMBytes();
+    uint32_t used = _storage->usedMBytes();
     float occupied = (float)used / (float)total;
 
     display->drawString(firstOffset, lineYPos, "SD size: ");

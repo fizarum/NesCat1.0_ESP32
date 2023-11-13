@@ -8,20 +8,19 @@
 #include "apps_registry.h"
 
 class App {
- private:
-  /** called on open() function call */
-  virtual void init() {}
-
  protected:
-  int id;
-  const char *name;
-  bool running;
+  int _id;
+  const char *_name;
+  bool _running;
 
   /** flag indicating if application needs to be redrawn */
   bool needsToRedraw = false;
 
   /** called on app's close() */
   void (*onCloseListener)() = nullptr;
+
+  /** called on open() function call */
+  virtual void onOpen() {}
 
   /** app specific implementation of update */
   virtual void onUpdate(){};
@@ -36,6 +35,7 @@ class App {
   virtual void onClose() {}
 
  public:
+  virtual void init(int id, const char *name) final;
   int getId();
   const char *getName();
   bool isRunning();

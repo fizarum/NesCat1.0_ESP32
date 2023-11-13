@@ -1,10 +1,9 @@
 #ifndef STORAGE_H
 #define STORAGE_H
 
+#include <base_device.h>
 #include <stdint.h>
 #include <stdlib.h>
-
-#include "../base_device.h"
 
 class StorageDevice : public BaseDevice {
  public:

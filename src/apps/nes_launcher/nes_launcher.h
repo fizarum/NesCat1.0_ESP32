@@ -12,13 +12,13 @@ class NesLauncher : public App {
   const uint8_t filesPerPage = 8;
   uint8_t pageCount = 0;
   int8_t cursorPos = 0;
-  char *fullPathToSelectedNes;
+  char fullPathToSelectedNes[256];
   bool isLoading = false;
 
-  void init();
   const char *selectFile();
 
  protected:
+  void onOpen();
   void onDraw(DisplayDevice *display);
   void drawBackground(DisplayDevice *display);
   void drawTitle(DisplayDevice *display);
@@ -26,13 +26,6 @@ class NesLauncher : public App {
   bool onHandleInput(InputDevice *inputDevice);
 
  public:
-  NesLauncher() {
-    this->id = nesEmulatorId;
-    this->name = emulatorTitle;
-    this->running = false;
-    this->fullPathToSelectedNes = new char[256];
-  }
-
   void resetLoadingStats(bool startLoading = false);
 };
 

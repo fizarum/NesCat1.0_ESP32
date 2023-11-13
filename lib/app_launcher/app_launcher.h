@@ -8,14 +8,22 @@
 
 #include <vector>
 
-class AppContainer {
+class AppLauncher {
  private:
-  std::vector<App *> apps;
-  Menu *menuApp = nullptr;
-  App *activeApp = nullptr;
+  std::vector<App *> _apps;
+  Menu _menuApp;
+  App *_activeApp = nullptr;
 
  public:
   void init();
+
+  /**
+   * @brief add user app to the app launcher
+   *
+   * @param app user application
+   * @param appName new application's name
+   */
+  void add(App *app, const char *appName);
   void start();
   void update();
   void draw(DisplayDevice *display);
