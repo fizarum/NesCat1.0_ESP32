@@ -14,3 +14,8 @@
 // #define AUDIO_ON
 #define JOYSTICK_ON
 #define STORAGE_ON
+
+// display options
+#define DISPLAY_WIDTH 320
+#define DISPLAY_HEIGHT 240
+#define DISPLAY_ORIENTATION 1

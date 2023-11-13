@@ -3,11 +3,10 @@
 
 #include <app.h>
 #include <app_menu.h>
-#include <input_device/input_device.h>  //"../device/controls/joystick_device.h"
+#include <display_device/display_device.h>
+#include <input_device/input_device.h>
 
 #include <vector>
-
-#include "../device/display/display_device.h"
 
 class AppContainer {
  private:

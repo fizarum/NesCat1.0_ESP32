@@ -61,8 +61,8 @@ void nescreen::fillScreen(uint8_t colorIndex) {
     }
 }
 
-void nescreen::writeFrame(const uint16_t x, const uint16_t y,
-                          const uint16_t width, const uint16_t height) {
+void nescreen::writeFrame(uint16_t x, uint16_t y, uint16_t width,
+                          uint16_t height) {
   uint8_t index;
   int16_t absYPos;
 

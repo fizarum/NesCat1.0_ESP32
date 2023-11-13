@@ -2,6 +2,9 @@
 
 #include <log.h>
 
+#define DISPLAY_H_CENTER DISPLAY_WIDTH / 2
+#define DISPLAY_V_CENTER DISPLAY_HEIGHT / 2
+
 uint8_t totalMenuItems = 4;
 
 // menu items
@@ -53,7 +56,8 @@ bool Menu::onHandleInput(InputDevice *inputDevice) {
 
 void Menu::onDraw(DisplayDevice *display) {
   MenuItem item = menuItems[selectedMenu];
-  display->drawString(H_CENTER, V_CENTER, item.title, COLOR_WHITE, MC_DATUM);
+  display->drawString(DISPLAY_H_CENTER, DISPLAY_V_CENTER, item.title,
+                      COLOR_WHITE, MC_DATUM);
   debug("menu item: %s", item.title);
 }
 

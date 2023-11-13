@@ -23,16 +23,16 @@
 #include <app_container.h>
 #include <configurator.h>
 #include <device_manager.h>
-#include <display/display_device.h>
 #include <storage/storage_device.h>
 
 #include "devices/audio/audio_device.h"
+#include "devices/display/ili9341_display.h"
 #include "devices/joystick/joystick_device.h"
 
 DeviceManager deviceManager;
 AppContainer appContainer;
 
-DisplayDevice *displayDevice = nullptr;
+ILI9341Display *display = nullptr;
 JoystickDevice *joystick = nullptr;
 
 void onInputTriggered();
@@ -45,8 +45,8 @@ void setup() {
   deviceManager.init();
 
 #ifdef DISPLAY_ON
-  displayDevice = new DisplayDevice();
-  deviceManager.add(DEVICE_DISPLAY_ID, displayDevice);
+  display = new ILI9341Display();
+  deviceManager.add(DEVICE_DISPLAY_ID, display);
 #endif
 
 #ifdef JOYSTICK_ON
@@ -71,7 +71,7 @@ void loop() {
   deviceManager.update();
 
   appContainer.update();
-  appContainer.draw(displayDevice);
+  appContainer.draw(display);
 }
 
 void onInputTriggered() { appContainer.handleInput(joystick); }
