@@ -8,6 +8,7 @@ class ILI9341Display : public DisplayDevice {
   bool onInit();
   void onUpdate();
   void onEnabled(bool enabled);
+  void onBacklightChanged(uint8_t value);
 
   void fillScreen(uint16_t color);
   void fillRectangle(int16_t x, int16_t y, int16_t width, int16_t height,

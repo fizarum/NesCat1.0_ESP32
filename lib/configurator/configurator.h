@@ -19,3 +19,13 @@
 #define DISPLAY_WIDTH 320
 #define DISPLAY_HEIGHT 240
 #define DISPLAY_ORIENTATION 1
+
+// backlight values
+// backlight off
+#define BL_LEVEL_OFF 0
+// min backlight
+#define BL_LEVEL_MIN 1
+// full light
+#define BL_LEVEL_MAX 255
+// default backlight value
+#define BL_LEVEL_DEFAULT 40
