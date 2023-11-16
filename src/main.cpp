@@ -23,8 +23,10 @@
 #include <app_launcher.h>
 #include <configurator.h>
 #include <device_manager.h>
+#include <scheduler.h>
 
 // apps
+#include "apps/demo/demo_app.h"
 #include "apps/fm/app_file_manager.h"
 #include "apps/nes_launcher/nes_launcher.h"
 #include "apps/player/app_audio_player.h"
@@ -53,6 +55,7 @@ void setup() {
 
 #ifdef DISPLAY_ON
   display = new ILI9341Display();
+  disableWDTForCore0();
   deviceManager.add(DEVICE_DISPLAY_ID, display);
 #endif
 
@@ -77,6 +80,7 @@ void setup() {
   appLauncher.add(new Settings(), "Settings");
   appLauncher.add(new AudioPlayer(), "Audio Player");
   appLauncher.add(new NesLauncher(), "NES Emulator");
+  appLauncher.add(new DemoApp(), "Demo App");
 
   appLauncher.start();
 }

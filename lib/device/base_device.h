@@ -14,6 +14,7 @@ class BaseDevice {
     this->_id = id;
     this->_name = name;
     this->_enabled = onInit();
+    this->onEnabled(this->_enabled);
     return this->_enabled;
   }
 

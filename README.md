@@ -32,6 +32,7 @@ Used libraries:
 - TFT_CS 5
 - TFT_DC 16
 - TFT_RST 17
+- TFT_BL 4
 
 ### SD
 
