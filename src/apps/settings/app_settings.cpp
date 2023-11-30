@@ -5,18 +5,26 @@
 #include <log.h>
 #include <soc/rtc.h>
 
-#include "devices/storage/storage_device.h"
-
 char buff[24];
-StorageDevice *_storage = nullptr;
+
 uint8_t const firstOffset = 30;
 uint8_t const secondOffset = 160;
 uint8_t lineYPos = 50;
 
-bool Settings::onHandleInput(InputDevice *inputDevice) { return false; }
+bool Settings::onHandleInput(InputDevice *inputDevice) {
+  if (inputDevice->isUpPressed()) {
+    increaseDisplayBacklight(5);
+    return true;
+  }
+  if (inputDevice->isDownPressed()) {
+    decreaseDisplayBacklight(5);
+    return true;
+  }
+  return true;
+}
 
 void Settings::onOpen() {
-  _storage = (StorageDevice *)DeviceManager::get(DEVICE_STORAGE_ID);
+  this->_storage = (StorageDevice *)DeviceManager::get(DEVICE_STORAGE_ID);
 }
 
 void Settings::drawBackground(DisplayDevice *display) {
@@ -28,6 +36,10 @@ void Settings::drawTitle(DisplayDevice *display) {
 }
 
 void Settings::onDraw(DisplayDevice *display) {
+  if (this->_display == nullptr) {
+    this->_display = display;
+  }
+
   lineYPos = 50;
 
   display->drawString(firstOffset, lineYPos, "Model: ");
@@ -76,4 +88,24 @@ void Settings::onDraw(DisplayDevice *display) {
     sprintf(buff, "%2.2f %%", occupied);
     display->drawString(secondOffset, lineYPos, buff);
   }
+}
+
+void Settings::increaseDisplayBacklight(uint8_t step) {
+  uint8_t value = this->_display->getBacklightValue();
+  if (value > BL_LEVEL_MAX - step) {
+    value = BL_LEVEL_MAX;
+  } else {
+    value += step;
+  }
+  this->_display->setBackLightValue(value);
+}
+
+void Settings::decreaseDisplayBacklight(uint8_t step) {
+  uint8_t value = this->_display->getBacklightValue();
+  if (value < BL_LEVEL_MIN + step) {
+    value = BL_LEVEL_MIN;
+  } else {
+    value -= step;
+  }
+  this->_display->setBackLightValue(value);
 }

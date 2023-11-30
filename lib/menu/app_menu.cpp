@@ -2,9 +2,6 @@
 
 #include <log.h>
 
-#define DISPLAY_H_CENTER DISPLAY_WIDTH / 2
-#define DISPLAY_V_CENTER DISPLAY_HEIGHT / 2
-
 void (*onMenuSelectedCallback)(uint8_t appId);
 
 void Menu::setAppData(std::vector<App *> *apps) {
