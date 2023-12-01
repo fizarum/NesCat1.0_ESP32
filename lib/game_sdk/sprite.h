@@ -27,6 +27,8 @@ class Sprite {
     this->height = height;
   }
 
+  ~Sprite() { pixels.clear(); }
+
   uint8_t getWidth() { return width; }
   uint8_t getHeight() { return height; }
   int16_t getLeft() { return left; }

@@ -118,13 +118,13 @@ bool StorageDevice::hasSuchExtension(const char* filename,
   //+1 to copy only extension
   strcpy(_temp_str, substring + 1);
 
-  // make a lover case of it
-  toLowerCase(_temp_str);
+  // make a lower case of it
+  strToLowerCase(_temp_str);
 
   // copy extension to prevent its modification as well
   strcpy(_small_buffer, extension);
-  // and lover case for it too
-  toLowerCase(_small_buffer);
+  // and lower case for it too
+  strToLowerCase(_small_buffer);
 
   return strstr(_temp_str, _small_buffer) != nullptr;
 }

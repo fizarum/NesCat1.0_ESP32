@@ -50,8 +50,8 @@ bool bit::isBitSet(uint16_t source, uint8_t position) {
   return (source & mask) == mask;
 }
 
-void toLowerCase(char *string) {
-  char *temp = string;
+void strToLowerCase(char *str) {
+  char *temp = str;
   while (*temp) {
     *temp = tolower(*temp);
     temp++;

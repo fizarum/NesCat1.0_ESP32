@@ -14,9 +14,9 @@ bool isBitSet(uint16_t source, uint8_t position);
  * @brief modify current string by changing all
  * letters to lower case
  *
- * @param string
+ * @param str string to transform
  */
-void toLowerCase(char *string);
+void strToLowerCase(char *str);
 
 void getMemoryStatus();
 void getPsRamStatus(uint32_t psramSize);

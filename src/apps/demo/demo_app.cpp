@@ -6,29 +6,33 @@
 
 #include "canvas.h"
 #include "demo_app_settings.h"
+#include "scene_holder.h"
 
 DisplayDevice *_display = nullptr;
 QueueHandle_t queue;
 TaskHandle_t videoTaskHandler;
 TaskHandle_t updateTaskHandler;
 //
-Sprite *sprite;
-Canvas *canvas;
-
-uint32_t renderDelay = toMillis(33);
-uint32_t updateDelay = toMillis(50);
+Sprite *playerSprite = nullptr;
+SceneHolder *sceneHolder = nullptr;
 
 inline void drawVirtualPixel(uint16_t x, uint16_t y, Color color);
 void renderTask(void *params);
 void writeFrameTask(void *params);
 
 void printDebugInfo();
-void setupSprite();
+void printQueueStatus(const char *message = "");
+
+void setupPlayerSprite();
+void setupSimpleSprite();
 
 void DemoApp::onOpen() {
   queue = xQueueCreate(1, sizeof(Canvas));
-  canvas = new Canvas();
-  setupSprite();
+  sceneHolder = new SceneHolder();
+
+  setupPlayerSprite();
+  setupSimpleSprite();
+
   if (queue != nullptr) {
     createTaskOnCore0(&renderTask, "render_task", 10000, RENDER_TASK_PRIORITY,
                       &videoTaskHandler);
@@ -49,13 +53,13 @@ void DemoApp::onDraw(DisplayDevice *display) {
 
 bool DemoApp::onHandleInput(InputDevice *inputDevice) {
   if (inputDevice->isLeftPressed()) {
-    sprite->moveBy(-1, 0);
+    playerSprite->moveBy(-1, 0);
   } else if (inputDevice->isRightPressed()) {
-    sprite->moveBy(1, 0);
+    playerSprite->moveBy(1, 0);
   } else if (inputDevice->isUpPressed()) {
-    sprite->moveBy(0, -1);
+    playerSprite->moveBy(0, -1);
   } else if (inputDevice->isDownPressed()) {
-    sprite->moveBy(0, 1);
+    playerSprite->moveBy(0, 1);
   }
 
   return true;
@@ -74,13 +78,14 @@ void renderTask(void *params) {
   uint16_t x = 0;
   uint16_t y = 0;
   for (;;) {
-    if (xQueueReceive(queue, canvas, portMAX_DELAY) == pdPASS) {
+    if (xQueueReceive(queue, sceneHolder->canvas, portMAX_DELAY) == pdPASS) {
       if (_display != nullptr) {
         x = 0;
         y = 0;
 
-        for (auto index = 0; index < canvas->getPixelsCount(); ++index) {
-          drawVirtualPixel(x, y, canvas->getPixel(index));
+        for (auto index = 0; index < sceneHolder->canvas->getPixelsCount();
+             ++index) {
+          drawVirtualPixel(x, y, sceneHolder->canvas->getPixel(index));
 
           x += PIXEL_SIZE;
           if (x == DISPLAY_WIDTH) {
@@ -91,7 +96,7 @@ void renderTask(void *params) {
       }
     }
     // vPortYield();
-    vTaskDelay(renderDelay);
+    vTaskDelay(toMillis(33));
   }
   vTaskDelete(videoTaskHandler);
 }
@@ -101,23 +106,12 @@ void writeFrameTask(void *param) {
   ColorIndex pixelData = 0;
   for (;;) {
     index = 0;
-    // pixelData = 0;
-    if (_display != nullptr) {
-      for (uint8_t y = 0; y < HEIGHT_IN_V_PIXELS; ++y) {
-        for (uint8_t x = 0; x < WIDTH_IN_V_PIXELS; ++x) {
-          if (sprite->contains(x, y) == true) {
-            pixelData = sprite->getPixel(x, y);
-            canvas->setPixel(index, pixelData);
-          } else {
-            canvas->setPixel(index, 0);
-          }
-          ++index;
-        }
-      }
+    sceneHolder->bakeCanvas();
+    if (xQueueSend(queue, sceneHolder->canvas, 100) == pdPASS) {
+      vTaskDelay(toMillis(50));
+    } else {
+      debug("failed to send data!");
     }
-
-    xQueueSend(queue, canvas, 0);
-    vTaskDelay(updateDelay);
     // vPortYield();
   }
   vTaskDelete(updateTaskHandler);
@@ -129,10 +123,18 @@ inline void drawVirtualPixel(uint16_t x, uint16_t y, Color color) {
   }
 }
 
-void setupSprite() {
+void setupPlayerSprite() {
+  playerSprite = sceneHolder->createSprite(2, 2);
   ColorIndex pixels[] = {3, 3, 2, 2};
-  sprite = new Sprite(2, 2);
-  sprite->setPixels(pixels, 4);
+  playerSprite->setPixels(pixels, 4);
+}
+
+void setupSimpleSprite() {
+  Sprite *sprite = sceneHolder->createSprite(4, 4);
+  // tree sprite, 4x4 pixels
+  ColorIndex pixels[] = {0, 5, 5, 0, 5, 5, 5, 5, 5, 5, 5, 5, 0, 10, 10, 0};
+  sprite->setPixels(pixels, 16);
+  sprite->moveBy(5, 5);
 }
 
 void printDebugInfo() {
