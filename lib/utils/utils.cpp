@@ -33,6 +33,14 @@ uint16_t bit::setBit16(uint16_t source, uint8_t position, bool isSet) {
   }
 }
 
+uint32_t bit::setBit32(uint32_t source, uint8_t position, bool isSet) {
+  if (isSet == true) {
+    return source | (1UL << position);
+  } else {
+    return source & (~(1UL << position));
+  }
+}
+
 /**
  * @brief Reset (to 0) the bit in byte
  *
@@ -47,6 +55,11 @@ uint8_t bit::resetBit(uint8_t source, uint8_t position) {
 
 bool bit::isBitSet(uint16_t source, uint8_t position) {
   uint16_t mask = (1UL << position);
+  return (source & mask) == mask;
+}
+
+bool bit::isBitSet32(uint32_t source, uint8_t position) {
+  uint32_t mask = (1UL << position);
   return (source & mask) == mask;
 }
 

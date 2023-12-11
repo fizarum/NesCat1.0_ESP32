@@ -6,7 +6,11 @@
 
 #include <array>
 
-#define PALETTE_SIZE 32
+#define PALETTE_SIZE UINT8_MAX
+
+#define COLOR_INDEX_UNDEF 255
+#define COLOR_INDEX_TRANSPARENT 200
+#define COLOR_INDEX_BACKGROUND 201
 
 /**
  * @brief color in RGB565 format
@@ -18,12 +22,22 @@ typedef uint16_t Color;
  */
 typedef uint8_t ColorIndex;
 
+static inline bool ifColorIndexHasColor(ColorIndex colorIndex) {
+  return colorIndex != COLOR_INDEX_UNDEF &&
+         colorIndex != COLOR_INDEX_TRANSPARENT;
+}
+
 class Palette {
  private:
   std::array<Color, PALETTE_SIZE> palette = {};
 
  public:
-  Palette() { palette.fill(COLOR_BLACK); }
+  Palette(Color backgroundColor = COLOR_BLACK,
+          Color transparentColor = COLOR_BLACK) {
+    palette[COLOR_INDEX_BACKGROUND] = backgroundColor;
+    palette[COLOR_INDEX_TRANSPARENT] = transparentColor;
+  }
+
   inline Color getColor(ColorIndex index) { return palette[index]; }
   inline void setColor(ColorIndex index, Color color) {
     palette[index] = color;
