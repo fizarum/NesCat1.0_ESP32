@@ -28,25 +28,19 @@
  * array<uint32_t, 5> 5 numbers of uint32_t
  */
 
-uint32_t static setBit(uint32_t source, uint8_t position, bool isSet = true);
-bool static isBitSet(uint32_t source, uint8_t position);
-
-struct Point {
-  uint8_t x;
-  uint8_t y;
-};
-
 // structure representing line of max 160 pixels (bytes of each Segment)
-struct Line {
+class Line {
+ private:
   uint32_t first = 0;
   uint32_t second = 0;
   uint32_t third = 0;
   uint32_t fourth = 0;
   uint32_t fifth = 0;
-};
 
-void setPixelOnLine(Line *line, uint8_t pos);
-bool isPixelSetOnLine(Line *line, uint8_t pos);
+ public:
+  void setPixelOnLine(uint8_t pos);
+  bool isPixelSetOnLine(uint8_t pos);
+};
 
 class DurtyRegionTracker {
  private:
@@ -71,7 +65,7 @@ class DurtyRegionTracker {
     for (uint8_t y = top; y <= bottom; ++y) {
       Line *line = &(lines[y]);
       for (uint8_t x = left; x <= right; ++x) {
-        setPixelOnLine(line, x);
+        line->setPixelOnLine(x);
       }
     }
     isAtLeastOnePixelDurty = true;
@@ -81,7 +75,7 @@ class DurtyRegionTracker {
     for (uint8_t y = 0; y < HEIGHT_IN_V_PIXELS; ++y) {
       Line *line = &(lines[y]);
       for (uint8_t x = 0; x < WIDTH_IN_V_PIXELS; ++x) {
-        if (isPixelSetOnLine(line, x) == true) {
+        if (line->isPixelSetOnLine(x) == true) {
           callback(x, y);
         }
       }

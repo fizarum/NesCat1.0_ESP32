@@ -1,30 +1,30 @@
 #include "durty_region_tracker.h"
 
-void setPixelOnLine(Line *line, uint8_t pos) {
+void Line::setPixelOnLine(uint8_t pos) {
   if (pos < 32) {
-    line->first = bit::setBit32(line->first, pos);
+    this->first = bit::setBit32(this->first, pos);
     return;
   }
   if (pos < 64) {
-    line->second = bit::setBit32(line->second, pos);
+    this->second = bit::setBit32(this->second, pos);
     return;
   }
   if (pos < 96) {
-    line->third = bit::setBit32(line->third, pos);
+    this->third = bit::setBit32(this->third, pos);
     return;
   }
   if (pos < 128) {
-    line->fourth = bit::setBit32(line->fourth, pos);
+    this->fourth = bit::setBit32(this->fourth, pos);
     return;
   }
 
-  line->fifth = bit::setBit32(line->fifth, pos);
+  this->fifth = bit::setBit32(this->fifth, pos);
 }
 
-bool isPixelSetOnLine(Line *line, uint8_t pos) {
-  if (pos < 32) return bit::isBitSet32(line->first, pos);
-  if (pos < 64) return bit::isBitSet32(line->second, pos);
-  if (pos < 96) return bit::isBitSet32(line->third, pos);
-  if (pos < 128) return bit::isBitSet32(line->fourth, pos);
-  return bit::isBitSet32(line->fifth, pos);
+bool Line::isPixelSetOnLine(uint8_t pos) {
+  if (pos < 32) return bit::isBitSet32(this->first, pos);
+  if (pos < 64) return bit::isBitSet32(this->second, pos);
+  if (pos < 96) return bit::isBitSet32(this->third, pos);
+  if (pos < 128) return bit::isBitSet32(this->fourth, pos);
+  return bit::isBitSet32(this->fifth, pos);
 }
