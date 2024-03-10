@@ -1,8 +1,12 @@
 #include "utils.h"
 
+#ifndef PORT_SDK
 #include <Esp.h>
 #include <Wire.h>
 #include <log.h>
+#else
+#include <ctype.h>
+#endif  // PORT_SDK
 
 #define MAXFILENAME_LENGTH 64
 
@@ -71,6 +75,7 @@ void strToLowerCase(char *str) {
   }
 }
 
+#ifndef PORT_SDK
 void getMemoryStatus() {
   debug("--------------------------------");
   debug("TOTAL HEAP: %u", ESP.getHeapSize());
@@ -80,6 +85,9 @@ void getMemoryStatus() {
   debug("--------------------------------");
 }
 
+#endif  // PORT_SDK
+
+#ifndef PORT_SDK
 // uint32_t size = ESP.getPsramSize();
 void getPsRamStatus(uint32_t psramSize) {
   debug("--------------------------------");
@@ -106,6 +114,8 @@ uint8_t findI2CDevice(const uint8_t startAddress) {
   debug("device not found in i2c port");
   return 0;
 }
+
+#endif  // PORT_SDK
 
 uint32_t alignTo(uint32_t value, uint16_t blockSize) {
   uint32_t blockCounts = value / blockSize;

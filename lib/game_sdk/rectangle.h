@@ -6,13 +6,16 @@
 #include "sdk_configurator.h"
 
 class Rectangle {
- public:
+ private:
   int16_t left;
   int16_t top;
   int16_t right;
   int16_t bottom;
   uint8_t width;
   uint8_t height;
+
+ public:
+  Rectangle() : Rectangle(0, 0, 0, 0) {}
 
   Rectangle(uint8_t width, uint8_t height, uint8_t left = 0, uint8_t top = 0) {
     this->left = left;
@@ -60,7 +63,7 @@ class Rectangle {
     this->top = top;
     this->right = right;
     this->bottom = bottom;
-    this->width = left - right + 1;
+    this->width = right - left + 1;
     this->height = bottom - top + 1;
   }
 

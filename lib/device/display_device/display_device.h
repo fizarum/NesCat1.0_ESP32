@@ -1,9 +1,9 @@
 #ifndef DISPLAY_DEVICE_H
 #define DISPLAY_DEVICE_H
 
-#include <base_device.h>
 #include <stdint.h>
 
+#include "../base_device.h"
 #include "datum.h"
 #include "palette.h"
 

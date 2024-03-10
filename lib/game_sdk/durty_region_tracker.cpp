@@ -28,3 +28,25 @@ bool Line::isPixelSetOnLine(uint8_t pos) {
   if (pos < 128) return bit::isBitSet32(this->fourth, pos);
   return bit::isBitSet32(this->fifth, pos);
 }
+
+void Line::resetLine() {
+  this->first = 0;
+  this->second = 0;
+  this->third = 0;
+  this->fourth = 0;
+  this->fifth = 0;
+}
+
+#ifdef PORT_SDK
+const uint8_t _buff_len = 160;
+char buff[_buff_len];
+
+void Line::printLine(char durtyPixel) {
+  memset(buff, 0, _buff_len);
+  for (uint8_t pos = 0; pos <= _buff_len; ++pos) {
+    buff[pos] = this->isPixelSetOnLine(pos) == true ? durtyPixel : ' ';
+  }
+  printf("%s\n", buff);
+}
+
+#endif  // PORT_SDK

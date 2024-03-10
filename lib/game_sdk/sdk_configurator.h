@@ -1,7 +1,7 @@
 #ifndef GAME_SDK_CONFIGURATOR_H
 #define GAME_SDK_CONFIGURATOR_H
 
-#include "configurator.h"
+#include "../configurator/configurator.h"
 
 /*
  * Virtual pixel size. Bigger pixel size - better performance

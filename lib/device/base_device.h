@@ -1,7 +1,7 @@
 #ifndef BASE_DEVICE_H
 #define BASE_DEVICE_H
 
-#include <configurator.h>
+#include "../configurator/configurator.h"
 
 class BaseDevice {
  private:

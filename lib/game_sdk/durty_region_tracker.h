@@ -2,10 +2,15 @@
 #define SDK_DURTY_REGION_TRACKER_H
 
 #include <stdint.h>
-#include <utils.h>
+#include <string.h>
+
+#ifdef PORT_SDK
+#include <stdio.h>
+#endif  // PORT_SDK
 
 #include <array>
 
+#include "../utils/utils.h"
 #include "sdk_configurator.h"
 
 /**
@@ -40,6 +45,10 @@ class Line {
  public:
   void setPixelOnLine(uint8_t pos);
   bool isPixelSetOnLine(uint8_t pos);
+  void resetLine();
+#ifdef PORT_SDK
+  void printLine(char durtyPixel = 219);
+#endif
 };
 
 class DurtyRegionTracker {
@@ -80,6 +89,36 @@ class DurtyRegionTracker {
         }
       }
     }
+  }
+
+  char seg32[32];
+  const char vSeparator = 179;
+  const char separator = 194;
+  const char segItem = 196;
+
+  void fillString(char *buff, size_t len, char symbol) {
+    memset(buff, 0, len);
+    memset(buff, symbol, len - 1);
+  }
+
+  void printDebugInfo() {
+#ifdef PORT_SDK
+
+    if (isAtLeastOnePixelDurty == false) return;
+
+    fillString(seg32, 32, segItem);
+
+    printf("%s%c%s%c%s%c%s%c%s\n", seg32, separator, seg32, separator, seg32,
+           separator, seg32, separator, seg32);
+    // lets print only 40 fist lines
+    for (uint8_t lineNum = 0; lineNum < 40; ++lineNum) {
+      Line *line = &(lines[lineNum]);
+      line->printLine();
+    }
+
+    printf("%s%c%s%c%s%c%s%c%s\n", seg32, separator, seg32, separator, seg32,
+           separator, seg32, separator, seg32);
+#endif  // PORT_SDK
   }
 };
 

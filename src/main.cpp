@@ -14,7 +14,6 @@
 //*   - ESP32-WROVER PSRAM module support
 //*   - MicroSD card support
 //*   - 320*240 2.8" LCD ILI9341 display
-//*   - Composite TV OUT Video PAL
 //*   - I2S AUDIO support PCM5102 module
 //*   - huge NES ROMs up to 512kB (read from FLASH)
 //*

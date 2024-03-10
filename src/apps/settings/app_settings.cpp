@@ -5,8 +5,6 @@
 #include <log.h>
 #include <soc/rtc.h>
 
-char buff[24];
-
 uint8_t const firstOffset = 30;
 uint8_t const secondOffset = 160;
 uint8_t lineYPos = 50;
@@ -47,31 +45,32 @@ void Settings::onDraw(DisplayDevice *display) {
   lineYPos += 20;
 
   display->drawString(firstOffset, lineYPos, "Revision: ");
-  sprintf(buff, "%d", ESP.getChipRevision());
-  display->drawString(secondOffset, lineYPos, buff);
+  sprintf(this->buff, "%d", ESP.getChipRevision());
+  display->drawString(secondOffset, lineYPos, this->buff);
   lineYPos += 20;
 
   display->drawString(firstOffset, lineYPos, "Cores: ");
-  sprintf(buff, "%d", ESP.getChipCores());
-  display->drawString(secondOffset, lineYPos, buff);
+  sprintf(this->buff, "%d", ESP.getChipCores());
+  display->drawString(secondOffset, lineYPos, this->buff);
   lineYPos += 20;
 
   // Get current CPU clock configuration
   rtc_cpu_freq_config_t conf;
   rtc_clk_cpu_freq_get_config(&conf);
   display->drawString(firstOffset, lineYPos, "CPU Speed: ");
-  sprintf(buff, "%d Mhz", conf.freq_mhz);
-  display->drawString(secondOffset, lineYPos, buff);
+  sprintf(this->buff, "%d Mhz", conf.freq_mhz);
+  display->drawString(secondOffset, lineYPos, this->buff);
   lineYPos += 20;
 
   display->drawString(firstOffset, lineYPos, "Flash size: ");
-  sprintf(buff, "%d MB", ESP.getFlashChipSize() / (1024 * 1024));
-  display->drawString(secondOffset, lineYPos, buff);
+  sprintf(this->buff, "%d MB", ESP.getFlashChipSize() / (1024 * 1024));
+  display->drawString(secondOffset, lineYPos, this->buff);
   lineYPos += 20;
 
   display->drawString(firstOffset, lineYPos, "RAM: ");
-  sprintf(buff, "%d/%d Kb", ESP.getFreeHeap() / 1024, ESP.getHeapSize() / 1024);
-  display->drawString(secondOffset, lineYPos, buff);
+  sprintf(this->buff, "%d/%d Kb", ESP.getFreeHeap() / 1024,
+          ESP.getHeapSize() / 1024);
+  display->drawString(secondOffset, lineYPos, this->buff);
   lineYPos += 20;
 
   if (_storage != nullptr) {
@@ -80,13 +79,13 @@ void Settings::onDraw(DisplayDevice *display) {
     float occupied = (float)used / (float)total;
 
     display->drawString(firstOffset, lineYPos, "SD size: ");
-    sprintf(buff, "%u Mb", total);
-    display->drawString(secondOffset, lineYPos, buff);
+    sprintf(this->buff, "%u Mb", total);
+    display->drawString(secondOffset, lineYPos, this->buff);
     lineYPos += 20;
 
     display->drawString(firstOffset, lineYPos, "SD used: ");
-    sprintf(buff, "%2.2f %%", occupied);
-    display->drawString(secondOffset, lineYPos, buff);
+    sprintf(this->buff, "%2.2f %%", occupied);
+    display->drawString(secondOffset, lineYPos, this->buff);
   }
 }
 

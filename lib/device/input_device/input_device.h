@@ -1,8 +1,9 @@
 #ifndef INPUT_DEVICE_H
 #define INPUT_DEVICE_H
 
-#include <base_device.h>
 #include <stdint.h>
+
+#include "../base_device.h"
 
 class InputDevice : public BaseDevice {
  public:

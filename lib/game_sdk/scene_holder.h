@@ -49,6 +49,8 @@ class SceneHolder {
    */
   void setDurtyRegion(Rectangle *region, uint8_t extraSpace = 0);
   void removeAllDurtyRegions();
+
+  void drawDurtyRegion();
 };
 
 #endif  // GAME_SDK_CONTROLLER_H

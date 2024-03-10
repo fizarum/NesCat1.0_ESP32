@@ -1,10 +1,11 @@
 #ifndef GAME_SDK_PALETTE_H
 #define GAME_SDK_PALETTE_H
 
-#include <display_device/palette.h>
 #include <stdint.h>
 
 #include <array>
+
+#include "../device/display_device/palette.h"
 
 #define PALETTE_SIZE UINT8_MAX
 

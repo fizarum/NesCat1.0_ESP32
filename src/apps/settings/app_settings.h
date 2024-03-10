@@ -10,6 +10,8 @@ class Settings : public App {
   uint8_t muteSound = 2;
   uint8_t powerSaveMode = 3;
 
+  char buff[24];
+
   StorageDevice *_storage = nullptr;
   DisplayDevice *_display = nullptr;
 

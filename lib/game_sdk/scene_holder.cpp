@@ -1,7 +1,5 @@
 #include "scene_holder.h"
 
-#include "utils.h"
-
 void setupDefaultPalette(Palette *palette);
 
 SceneHolder *__self = nullptr;
@@ -9,8 +7,8 @@ void (*__callback)(uint8_t x, uint8_t y, Color color) = nullptr;
 
 SceneHolder::SceneHolder(void (*onPixelUpdatedCallback)(uint8_t x, uint8_t y,
                                                         Color color)) {
-  palette = new Palette();
-  tracker = new DurtyRegionTracker();
+  this->palette = new Palette();
+  this->tracker = new DurtyRegionTracker();
 
   setupDefaultPalette(palette);
   __callback = onPixelUpdatedCallback;
@@ -125,15 +123,17 @@ void SceneHolder::setDurtyRegion(uint8_t left, uint8_t top, uint8_t right,
 
 void SceneHolder::setDurtyRegion(Rectangle *region, uint8_t extraSpace) {
   // TODO: complete bouds checkings
-  uint8_t left = region->getVisibleLeft() - extraSpace;
-  uint8_t top = region->getVisibleTop() - extraSpace;
-  uint8_t right = region->getVisibleRight() + extraSpace;
-  uint8_t bottom = region->getVisibleBottom() + extraSpace;
+  uint8_t left = region->getVisibleLeft();
+  uint8_t top = region->getVisibleTop();
+  uint8_t right = region->getVisibleRight();
+  uint8_t bottom = region->getVisibleBottom();
 
   tracker->setDurtyRegion(left, top, right, bottom);
 }
 
 void SceneHolder::removeAllDurtyRegions() { tracker->resetDurtyRegions(); }
+
+void SceneHolder::drawDurtyRegion() { tracker->printDebugInfo(); }
 
 void setupDefaultPalette(Palette *palette) {
   palette->setColor(0, COLOR_BLACK);
