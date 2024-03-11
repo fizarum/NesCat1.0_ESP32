@@ -5,22 +5,26 @@
 #include <vector>
 
 #include "durty_region_tracker.h"
+#include "game_object.h"
 #include "rectangle.h"
 #include "sprite.h"
 
-typedef uint16_t SpriteId;
-
 class SceneHolder {
  private:
-  std::map<SpriteId, Sprite *> spritesWithId = {};
-  std::map<SpriteId, Sprite *> backgroundSpritesWithId = {};
+  std::map<ObjectId, Sprite *> spritesWithId = {};
+  std::map<ObjectId, Sprite *> backgroundSpritesWithId = {};
+  std::map<ObjectId, GameObject *> gameObjectsWithId = {};
+
   Palette *palette;
   DurtyRegionTracker *tracker;
-  SpriteId _lastAssignedIdForSprite = 0;
-  SpriteId _lastAssignedIdForBackgroundSprite = 0;
+  ObjectId _lastAssignedIdForSprite = 0;
+  ObjectId _lastAssignedIdForBackgroundSprite = 0;
+  ObjectId _lastAssignedIdForGameObject = 0;
+
   Sprite *createPlainSprite(uint8_t width, uint8_t height, ColorIndex pixels[],
                             size_t pixelsCount, uint8_t positionX,
                             uint8_t positionY);
+  ColorIndex findPixelInGameObjects(uint8_t x, uint8_t y);
   ColorIndex findPixelInSprites(uint8_t x, uint8_t y);
   ColorIndex findPixelInBackgroundSprites(uint8_t x, uint8_t y);
 
@@ -29,14 +33,30 @@ class SceneHolder {
                                              Color color));
   ~SceneHolder();
 
-  SpriteId createSprite(uint8_t width, uint8_t height, ColorIndex pixels[],
+  ObjectId createSprite(uint8_t width, uint8_t height, ColorIndex pixels[],
                         size_t pixelsCount, uint8_t positionX = 0,
                         uint8_t positionY = 0);
-  SpriteId createBackgroundSprite(uint8_t width, uint8_t height,
+  ObjectId createBackgroundSprite(uint8_t width, uint8_t height,
                                   ColorIndex pixels[], size_t pixelsCount,
                                   uint8_t positionX = 0, uint8_t positionY = 0);
 
-  void moveSpriteBy(SpriteId spriteId, int8_t x, int8_t y);
+  /**
+   * @brief Create a Game Object object
+   *
+   * @param width
+   * @param height
+   * @param pixels
+   * @param pixelsCount
+   * @param isCollidable
+   * @param isGravitable
+   * @return ObjectId
+   */
+  ObjectId createGameObject(uint8_t width, uint8_t height, ColorIndex pixels[],
+                            size_t pixelsCount, bool isCollidable = false,
+                            bool isGravitable = false);
+
+  void moveSpriteBy(ObjectId spriteId, int8_t x, int8_t y);
+  void moveGameObjectBy(ObjectId id, int8_t x, int8_t y);
 
   void bakeCanvas();
   Color calculatePixel(uint8_t x, uint8_t y);

@@ -4,6 +4,7 @@ void setupDefaultPalette(Palette *palette);
 
 SceneHolder *__self = nullptr;
 void (*__callback)(uint8_t x, uint8_t y, Color color) = nullptr;
+void __onEachDurtyPixel(uint8_t x, uint8_t y);
 
 SceneHolder::SceneHolder(void (*onPixelUpdatedCallback)(uint8_t x, uint8_t y,
                                                         Color color)) {
@@ -32,11 +33,11 @@ Sprite *SceneHolder::createPlainSprite(uint8_t width, uint8_t height,
   if (positionX != 0 || positionY != 0) {
     sprite->moveTo(positionX, positionY);
   }
-  setDurtyRegion(sprite->getBounds());
+  setDurtyRegion(sprite);
   return sprite;
 }
 
-SpriteId SceneHolder::createSprite(uint8_t width, uint8_t height,
+ObjectId SceneHolder::createSprite(uint8_t width, uint8_t height,
                                    ColorIndex pixels[], size_t pixelsCount,
                                    uint8_t positionX, uint8_t positionY) {
   _lastAssignedIdForSprite++;
@@ -47,7 +48,7 @@ SpriteId SceneHolder::createSprite(uint8_t width, uint8_t height,
   return _lastAssignedIdForSprite;
 }
 
-SpriteId SceneHolder::createBackgroundSprite(uint8_t width, uint8_t height,
+ObjectId SceneHolder::createBackgroundSprite(uint8_t width, uint8_t height,
                                              ColorIndex pixels[],
                                              size_t pixelsCount,
                                              uint8_t positionX,
@@ -56,21 +57,63 @@ SpriteId SceneHolder::createBackgroundSprite(uint8_t width, uint8_t height,
   Sprite *sprite = createPlainSprite(width, height, pixels, pixelsCount,
                                      positionX, positionY);
   backgroundSpritesWithId[_lastAssignedIdForBackgroundSprite] = sprite;
+
   return _lastAssignedIdForBackgroundSprite;
 }
 
-void SceneHolder::moveSpriteBy(SpriteId spriteId, int8_t x, int8_t y) {
+ObjectId SceneHolder::createGameObject(uint8_t width, uint8_t height,
+                                       ColorIndex pixels[], size_t pixelsCount,
+                                       bool isCollidable, bool isGravitable) {
+  _lastAssignedIdForSprite++;
+  Sprite *sprite = createPlainSprite(width, height, pixels, pixelsCount, 0, 0);
+  spritesWithId[_lastAssignedIdForSprite] = sprite;
+
+  _lastAssignedIdForGameObject++;
+  GameObject *gameObject =
+      new GameObject(_lastAssignedIdForSprite, true, false);
+  gameObjectsWithId[_lastAssignedIdForGameObject] = gameObject;
+
+  return _lastAssignedIdForGameObject;
+}
+
+void SceneHolder::moveSpriteBy(ObjectId spriteId, int8_t x, int8_t y) {
   Sprite *sprite = spritesWithId[spriteId];
   // set old region as durty
-  setDurtyRegion(sprite->getBounds(), 1);
+  setDurtyRegion(sprite, 1);
   sprite->moveBy(x, y);
   // as well as new
-  setDurtyRegion(sprite->getBounds());
+  setDurtyRegion(sprite);
+}
+
+void SceneHolder::moveGameObjectBy(ObjectId id, int8_t x, int8_t y) {
+  GameObject *gameObject = gameObjectsWithId[id];
+  if (gameObject == nullptr) return;
+  // todo: add collision logic
+
+  ObjectId spriteId = gameObject->getSpriteId();
+  this->moveSpriteBy(spriteId, x, y);
+}
+
+ColorIndex SceneHolder::findPixelInGameObjects(uint8_t x, uint8_t y) {
+  ObjectId spriteId;
+  ColorIndex ci = COLOR_INDEX_UNDEF;
+
+  for (auto &it : gameObjectsWithId) {
+    spriteId = it.second->getSpriteId();
+    Sprite *sprite = spritesWithId[spriteId];
+    if (sprite != nullptr) {
+      ci = sprite->getPixel(x, y);
+      if (ci != COLOR_INDEX_UNDEF && ci != COLOR_INDEX_TRANSPARENT) {
+        return ci;
+      }
+    }
+  }
+  return COLOR_INDEX_UNDEF;
 }
 
 ColorIndex SceneHolder::findPixelInSprites(uint8_t x, uint8_t y) {
   for (auto &it : spritesWithId) {
-    ColorIndex ci = it.second->getPixelOrDefault(x, y, COLOR_INDEX_UNDEF);
+    ColorIndex ci = it.second->getPixel(x, y);
     // second check allows to continue searching in siblin sprites
     // when current one has transparent pixel
     if (ci != COLOR_INDEX_UNDEF && ci != COLOR_INDEX_TRANSPARENT) {
@@ -82,7 +125,7 @@ ColorIndex SceneHolder::findPixelInSprites(uint8_t x, uint8_t y) {
 
 ColorIndex SceneHolder::findPixelInBackgroundSprites(uint8_t x, uint8_t y) {
   for (auto &it : backgroundSpritesWithId) {
-    ColorIndex ci = it.second->getPixelOrDefault(x, y, COLOR_INDEX_UNDEF);
+    ColorIndex ci = it.second->getPixel(x, y);
     if (ci != COLOR_INDEX_UNDEF) {
       return ci;
     }
@@ -91,21 +134,30 @@ ColorIndex SceneHolder::findPixelInBackgroundSprites(uint8_t x, uint8_t y) {
 }
 
 Color SceneHolder::calculatePixel(uint8_t x, uint8_t y) {
-  // check foreground sprites
-  ColorIndex colorIndex = findPixelInSprites(x, y);
-  // if pixel not taken for normal sprites, take background ones
-  if (ifColorIndexHasColor(colorIndex) == false) {
-    // background sprites
-    colorIndex = findPixelInBackgroundSprites(x, y);
-    if (ifColorIndexHasColor(colorIndex) == false) {
-      // if pixel not taken even by background sprite, take def value
-      colorIndex = COLOR_INDEX_BACKGROUND;
-    }
+  // check game object's sprites
+  ColorIndex colorIndex = findPixelInGameObjects(x, y);
+  if (ifColorIndexHasColor(colorIndex) == true) {
+    return palette->getColor(colorIndex);
   }
-  return palette->getColor(colorIndex);
+
+  // else foreground sprites
+  colorIndex = findPixelInSprites(x, y);
+  if (ifColorIndexHasColor(colorIndex) == true) {
+    return palette->getColor(colorIndex);
+  }
+
+  // nothing found? take background once
+  colorIndex = findPixelInBackgroundSprites(x, y);
+  if (ifColorIndexHasColor(colorIndex) == true) {
+    // if pixel not taken even by background sprite, take def value
+    return palette->getColor(colorIndex);
+  }
+
+  // if pixel not taken even by background sprite, take def value
+  return palette->getColor(COLOR_INDEX_BACKGROUND);
 }
 
-void onEachDurtyPixel(uint8_t x, uint8_t y) {
+void __onEachDurtyPixel(uint8_t x, uint8_t y) {
   Color color = __self->calculatePixel(x, y);
   if (__callback != nullptr) {
     __callback(x, y, color);
@@ -113,7 +165,7 @@ void onEachDurtyPixel(uint8_t x, uint8_t y) {
 }
 
 void SceneHolder::bakeCanvas() {
-  tracker->foreachDurtyPixel(&onEachDurtyPixel);
+  tracker->foreachDurtyPixel(&__onEachDurtyPixel);
 }
 
 void SceneHolder::setDurtyRegion(uint8_t left, uint8_t top, uint8_t right,
