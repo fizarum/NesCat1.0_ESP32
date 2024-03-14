@@ -7,6 +7,7 @@
 
 #include "../utils/utils.h"
 #include "palette.h"
+#include "primitives.h"
 #include "rectangle.h"
 
 class Sprite : public Rectangle {
@@ -37,12 +38,11 @@ class Sprite : public Rectangle {
   ColorIndex getPixel(uint16_t screenX, uint16_t screenY,
                       ColorIndex defaultValue = COLOR_INDEX_UNDEF) {
     // translate from absolute to sprite relative coords
-    uint8_t width = this->getWidth();
     uint8_t x = screenX - this->getLeft();
     uint8_t y = screenY - this->getTop();
 
     if (this->contains(screenX, screenY) == true) {
-      uint16_t index = indexOf(x, y, width);
+      uint16_t index = this->indexOf(x, y);
       return this->pixels[index];
     }
     return defaultValue;

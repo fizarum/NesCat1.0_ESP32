@@ -10,25 +10,10 @@
 
 #define MAXFILENAME_LENGTH 64
 
-/**
- * @brief Set (to 1) the bit in byte
- *
- * @param source source byte
- * @param position of bit to change, counts from 0
- * @return uint8_t
- */
 uint8_t bit::setBit(uint8_t source, uint8_t position) {
   return source | (1UL << position);
 }
 
-/**
- * @brief Set or reset the bit in uint16_t, source value isn't mutated
- *
- * @param source source uint16_t
- * @param position of bit to change, counts from 0
- * @param isSet 0 means reset, > 0 - means set
- * @return updated copy of source value
- */
 uint16_t bit::setBit16(uint16_t source, uint8_t position, bool isSet) {
   if (isSet == true) {
     return source | (1UL << position);
@@ -45,13 +30,6 @@ uint32_t bit::setBit32(uint32_t source, uint8_t position, bool isSet) {
   }
 }
 
-/**
- * @brief Reset (to 0) the bit in byte
- *
- * @param source source byte
- * @param position of bit to change, counts from 0
- * @return uint8_t
- */
 uint8_t bit::resetBit(uint8_t source, uint8_t position) {
   // if position is 1 then it moves 0001 to 0010
   return source & (~(1UL << position));

@@ -111,6 +111,15 @@ class Rectangle {
   }
 
   bool isEmpty() { return width == 0 && height == 0; }
+
+  /**
+   * @brief get index in 1 dimention array for specified x,y in rectangle
+   *
+   * @param x coordinate in rectangle
+   * @param y coordinate in rectangle
+   * @return index in 1d array
+   */
+  uint32_t indexOf(uint8_t x, uint8_t y) { return y * getWidth() + x; }
 };
 
 #endif  // GAME_SDK_RECTANGLE_H

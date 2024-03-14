@@ -1,5 +1,7 @@
 #include "scene_holder.h"
 
+#include "../log/log.h"
+
 void setupDefaultPalette(Palette *palette);
 
 SceneHolder *__self = nullptr;
@@ -70,7 +72,7 @@ ObjectId SceneHolder::createGameObject(uint8_t width, uint8_t height,
 
   _lastAssignedIdForGameObject++;
   GameObject *gameObject =
-      new GameObject(_lastAssignedIdForSprite, true, false);
+      new GameObject(_lastAssignedIdForSprite, isCollidable, isGravitable);
   gameObjectsWithId[_lastAssignedIdForGameObject] = gameObject;
 
   return _lastAssignedIdForGameObject;
@@ -85,13 +87,125 @@ void SceneHolder::moveSpriteBy(ObjectId spriteId, int8_t x, int8_t y) {
   setDurtyRegion(sprite);
 }
 
-void SceneHolder::moveGameObjectBy(ObjectId id, int8_t x, int8_t y) {
-  GameObject *gameObject = gameObjectsWithId[id];
-  if (gameObject == nullptr) return;
-  // todo: add collision logic
+void SceneHolder::calculateNextPosition(GameObject *object, int8_t moveByX,
+                                        int8_t moveByY) {
+  uint8_t nextX, nextY = 0;
 
-  ObjectId spriteId = gameObject->getSpriteId();
-  this->moveSpriteBy(spriteId, x, y);
+  Sprite *sprite = getSprite(object);
+
+  Direction direction = getDirection(moveByX, moveByY);
+  switch (direction) {
+    case DIRECTION_LT:
+      nextX = sprite->getVisibleLeft() + moveByX;
+      nextY = sprite->getVisibleTop() + moveByY;
+      object->setNextPositionForCorner1(nextX, nextY);
+      object->resetNextPositionOfCorner2();
+      break;
+
+    case DIRECTION_T:
+      nextX = sprite->getVisibleLeft();
+      nextY = sprite->getVisibleTop() + moveByY;
+      object->setNextPositionForCorner1(nextX, nextY);
+
+      nextX = sprite->getVisibleRight();
+      object->setNextPositionForCorner2(nextX, nextY);
+      break;
+
+    case DIRECTION_RT:
+      nextX = sprite->getVisibleRight() + moveByX;
+      nextY = sprite->getVisibleTop() + moveByY;
+      object->setNextPositionForCorner1(nextX, nextY);
+      object->resetNextPositionOfCorner2();
+      break;
+
+    case DIRECTION_L:
+      nextX = sprite->getVisibleLeft() + moveByX;
+      nextY = sprite->getVisibleTop();
+      object->setNextPositionForCorner1(nextX, nextY);
+
+      nextY = sprite->getVisibleBottom();
+      object->setNextPositionForCorner2(nextX, nextY);
+      break;
+
+    case DIRECTION_R:
+      nextX = sprite->getVisibleRight() + moveByX;
+      nextY = sprite->getVisibleTop();
+      object->setNextPositionForCorner1(nextX, nextY);
+
+      nextY = sprite->getVisibleBottom();
+      object->setNextPositionForCorner2(nextX, nextY);
+      break;
+
+    case DIRECTION_LB:
+      nextX = sprite->getVisibleLeft() + moveByX;
+      nextY = sprite->getVisibleBottom() + moveByY;
+      object->setNextPositionForCorner1(nextX, nextY);
+      object->resetNextPositionOfCorner2();
+      break;
+
+    case DIRECTION_B:
+      nextX = sprite->getVisibleLeft();
+      nextY = sprite->getVisibleBottom() + moveByY;
+      object->setNextPositionForCorner1(nextX, nextY);
+
+      nextX = sprite->getVisibleRight();
+      object->setNextPositionForCorner2(nextX, nextY);
+      break;
+
+    case DIRECTION_RB:
+      nextX = sprite->getVisibleRight() + moveByX;
+      nextY = sprite->getVisibleBottom() + moveByY;
+      object->setNextPositionForCorner1(nextX, nextY);
+      object->resetNextPositionOfCorner2();
+      break;
+
+    default:
+      object->resetNextPositionOfCorner1();
+      object->resetNextPositionOfCorner2();
+      break;
+  }
+}
+
+ObjectId SceneHolder::getObstacle(GameObject *object) {
+  Point *nextPositionForCorner1 = object->getNextPositionOfCorner1();
+  Point *nextPositionForCorner2 = object->getNextPositionOfCorner2();
+  // check obstacle on corner 1
+  ObjectId obstacleId = findObjectOnScreen(nextPositionForCorner1->getX(),
+                                           nextPositionForCorner1->getY());
+  // if no obstacle found check another corner
+  if (obstacleId == OBJECT_ID_UNDEF) {
+    obstacleId = findObjectOnScreen(nextPositionForCorner2->getX(),
+                                    nextPositionForCorner2->getY());
+  }
+  return obstacleId;
+}
+
+void SceneHolder::moveGameObjectBy(ObjectId id, int8_t x, int8_t y) {
+  GameObject *objectToMove = gameObjectsWithId[id];
+  if (objectToMove == nullptr) return;
+
+  // if object to move isn't collidable, just move it
+  if (objectToMove->isCollidable() == false) {
+    this->moveSpriteBy(objectToMove->getSpriteId(), x, y);
+    return;
+  }
+
+  calculateNextPosition(objectToMove, x, y);
+  ObjectId obstacleId = getObstacle(objectToMove);
+
+  // if no obstacles detected - move object
+  if (obstacleId == OBJECT_ID_UNDEF) {
+    this->moveSpriteBy(objectToMove->getSpriteId(), x, y);
+    return;
+  }
+
+  GameObject *obstacle = gameObjectsWithId[obstacleId];
+  // if obstacle is collidable - stop movement
+  if (obstacle->isCollidable() == true) {
+    debug("hit registered with object: %d\n", obstacleId);
+  } else {
+    this->moveSpriteBy(objectToMove->getSpriteId(), x, y);
+  }
 }
 
 ColorIndex SceneHolder::findPixelInGameObjects(uint8_t x, uint8_t y) {
@@ -99,8 +213,7 @@ ColorIndex SceneHolder::findPixelInGameObjects(uint8_t x, uint8_t y) {
   ColorIndex ci = COLOR_INDEX_UNDEF;
 
   for (auto &it : gameObjectsWithId) {
-    spriteId = it.second->getSpriteId();
-    Sprite *sprite = spritesWithId[spriteId];
+    Sprite *sprite = getSprite(it.second);
     if (sprite != nullptr) {
       ci = sprite->getPixel(x, y);
       if (ci != COLOR_INDEX_UNDEF && ci != COLOR_INDEX_TRANSPARENT) {
@@ -131,6 +244,16 @@ ColorIndex SceneHolder::findPixelInBackgroundSprites(uint8_t x, uint8_t y) {
     }
   }
   return COLOR_INDEX_UNDEF;
+}
+
+ObjectId SceneHolder::findObjectOnScreen(uint8_t x, uint8_t y) {
+  for (auto &it : gameObjectsWithId) {
+    Sprite *sprite = getSprite(it.second);
+    if (sprite != nullptr && sprite->contains(x, y)) {
+      return it.first;
+    }
+  }
+  return OBJECT_ID_UNDEF;
 }
 
 Color SceneHolder::calculatePixel(uint8_t x, uint8_t y) {

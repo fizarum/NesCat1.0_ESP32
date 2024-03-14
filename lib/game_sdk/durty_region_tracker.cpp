@@ -38,7 +38,7 @@ void Line::resetLine() {
 }
 
 #ifdef PORT_SDK
-const uint8_t _buff_len = 160;
+const uint8_t _buff_len = 200;
 char buff[_buff_len];
 
 void Line::printLine(char durtyPixel) {

@@ -24,9 +24,43 @@ class SceneHolder {
   Sprite *createPlainSprite(uint8_t width, uint8_t height, ColorIndex pixels[],
                             size_t pixelsCount, uint8_t positionX,
                             uint8_t positionY);
+
   ColorIndex findPixelInGameObjects(uint8_t x, uint8_t y);
   ColorIndex findPixelInSprites(uint8_t x, uint8_t y);
   ColorIndex findPixelInBackgroundSprites(uint8_t x, uint8_t y);
+
+  inline Sprite *getSprite(GameObject *object) {
+    if (object == nullptr) return nullptr;
+    ObjectId spriteId = object->getSpriteId();
+    return spritesWithId[spriteId];
+  }
+
+  /**
+   * @brief Find any object which has given pixel
+   *
+   * @param x - x coord of pixel
+   * @param y - y coord of pixel
+   * @return ObjectId of found object, or ObjectIdUndef
+   */
+  ObjectId findObjectOnScreen(uint8_t x, uint8_t y);
+
+  /**
+   * @brief calculates next position of point closest to any possible obstacle
+   *
+   * @param geometry - original object to move
+   * @param moveByX - value on which original object moves by horizontal
+   * @param moveByY - value on which original object moves by vertical
+   */
+  void calculateNextPosition(GameObject *object, int8_t moveByX,
+                             int8_t moveByY);
+
+  /**
+   * @brief Get the obstacle for moving object
+   *
+   * @param object - gameObject which performs movement
+   * @return ObjectId for any obstacle if present or OBJECT_ID_UNDEF otherwise
+   */
+  ObjectId getObstacle(GameObject *object);
 
  public:
   SceneHolder(void (*onPixelUpdatedCallback)(uint8_t x, uint8_t y,

@@ -6,22 +6,9 @@
 #include <array>
 
 #include "../device/display_device/palette.h"
+#include "primitives.h"
 
 #define PALETTE_SIZE UINT8_MAX
-
-#define COLOR_INDEX_UNDEF 255
-#define COLOR_INDEX_TRANSPARENT 200
-#define COLOR_INDEX_BACKGROUND 201
-
-/**
- * @brief color in RGB565 format
- */
-typedef uint16_t Color;
-
-/**
- * @brief index of color in pallette
- */
-typedef uint8_t ColorIndex;
 
 static inline bool ifColorIndexHasColor(ColorIndex colorIndex) {
   return colorIndex != COLOR_INDEX_UNDEF &&
