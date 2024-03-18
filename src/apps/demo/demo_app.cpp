@@ -10,8 +10,8 @@
 
 DisplayDevice *_display = nullptr;
 TaskHandle_t loopTaskHandler;
-SpriteId playerSprite = 0;
-SpriteId addonSprite = 0;
+ObjectId playerSprite = 0;
+ObjectId addonSprite = 0;
 
 SceneHolder *sceneHolder = nullptr;
 volatile bool _loopRunning = false;

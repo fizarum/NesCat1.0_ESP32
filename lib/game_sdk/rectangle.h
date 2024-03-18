@@ -119,7 +119,7 @@ class Rectangle {
    * @param y coordinate in rectangle
    * @return index in 1d array
    */
-  uint32_t indexOf(uint8_t x, uint8_t y) { return y * getWidth() + x; }
+  uint32_t indexOf(uint8_t x, uint8_t y) { return y * this->width + x; }
 };
 
 #endif  // GAME_SDK_RECTANGLE_H

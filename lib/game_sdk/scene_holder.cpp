@@ -6,7 +6,7 @@ void setupDefaultPalette(Palette *palette);
 
 SceneHolder *__self = nullptr;
 void (*__callback)(uint8_t x, uint8_t y, Color color) = nullptr;
-void __onEachDurtyPixel(uint8_t x, uint8_t y);
+void __onEachDurtyLine(Line *line, uint8_t lineNumber);
 
 SceneHolder::SceneHolder(void (*onPixelUpdatedCallback)(uint8_t x, uint8_t y,
                                                         Color color)) {
@@ -280,15 +280,19 @@ Color SceneHolder::calculatePixel(uint8_t x, uint8_t y) {
   return palette->getColor(COLOR_INDEX_BACKGROUND);
 }
 
-void __onEachDurtyPixel(uint8_t x, uint8_t y) {
-  Color color = __self->calculatePixel(x, y);
-  if (__callback != nullptr) {
-    __callback(x, y, color);
+void __onEachDurtyLine(Line *line, uint8_t lineNumber) {
+  for (uint8_t x = 0; x < WIDTH_IN_V_PIXELS; ++x) {
+    if (line->isPixelSetOnLine(x) == true) {
+      Color color = __self->calculatePixel(x, lineNumber);
+      __callback(x, lineNumber, color);
+    }
   }
 }
 
 void SceneHolder::bakeCanvas() {
-  tracker->foreachDurtyPixel(&__onEachDurtyPixel);
+  if (__callback == nullptr) return;
+
+  tracker->redrawDurtyPixels(&__onEachDurtyLine);
 }
 
 void SceneHolder::setDurtyRegion(uint8_t left, uint8_t top, uint8_t right,

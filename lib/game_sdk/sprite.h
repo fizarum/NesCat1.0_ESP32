@@ -37,15 +37,14 @@ class Sprite : public Rectangle {
    */
   ColorIndex getPixel(uint16_t screenX, uint16_t screenY,
                       ColorIndex defaultValue = COLOR_INDEX_UNDEF) {
+    if (this->contains(screenX, screenY) == false) return defaultValue;
+
     // translate from absolute to sprite relative coords
     uint8_t x = screenX - this->getLeft();
     uint8_t y = screenY - this->getTop();
 
-    if (this->contains(screenX, screenY) == true) {
-      uint16_t index = this->indexOf(x, y);
-      return this->pixels[index];
-    }
-    return defaultValue;
+    uint16_t index = this->indexOf(x, y);
+    return this->pixels[index];
   }
 };
 
