@@ -2,18 +2,16 @@
 
 #include "../log/log.h"
 
-void setupDefaultPalette(Palette *palette);
-
 SceneHolder *__self = nullptr;
 void (*__callback)(uint8_t x, uint8_t y, Color color) = nullptr;
 void __onEachDurtyLine(Line *line, uint8_t lineNumber);
 
-SceneHolder::SceneHolder(void (*onPixelUpdatedCallback)(uint8_t x, uint8_t y,
+SceneHolder::SceneHolder(Palette *palette,
+                         void (*onPixelUpdatedCallback)(uint8_t x, uint8_t y,
                                                         Color color)) {
-  this->palette = new Palette();
+  this->palette = palette;
   this->tracker = new DurtyRegionTracker();
 
-  setupDefaultPalette(palette);
   __callback = onPixelUpdatedCallback;
   __self = this;
 }
@@ -208,42 +206,42 @@ void SceneHolder::moveGameObjectBy(ObjectId id, int8_t x, int8_t y) {
   }
 }
 
-ColorIndex SceneHolder::findPixelInGameObjects(uint8_t x, uint8_t y) {
-  ObjectId spriteId;
-  ColorIndex ci = COLOR_INDEX_UNDEF;
-
+ColorIndex SceneHolder::findPixelInGameObjects(uint8_t x, uint8_t y,
+                                               ColorIndex defaultColorIndex) {
   for (auto &it : gameObjectsWithId) {
     Sprite *sprite = getSprite(it.second);
     if (sprite != nullptr) {
-      ci = sprite->getPixel(x, y);
-      if (ci != COLOR_INDEX_UNDEF && ci != COLOR_INDEX_TRANSPARENT) {
+      ColorIndex ci = sprite->getPixel(x, y, defaultColorIndex);
+      if (this->palette->isVisible(ci) == true) {
         return ci;
       }
     }
   }
-  return COLOR_INDEX_UNDEF;
+  return defaultColorIndex;
 }
 
-ColorIndex SceneHolder::findPixelInSprites(uint8_t x, uint8_t y) {
+ColorIndex SceneHolder::findPixelInSprites(uint8_t x, uint8_t y,
+                                           ColorIndex defaultColorIndex) {
   for (auto &it : spritesWithId) {
-    ColorIndex ci = it.second->getPixel(x, y);
+    ColorIndex ci = it.second->getPixel(x, y, defaultColorIndex);
     // second check allows to continue searching in siblin sprites
     // when current one has transparent pixel
-    if (ci != COLOR_INDEX_UNDEF && ci != COLOR_INDEX_TRANSPARENT) {
+    if (this->palette->isVisible(ci) == true) {
       return ci;
     }
   }
-  return COLOR_INDEX_UNDEF;
+  return defaultColorIndex;
 }
 
-ColorIndex SceneHolder::findPixelInBackgroundSprites(uint8_t x, uint8_t y) {
+ColorIndex SceneHolder::findPixelInBackgroundSprites(
+    uint8_t x, uint8_t y, ColorIndex defaultColorIndex) {
   for (auto &it : backgroundSpritesWithId) {
-    ColorIndex ci = it.second->getPixel(x, y);
-    if (ci != COLOR_INDEX_UNDEF) {
+    ColorIndex ci = it.second->getPixel(x, y, defaultColorIndex);
+    if (ci != defaultColorIndex) {
       return ci;
     }
   }
-  return COLOR_INDEX_UNDEF;
+  return defaultColorIndex;
 }
 
 ObjectId SceneHolder::findObjectOnScreen(uint8_t x, uint8_t y) {
@@ -257,27 +255,29 @@ ObjectId SceneHolder::findObjectOnScreen(uint8_t x, uint8_t y) {
 }
 
 Color SceneHolder::calculatePixel(uint8_t x, uint8_t y) {
+  ColorIndex backgroundColorIndex = this->palette->getBackgroundColorIndex();
+
   // check game object's sprites
-  ColorIndex colorIndex = findPixelInGameObjects(x, y);
-  if (ifColorIndexHasColor(colorIndex) == true) {
+  ColorIndex colorIndex = findPixelInGameObjects(x, y, backgroundColorIndex);
+  if (this->palette->isVisible(colorIndex) == true) {
     return palette->getColor(colorIndex);
   }
 
   // else foreground sprites
-  colorIndex = findPixelInSprites(x, y);
-  if (ifColorIndexHasColor(colorIndex) == true) {
+  colorIndex = findPixelInSprites(x, y, backgroundColorIndex);
+  if (this->palette->isVisible(colorIndex) == true) {
     return palette->getColor(colorIndex);
   }
 
   // nothing found? take background once
-  colorIndex = findPixelInBackgroundSprites(x, y);
-  if (ifColorIndexHasColor(colorIndex) == true) {
+  colorIndex = findPixelInBackgroundSprites(x, y, backgroundColorIndex);
+  if (this->palette->isVisible(colorIndex) == true) {
     // if pixel not taken even by background sprite, take def value
     return palette->getColor(colorIndex);
   }
 
   // if pixel not taken even by background sprite, take def value
-  return palette->getColor(COLOR_INDEX_BACKGROUND);
+  return palette->getBackgroundColor();
 }
 
 void __onEachDurtyLine(Line *line, uint8_t lineNumber) {
@@ -313,24 +313,3 @@ void SceneHolder::setDurtyRegion(Rectangle *region, uint8_t extraSpace) {
 void SceneHolder::removeAllDurtyRegions() { tracker->resetDurtyRegions(); }
 
 void SceneHolder::drawDurtyRegion() { tracker->printDebugInfo(); }
-
-void setupDefaultPalette(Palette *palette) {
-  palette->setColor(0, COLOR_BLACK);
-  palette->setColor(1, COLOR_PEARL);
-  palette->setColor(2, COLOR_WATERMELON_RED);
-  palette->setColor(3, COLOR_PEWTER_BLUE);
-  palette->setColor(4, COLOR_PURPLE_TAUPE);
-  palette->setColor(5, COLOR_FOREST_GREEN);
-  palette->setColor(6, COLOR_INDIGO);
-  palette->setColor(7, COLOR_SUNRAY);
-  palette->setColor(8, COLOR_LIGHT_TAUPE);
-  palette->setColor(9, COLOR_FELDGRAU);
-  palette->setColor(10, COLOR_CEDAR_CHEST);
-  palette->setColor(11, COLOR_DARK_CHARCOAL);
-  palette->setColor(12, COLOR_SONIC_SILVER);
-  palette->setColor(13, COLOR_ASPARAGUS);
-  palette->setColor(14, COLOR_SEA_SERPENT);
-  palette->setColor(15, COLOR_GRAY);
-  //
-  palette->setColor(COLOR_INDEX_BACKGROUND, COLOR_BLACK);
-}

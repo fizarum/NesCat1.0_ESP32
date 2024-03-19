@@ -8,25 +8,33 @@
 #include "../device/display_device/palette.h"
 #include "primitives.h"
 
-#define PALETTE_SIZE UINT8_MAX
-
-static inline bool ifColorIndexHasColor(ColorIndex colorIndex) {
-  return colorIndex != COLOR_INDEX_UNDEF &&
-         colorIndex != COLOR_INDEX_TRANSPARENT;
-}
+#define PALETTE_SIZE 16
 
 class Palette {
  private:
   std::array<Color, PALETTE_SIZE> palette = {};
 
+  /**
+   * @brief Index of color in palette which is used as background
+   */
+  ColorIndex background;
+
  public:
-  Palette(Color backgroundColor = COLOR_BLACK,
-          Color transparentColor = COLOR_BLACK) {
-    palette[COLOR_INDEX_BACKGROUND] = backgroundColor;
-    palette[COLOR_INDEX_TRANSPARENT] = transparentColor;
-  }
+  Palette(ColorIndex background = 0) { this->background = background; }
 
   inline Color getColor(ColorIndex index) { return palette[index]; }
+  inline Color getBackgroundColor() { return palette[background]; }
+  inline ColorIndex getBackgroundColorIndex() { return background; }
+
+  /**
+   * @brief Helps to understand if color index should be drawn as an active
+   * color
+   *
+   * @param index
+   * @return true if color is visible - not background
+   * @return false otherwise
+   */
+  inline bool isVisible(ColorIndex index) { return index != background; }
   inline void setColor(ColorIndex index, Color color) {
     palette[index] = color;
   }

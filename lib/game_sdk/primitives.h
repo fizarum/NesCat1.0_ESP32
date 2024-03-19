@@ -16,10 +16,6 @@ typedef uint16_t Color;
  */
 typedef uint8_t ColorIndex;
 
-#define COLOR_INDEX_UNDEF UINT8_MAX
-#define COLOR_INDEX_TRANSPARENT 200
-#define COLOR_INDEX_BACKGROUND 201
-
 /**
  * @brief Direction can have such values:
  *        1 2 3

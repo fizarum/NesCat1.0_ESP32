@@ -25,9 +25,12 @@ class SceneHolder {
                             size_t pixelsCount, uint8_t positionX,
                             uint8_t positionY);
 
-  ColorIndex findPixelInGameObjects(uint8_t x, uint8_t y);
-  ColorIndex findPixelInSprites(uint8_t x, uint8_t y);
-  ColorIndex findPixelInBackgroundSprites(uint8_t x, uint8_t y);
+  ColorIndex findPixelInGameObjects(uint8_t x, uint8_t y,
+                                    ColorIndex defaultColorIndex);
+  ColorIndex findPixelInSprites(uint8_t x, uint8_t y,
+                                ColorIndex defaultColorIndex);
+  ColorIndex findPixelInBackgroundSprites(uint8_t x, uint8_t y,
+                                          ColorIndex defaultColorIndex);
 
   inline Sprite *getSprite(GameObject *object) {
     if (object == nullptr) return nullptr;
@@ -63,7 +66,8 @@ class SceneHolder {
   ObjectId getObstacle(GameObject *object);
 
  public:
-  SceneHolder(void (*onPixelUpdatedCallback)(uint8_t x, uint8_t y,
+  SceneHolder(Palette *palette,
+              void (*onPixelUpdatedCallback)(uint8_t x, uint8_t y,
                                              Color color));
   ~SceneHolder();
 

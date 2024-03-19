@@ -36,7 +36,7 @@ class Sprite : public Rectangle {
    * @return ColorIndex
    */
   ColorIndex getPixel(uint16_t screenX, uint16_t screenY,
-                      ColorIndex defaultValue = COLOR_INDEX_UNDEF) {
+                      ColorIndex defaultValue) {
     if (this->contains(screenX, screenY) == false) return defaultValue;
 
     // translate from absolute to sprite relative coords
@@ -44,6 +44,8 @@ class Sprite : public Rectangle {
     uint8_t y = screenY - this->getTop();
 
     uint16_t index = this->indexOf(x, y);
+    // todo: here we have to calculate actual color based on information that
+    // colorIndex contains information about 2 pixels in a row
     return this->pixels[index];
   }
 };

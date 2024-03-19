@@ -14,6 +14,8 @@ ObjectId playerSprite = 0;
 ObjectId addonSprite = 0;
 
 SceneHolder *sceneHolder = nullptr;
+Palette *palette = nullptr;
+
 volatile bool _loopRunning = false;
 volatile bool _terminated = false;
 
@@ -23,12 +25,15 @@ void setupPlayerSprite();
 void setupSimpleSprite();
 void setupAdditionalSprite();
 void redrawPixel(uint8_t x, uint8_t y, Color color);
+void setupPalette();
 
 void DemoApp::onOpen() {
   _display = nullptr;
   _loopRunning = false;
   _terminated = false;
-  sceneHolder = new SceneHolder(&redrawPixel);
+
+  setupPalette();
+  sceneHolder = new SceneHolder(palette, &redrawPixel);
 
   setupPlayerSprite();
   setupSimpleSprite();
@@ -105,90 +110,22 @@ void _loopTask(void *params) {
 }
 
 void setupPlayerSprite() {
-  ColorIndex pixels[] = {COLOR_INDEX_TRANSPARENT, 6, 7, 7};
+  ColorIndex pixels[] = {0, 6, 7, 7};
   playerSprite = sceneHolder->createSprite(2, 2, pixels, 4, 20, 20);
 }
 
 void setupSimpleSprite() {
   // tree sprite, 4x4 pixels
-  ColorIndex pixels[] = {COLOR_INDEX_TRANSPARENT,
-                         5,
-                         5,
-                         COLOR_INDEX_TRANSPARENT,
-                         5,
-                         5,
-                         5,
-                         5,
-                         5,
-                         5,
-                         5,
-                         5,
-                         COLOR_INDEX_TRANSPARENT,
-                         10,
-                         10,
-                         COLOR_INDEX_TRANSPARENT};
+  ColorIndex pixels[] = {0, 5, 5, 0, 5, 5, 5, 5, 5, 5, 5, 5, 0, 10, 10, 0};
   sceneHolder->createBackgroundSprite(4, 4, pixels, 16, 5, 5);
 }
 
 void setupAdditionalSprite() {
   // cat sprite 7x7 pixels
   ColorIndex pixels[] = {
-      8,
-      COLOR_INDEX_TRANSPARENT,
-      8,
-      COLOR_INDEX_TRANSPARENT,
-      COLOR_INDEX_TRANSPARENT,
-      8,
-      8,
-      8,
-      8,
-      8,
-      COLOR_INDEX_TRANSPARENT,
-      COLOR_INDEX_TRANSPARENT,
-      COLOR_INDEX_TRANSPARENT,
-      8,
-      8,
-      8,
-      8,
-      COLOR_INDEX_TRANSPARENT,
-      COLOR_INDEX_TRANSPARENT,
-      COLOR_INDEX_TRANSPARENT,
-      8,
-      COLOR_INDEX_TRANSPARENT,
-      8,
-      8,
-      8,
-      8,
-      8,
-      8,
-      COLOR_INDEX_TRANSPARENT,
-      8,
-      8,
-      8,
-      8,
-      8,
-      8,
-      COLOR_INDEX_TRANSPARENT,
-      8,
-      COLOR_INDEX_TRANSPARENT,
-      COLOR_INDEX_TRANSPARENT,
-      COLOR_INDEX_TRANSPARENT,
-      COLOR_INDEX_TRANSPARENT,
-      8,
-      COLOR_INDEX_TRANSPARENT,
-      8,
-      COLOR_INDEX_TRANSPARENT,
-      COLOR_INDEX_TRANSPARENT,
-      COLOR_INDEX_TRANSPARENT,
-      COLOR_INDEX_TRANSPARENT,
-      8,
-      COLOR_INDEX_TRANSPARENT,
-      8,
-      COLOR_INDEX_TRANSPARENT,
-      COLOR_INDEX_TRANSPARENT,
-      COLOR_INDEX_TRANSPARENT,
-      COLOR_INDEX_TRANSPARENT,
-      8,
+      8, 0, 8, 0, 0, 8, 8, 8, 8, 8, 0, 0, 0, 8, 8, 8, 8, 0, 0,
+      0, 8, 0, 8, 8, 8, 8, 8, 8, 0, 8, 8, 8, 8, 8, 8, 0, 8, 0,
+      0, 0, 0, 8, 0, 8, 0, 0, 0, 0, 8, 0, 8, 0, 0, 0, 0, 8,
   };
 
   addonSprite = sceneHolder->createSprite(7, 7, pixels, 56, 15, 5);
@@ -202,4 +139,24 @@ void printDebugInfo() {
   debug("resolution width: %u", WIDTH_IN_V_PIXELS);
   debug("resolution height: %u", HEIGHT_IN_V_PIXELS);
   debug("----------------------");
+}
+
+void setupPalette() {
+  palette = new Palette();
+  palette->setColor(0, COLOR_BLACK);
+  palette->setColor(1, COLOR_PEARL);
+  palette->setColor(2, COLOR_WATERMELON_RED);
+  palette->setColor(3, COLOR_PEWTER_BLUE);
+  palette->setColor(4, COLOR_PURPLE_TAUPE);
+  palette->setColor(5, COLOR_FOREST_GREEN);
+  palette->setColor(6, COLOR_INDIGO);
+  palette->setColor(7, COLOR_SUNRAY);
+  palette->setColor(8, COLOR_LIGHT_TAUPE);
+  palette->setColor(9, COLOR_FELDGRAU);
+  palette->setColor(10, COLOR_CEDAR_CHEST);
+  palette->setColor(11, COLOR_DARK_CHARCOAL);
+  palette->setColor(12, COLOR_SONIC_SILVER);
+  palette->setColor(13, COLOR_ASPARAGUS);
+  palette->setColor(14, COLOR_SEA_SERPENT);
+  palette->setColor(15, COLOR_GRAY);
 }
