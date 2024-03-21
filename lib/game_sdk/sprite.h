@@ -43,10 +43,18 @@ class Sprite : public Rectangle {
     uint8_t x = screenX - this->getLeft();
     uint8_t y = screenY - this->getTop();
 
-    uint16_t index = this->indexOf(x, y);
-    // todo: here we have to calculate actual color based on information that
-    // colorIndex contains information about 2 pixels in a row
-    return this->pixels[index];
+    // we have 2 real pixels per item in "pixels" array we have to divide the
+    // result of indexOf() by 2
+    uint16_t index = this->indexOf(x, y) / 2;
+    bool isOdd = x & 1 == 1;
+
+    ColorIndexes indexes = this->pixels[index];
+    if (isOdd) {
+      return getSecondIndex(indexes);
+    }
+    return getFirstIndex(indexes);
+
+    // return this->pixels[localIndex];
   }
 };
 

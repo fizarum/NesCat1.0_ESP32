@@ -110,22 +110,23 @@ void _loopTask(void *params) {
 }
 
 void setupPlayerSprite() {
-  ColorIndex pixels[] = {0, 6, 7, 7};
+  ColorIndex pixels[] = {6, 119};
   playerSprite = sceneHolder->createSprite(2, 2, pixels, 4, 20, 20);
 }
 
 void setupSimpleSprite() {
   // tree sprite, 4x4 pixels
-  ColorIndex pixels[] = {0, 5, 5, 0, 5, 5, 5, 5, 5, 5, 5, 5, 0, 10, 10, 0};
+  ColorIndex pixels[] = {5, 80, 85, 85, 85, 85, 10, 160};
   sceneHolder->createBackgroundSprite(4, 4, pixels, 16, 5, 5);
 }
 
 void setupAdditionalSprite() {
   // cat sprite 7x7 pixels
+  // warning! all sprites should have sizes dividable by 2! (2, 4, 6, 8, etc.)
+  // so this sprite is rendered incorrectly
   ColorIndex pixels[] = {
-      8, 0, 8, 0, 0, 8, 8, 8, 8, 8, 0, 0, 0, 8, 8, 8, 8, 0, 0,
-      0, 8, 0, 8, 8, 8, 8, 8, 8, 0, 8, 8, 8, 8, 8, 8, 0, 8, 0,
-      0, 0, 0, 8, 0, 8, 0, 0, 0, 0, 8, 0, 8, 0, 0, 0, 0, 8,
+      128, 128, 8,   136, 136, 0, 8, 136, 128, 0, 128, 136, 136, 136,
+      8,   136, 136, 128, 128, 0, 8, 8,   0,   0, 128, 128, 0,   8,
   };
 
   addonSprite = sceneHolder->createSprite(7, 7, pixels, 56, 15, 5);
