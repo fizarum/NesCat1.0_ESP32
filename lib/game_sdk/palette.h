@@ -12,7 +12,7 @@
 
 class Palette {
  private:
-  std::array<Color, PALETTE_SIZE> palette = {};
+  std::array<Color, PALETTE_SIZE> palette;
 
   /**
    * @brief Index of color in palette which is used as background
@@ -22,9 +22,9 @@ class Palette {
  public:
   Palette(ColorIndex background = 0) { this->background = background; }
 
-  inline Color getColor(ColorIndex index) { return palette[index]; }
-  inline Color getBackgroundColor() { return palette[background]; }
-  inline ColorIndex getBackgroundColorIndex() { return background; }
+  const inline Color getColor(ColorIndex index) { return palette[index]; }
+  const inline Color getBackgroundColor() { return palette[background]; }
+  const inline ColorIndex getBackgroundColorIndex() { return background; }
 
   /**
    * @brief Helps to understand if color index should be drawn as an active

@@ -20,7 +20,7 @@ void Menu::onOpen() {
 }
 
 bool Menu::onHandleInput(InputDevice *inputDevice) {
-  if (inputDevice->isLeftPressed()) {
+  if (inputDevice->isLeftKeyUp()) {
     debug("menu: left key pressed: %u", inputDevice->keysState());
     this->selectedMenu -= 1;
     if (this->selectedMenu < 0) {
@@ -29,7 +29,7 @@ bool Menu::onHandleInput(InputDevice *inputDevice) {
     requestRedraw();
     return true;
   }
-  if (inputDevice->isRightPressed()) {
+  if (inputDevice->isRightKeyUp()) {
     debug("menu: right key pressed: %u", inputDevice->keysState());
     this->selectedMenu += 1;
     if (this->selectedMenu >= totalItems) {
@@ -39,7 +39,7 @@ bool Menu::onHandleInput(InputDevice *inputDevice) {
     return true;
   }
 
-  if (inputDevice->isXPressed()) {
+  if (inputDevice->isXKeyDown()) {
     debug("menu: is cross key pressed: %u", inputDevice->keysState());
     uint8_t appId = _items[selectedMenu]->id;
     onMenuSelectedCallback(appId);

@@ -7,7 +7,18 @@
 class GameObject {
  private:
   ObjectId spriteId;
+  /**
+   * @brief Indicates if collision detection should be triggered for this object
+   */
   bool collidable;
+  /**
+   * @brief if set to true another object can't move through this one
+   */
+  bool obstacle;
+
+  /**
+   * @brief if set to true object will be added to gravity force calculations
+   */
   bool gravitable;
 
   /**
@@ -19,16 +30,18 @@ class GameObject {
   Point nextPositionOfCorner2;
 
  public:
-  GameObject(ObjectId spriteId, bool collidable = false,
+  GameObject(ObjectId spriteId, bool collidable = false, bool obstacle = false,
              bool gravitable = false) {
     this->spriteId = spriteId;
     this->collidable = collidable;
+    this->obstacle = obstacle;
     this->gravitable = gravitable;
   }
 
   ObjectId getSpriteId() { return spriteId; }
 
-  bool isCollidable() { return this->collidable; }
+  inline bool isCollidable() { return this->collidable; }
+  inline bool isObstacle() { return this->obstacle; }
 
   Point *getNextPositionOfCorner1() { return &nextPositionOfCorner1; }
   Point *getNextPositionOfCorner2() { return &nextPositionOfCorner2; }

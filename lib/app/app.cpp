@@ -58,7 +58,7 @@ bool App::handleInput(InputDevice *inputDevice) {
   }
 
   if (preventClosingByUser() == false) {
-    if (inputDevice->isMenuPressed()) {
+    if (inputDevice->isMenuKeyDown()) {
       this->close();
       this->requestRedraw();
       return true;

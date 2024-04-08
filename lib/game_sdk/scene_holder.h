@@ -9,17 +9,19 @@
 #include "rectangle.h"
 #include "sprite.h"
 
+typedef std::map<ObjectId, Sprite *>::iterator SpriteIterator;
+typedef std::map<ObjectId, GameObject *>::iterator GameObjectIterator;
+
 class SceneHolder {
  private:
   std::map<ObjectId, Sprite *> spritesWithId = {};
   std::map<ObjectId, Sprite *> backgroundSpritesWithId = {};
+  std::map<ObjectId, GameObject *> backgroundGameObjectsWithId = {};
   std::map<ObjectId, GameObject *> gameObjectsWithId = {};
 
   Palette *palette;
   DurtyRegionTracker *tracker;
-  ObjectId _lastAssignedIdForSprite = 0;
-  ObjectId _lastAssignedIdForBackgroundSprite = 0;
-  ObjectId _lastAssignedIdForGameObject = 0;
+  ObjectId lastAssignedId = 0;
 
   Sprite *createPlainSprite(uint8_t width, uint8_t height, ColorIndex pixels[],
                             size_t pixelsCount, uint8_t positionX,
@@ -32,10 +34,38 @@ class SceneHolder {
   ColorIndex findPixelInBackgroundSprites(uint8_t x, uint8_t y,
                                           ColorIndex defaultColorIndex);
 
+  inline Sprite *getSprite(ObjectId id) {
+    SpriteIterator it = spritesWithId.find(id);
+    if (it != spritesWithId.end()) {
+      return it->second;
+    }
+
+    it = backgroundSpritesWithId.find(id);
+    if (it != backgroundSpritesWithId.end()) {
+      return it->second;
+    }
+
+    return nullptr;
+  }
+
   inline Sprite *getSprite(GameObject *object) {
     if (object == nullptr) return nullptr;
-    ObjectId spriteId = object->getSpriteId();
-    return spritesWithId[spriteId];
+
+    return this->getSprite(object->getSpriteId());
+  }
+
+  inline GameObject *getGameObject(ObjectId id) {
+    GameObjectIterator it = gameObjectsWithId.find(id);
+    if (it != gameObjectsWithId.end()) {
+      return it->second;
+    }
+
+    it = backgroundGameObjectsWithId.find(id);
+    if (it != backgroundGameObjectsWithId.end()) {
+      return it->second;
+    }
+
+    return nullptr;
   }
 
   /**
@@ -74,12 +104,13 @@ class SceneHolder {
   ObjectId createSprite(uint8_t width, uint8_t height, ColorIndex pixels[],
                         size_t pixelsCount, uint8_t positionX = 0,
                         uint8_t positionY = 0);
+
   ObjectId createBackgroundSprite(uint8_t width, uint8_t height,
                                   ColorIndex pixels[], size_t pixelsCount,
                                   uint8_t positionX = 0, uint8_t positionY = 0);
 
   /**
-   * @brief Create a Game Object object
+   * @brief Create a Game Object for foreground plane
    *
    * @param width
    * @param height
@@ -91,10 +122,29 @@ class SceneHolder {
    */
   ObjectId createGameObject(uint8_t width, uint8_t height, ColorIndex pixels[],
                             size_t pixelsCount, bool isCollidable = false,
-                            bool isGravitable = false);
+                            bool isObstacle = false, bool isGravitable = false);
+
+  /**
+   * @brief Create a Game Object for background plane
+   *
+   * @param width
+   * @param height
+   * @param pixels
+   * @param pixelsCount
+   * @param isCollidable
+   * @param isGravitable
+   * @return ObjectId
+   */
+  ObjectId createBackgroundGameObject(uint8_t width, uint8_t height,
+                                      ColorIndex pixels[], size_t pixelsCount,
+                                      bool isCollidable = false,
+                                      bool isObstacle = false,
+                                      bool isGravitable = false);
 
   void moveSpriteBy(ObjectId spriteId, int8_t x, int8_t y);
+  void moveSpriteTo(ObjectId spriteId, int8_t x, int8_t y);
   void moveGameObjectBy(ObjectId id, int8_t x, int8_t y);
+  void moveGameObjectTo(ObjectId id, int8_t x, int8_t y);
 
   void bakeCanvas();
   Color calculatePixel(uint8_t x, uint8_t y);

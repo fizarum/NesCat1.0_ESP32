@@ -132,7 +132,11 @@ class DurtyRegionTracker {
   }
 
   void resetDurtyRegions() {
-    lines.fill(emptyLine);
+    for (auto &line : lines) {
+      if (line.hasAnyPixelSet() == true) {
+        line.resetLine();
+      }
+    }
     isAtLeastOnePixelDurty = false;
   }
 

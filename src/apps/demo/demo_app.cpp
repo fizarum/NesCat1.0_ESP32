@@ -54,13 +54,13 @@ void DemoApp::onDraw(DisplayDevice *display) {
 }
 
 bool DemoApp::onHandleInput(InputDevice *inputDevice) {
-  if (inputDevice->isLeftPressed()) {
+  if (inputDevice->isLeftKeyDown()) {
     sceneHolder->moveSpriteBy(playerSprite, -1, 0);
-  } else if (inputDevice->isRightPressed()) {
+  } else if (inputDevice->isRightKeyDown()) {
     sceneHolder->moveSpriteBy(playerSprite, 1, 0);
-  } else if (inputDevice->isUpPressed()) {
+  } else if (inputDevice->isUpKeyDown()) {
     sceneHolder->moveSpriteBy(playerSprite, 0, -1);
-  } else if (inputDevice->isDownPressed()) {
+  } else if (inputDevice->isDownKeyDown()) {
     sceneHolder->moveSpriteBy(playerSprite, 0, 1);
   }
   return true;
@@ -85,10 +85,11 @@ void redrawPixel(uint8_t x, uint8_t y, Color color) {
 
 uint8_t maxAnimationIterations = 60;
 uint8_t animationIteration = 0;
+const uint16_t delayBetweenUpdates = 20;
 
 void _loopTask(void *params) {
   int64_t startedAt, finihedAt;
-  uint32_t diffInMillis;
+  int64_t diffInMillis;
 
   while (_terminated == false) {
     if (_loopRunning == true) {
@@ -103,8 +104,14 @@ void _loopTask(void *params) {
       sceneHolder->removeAllDurtyRegions();
       finihedAt = esp_timer_get_time();
 
-      // vPortYield();
-      vTaskDelay(toMillis(20));
+      diffInMillis = finihedAt - startedAt;
+
+      if (diffInMillis < delayBetweenUpdates) {
+        diffInMillis = delayBetweenUpdates - diffInMillis;
+        vTaskDelay(toMillis(diffInMillis));
+      } else {
+        vTaskDelay(toMillis(delayBetweenUpdates));
+      }
     }
   }
 }

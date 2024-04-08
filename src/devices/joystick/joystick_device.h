@@ -13,22 +13,45 @@ class JoystickDevice : public InputDevice {
  public:
   const char *const getName();
   void setCallback(void (*onInputCallbackPtr)(void));
-  bool isLeftPressed();
-  bool isRightPressed();
-  bool isDownPressed();
-  bool isUpPressed();
 
-  bool isSelectPressed();
-  bool isStartPressed();
-  bool isMenuPressed();
+  bool isLeftKeyDown();
+  bool isLeftKeyUp();
 
-  bool isAPressed();
-  bool isBPressed();
-  bool isXPressed();
-  bool isYPressed();
+  bool isRightKeyDown();
+  bool isRightKeyUp();
 
-  bool isLeftTriggerPressed();
-  bool isRightTriggerPressed();
+  bool isDownKeyDown();
+  bool isDownKeyUp();
+
+  bool isUpKeyDown();
+  bool isUpKeyUp();
+
+  bool isSelectKeyDown();
+  bool isSelectKeyUp();
+
+  bool isStartKeyDown();
+  bool isStartKeyUp();
+
+  bool isMenuKeyDown();
+  bool isMenuKeyUp();
+
+  bool isAKeyDown();
+  bool isAKeyUp();
+
+  bool isBKeyDown();
+  bool isBKeyUp();
+
+  bool isXKeyDown();
+  bool isXKeyUp();
+
+  bool isYKeyDown();
+  bool isYKeyUp();
+
+  bool isLTKeyDown();
+  bool isLTKeyUp();
+
+  bool isRTKeyDown();
+  bool isRTKeyUp();
 
   uint16_t keysState();
 };

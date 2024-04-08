@@ -32,7 +32,7 @@ void FileManager::onOpen() {
 }
 
 bool FileManager::onHandleInput(InputDevice *inputDevice) {
-  if (inputDevice->isUpPressed()) {
+  if (inputDevice->isUpKeyDown()) {
     this->cursorPos -= 1;
     if (this->cursorPos < 0) {
       this->cursorPos = _fileCountOnScreen - 1;
@@ -41,7 +41,7 @@ bool FileManager::onHandleInput(InputDevice *inputDevice) {
     requestRedraw();
   }
 
-  if (inputDevice->isDownPressed()) {
+  if (inputDevice->isDownKeyDown()) {
     this->cursorPos += 1;
     if (this->cursorPos >= _fileCountOnScreen) {
       this->cursorPos = 0;

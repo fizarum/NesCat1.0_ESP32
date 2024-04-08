@@ -10,13 +10,11 @@ uint8_t const secondOffset = 160;
 uint8_t lineYPos = 50;
 
 bool Settings::onHandleInput(InputDevice *inputDevice) {
-  if (inputDevice->isUpPressed()) {
+  if (inputDevice->isUpKeyUp()) {
     increaseDisplayBacklight(5);
-    return true;
   }
-  if (inputDevice->isDownPressed()) {
+  if (inputDevice->isDownKeyUp()) {
     decreaseDisplayBacklight(5);
-    return true;
   }
   return true;
 }

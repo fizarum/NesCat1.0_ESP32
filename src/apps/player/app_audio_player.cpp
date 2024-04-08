@@ -5,7 +5,7 @@
 void testSound();
 
 bool AudioPlayer::onHandleInput(InputDevice *inputDevice) {
-  if (inputDevice->isAPressed()) {
+  if (inputDevice->isAKeyDown()) {
     testSound();
   }
   return true;
