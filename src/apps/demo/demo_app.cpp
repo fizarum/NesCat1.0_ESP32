@@ -6,11 +6,12 @@
 #include <sprite.h>
 
 #include "demo_app_settings.h"
+#include "resources.h"
 #include "scene_holder.h"
 
 DisplayDevice *_display = nullptr;
 TaskHandle_t loopTaskHandler;
-ObjectId playerSprite = 0;
+ObjectId playerId = 0;
 ObjectId addonSprite = 0;
 
 SceneHolder *sceneHolder = nullptr;
@@ -21,9 +22,7 @@ volatile bool _terminated = false;
 
 void _loopTask(void *params);
 void printDebugInfo();
-void setupPlayerSprite();
-void setupSimpleSprite();
-void setupAdditionalSprite();
+void setupSprites();
 void redrawPixel(uint8_t x, uint8_t y, Color color);
 void setupPalette();
 
@@ -35,9 +34,7 @@ void DemoApp::onOpen() {
   setupPalette();
   sceneHolder = new SceneHolder(palette, &redrawPixel);
 
-  setupPlayerSprite();
-  setupSimpleSprite();
-  setupAdditionalSprite();
+  setupSprites();
 
   createTaskOnCore0(&_loopTask, "loop_task", 10000, RENDER_TASK_PRIORITY,
                     &loopTaskHandler);
@@ -55,13 +52,13 @@ void DemoApp::onDraw(DisplayDevice *display) {
 
 bool DemoApp::onHandleInput(InputDevice *inputDevice) {
   if (inputDevice->isLeftKeyDown()) {
-    sceneHolder->moveSpriteBy(playerSprite, -1, 0);
+    sceneHolder->moveGameObjectBy(playerId, -1, 0);
   } else if (inputDevice->isRightKeyDown()) {
-    sceneHolder->moveSpriteBy(playerSprite, 1, 0);
+    sceneHolder->moveGameObjectBy(playerId, 1, 0);
   } else if (inputDevice->isUpKeyDown()) {
-    sceneHolder->moveSpriteBy(playerSprite, 0, -1);
+    sceneHolder->moveGameObjectBy(playerId, 0, -1);
   } else if (inputDevice->isDownKeyDown()) {
-    sceneHolder->moveSpriteBy(playerSprite, 0, 1);
+    sceneHolder->moveGameObjectBy(playerId, 0, 1);
   }
   return true;
 }
@@ -116,18 +113,20 @@ void _loopTask(void *params) {
   }
 }
 
-void setupPlayerSprite() {
-  ColorIndex pixels[] = {6, 119};
-  playerSprite = sceneHolder->createSprite(2, 2, pixels, 4, 20, 20);
-}
+void setupSprites() {
+  // player
+  playerId = sceneHolder->createGameObject(8, 8, player, 64, true, true);
 
-void setupSimpleSprite() {
-  // tree sprite, 4x4 pixels
-  ColorIndex pixels[] = {5, 80, 85, 85, 85, 85, 10, 160};
-  sceneHolder->createBackgroundSprite(4, 4, pixels, 16, 5, 5);
-}
+  // tree sprite, 8x8 pixels
+  ObjectId treeObject =
+      sceneHolder->createGameObject(8, 8, tree, 64, true, true);
+  sceneHolder->moveGameObjectTo(treeObject, 50, 10);
 
-void setupAdditionalSprite() {
+  // bush, 8x8
+  sceneHolder->createBackgroundSprite(8, 8, bush, 64, 30, 20);
+
+  sceneHolder->createBackgroundSprite(16, 16, grass, 256, 0, 20);
+
   // cat sprite 7x7 pixels
   // warning! all sprites should have sizes dividable by 2! (2, 4, 6, 8, etc.)
   // so this sprite is rendered incorrectly

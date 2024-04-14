@@ -15,7 +15,7 @@ class DisplayDevice : public BaseDevice {
   const char* const getName() { return "display"; };
   virtual bool onInit() = 0;
   virtual void onUpdate() = 0;
-  virtual void onEnabled(bool enabled){};
+  virtual void onEnabled(bool enabled) {};
   virtual void onBacklightChanged(uint8_t value) = 0;
 
   /**
