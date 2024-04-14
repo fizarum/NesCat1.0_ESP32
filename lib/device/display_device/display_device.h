@@ -1,9 +1,9 @@
 #ifndef DISPLAY_DEVICE_H
 #define DISPLAY_DEVICE_H
 
-#include <base_device.h>
 #include <stdint.h>
 
+#include "../base_device.h"
 #include "datum.h"
 #include "palette.h"
 
@@ -15,7 +15,7 @@ class DisplayDevice : public BaseDevice {
   const char* const getName() { return "display"; };
   virtual bool onInit() = 0;
   virtual void onUpdate() = 0;
-  virtual void onEnabled(bool enabled){};
+  virtual void onEnabled(bool enabled) {};
   virtual void onBacklightChanged(uint8_t value) = 0;
 
   /**

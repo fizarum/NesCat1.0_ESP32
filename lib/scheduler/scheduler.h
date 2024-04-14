@@ -7,7 +7,7 @@
 #include <freertos/task.h>
 #include <stdint.h>
 
-static inline TickType_t toMillis(int16_t expectedMillis) {
+static inline TickType_t toMillis(uint16_t expectedMillis) {
   return expectedMillis / portTICK_PERIOD_MS;
 }
 

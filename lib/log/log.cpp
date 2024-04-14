@@ -1,9 +1,14 @@
 #include "log.h"
 
-#include <configurator.h>
+#include "../configurator/configurator.h"
 
 #ifdef DEBUG_ON
+#ifndef PORT_SDK
 #include <HardwareSerial.h>
+#else
+#include <stdio.h>
+#include <string.h>
+#endif  // PORT_SDK
 #endif  // DEBUG_ON
 
 #ifdef DEBUG_ON
@@ -13,7 +18,11 @@ char debugBuff[DEBUG_STRING_MAX_LEN];
 
 void debug(const char *message) {
 #ifdef DEBUG_ON
+#ifndef PORT_SDK
   Serial.println(message);
+#else
+  printf(message);
+#endif  // PORT_SDK
 #endif  // DEBUG_ON
 }
 

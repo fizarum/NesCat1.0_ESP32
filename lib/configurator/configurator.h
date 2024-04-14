@@ -18,7 +18,9 @@
 // display options
 #define DISPLAY_WIDTH 320
 #define DISPLAY_HEIGHT 240
-#define DISPLAY_ORIENTATION 1
+#define DISPLAY_ORIENTATION 3
+#define DISPLAY_H_CENTER DISPLAY_WIDTH / 2
+#define DISPLAY_V_CENTER DISPLAY_HEIGHT / 2
 
 // backlight values
 // backlight off

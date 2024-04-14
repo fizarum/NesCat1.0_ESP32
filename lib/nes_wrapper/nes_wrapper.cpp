@@ -54,6 +54,7 @@ FileName *getAllNesFiles(const char *path) {
 
   // getFilenames(path, onNewFileFoundCallback, "nes");
   // return _first;
+  return nullptr;
 }
 
 void pickRomFile(const char *filepath) {
@@ -91,6 +92,7 @@ void prepareFlash(size_t sizeToPrepare) {
 bool storeRomDataOnFlash(uint8_t *block, uint16_t blockSize,
                          uint16_t blockIndex) {
   // return savePortionToFlash(block, blockSize, blockIndex);
+  return false;
 }
 
 void onNewFileFoundCallback(const char *fname) {

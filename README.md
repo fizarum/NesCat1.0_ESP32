@@ -12,8 +12,9 @@ Planned changes:
 - ~~move from SD7789 to ILI9341 display~~ done
 - ~~add PCF8574N for keyboard (keys)~~ added for ABXY buttons
 - ~~move to 16 channel gpio expander~~ implemented by MCP23017
-- add charger module
+- ~~add charger module~~ done
 - ~~change to Max98357A I2S module~~ done
+- add separate repo for hardware
 
 Used libraries:
 

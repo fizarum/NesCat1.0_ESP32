@@ -58,7 +58,7 @@ bool NesLauncher::onHandleInput(InputDevice *inputDevice) {
     return true;
   }
 
-  if (inputDevice->isUpPressed()) {
+  if (inputDevice->isUpKeyDown()) {
     this->cursorPos -= 1;
     if (this->cursorPos < 0) {
       this->cursorPos = fileCountOnScreen;
@@ -66,7 +66,7 @@ bool NesLauncher::onHandleInput(InputDevice *inputDevice) {
     requestRedraw();
   }
 
-  if (inputDevice->isDownPressed()) {
+  if (inputDevice->isDownKeyDown()) {
     this->cursorPos += 1;
     if (this->cursorPos > fileCountOnScreen) {
       this->cursorPos = 0;
@@ -74,7 +74,7 @@ bool NesLauncher::onHandleInput(InputDevice *inputDevice) {
     requestRedraw();
   }
 
-  if (inputDevice->isXPressed()) {
+  if (inputDevice->isXKeyDown()) {
     if (_started == true) return true;
     _started = true;
 

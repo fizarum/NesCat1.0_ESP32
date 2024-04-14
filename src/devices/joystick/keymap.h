@@ -10,7 +10,7 @@ sony like keymap used in project:
     left  right     square(Y)  circle(A)
        down             cross(B)
 
-      select  start  menu
+        select  start  menu
  */
 
 // gpio definitions
@@ -28,7 +28,7 @@ sony like keymap used in project:
 #define GPIO_BUTTON_START 14
 #define GPIO_BUTTON_MENU 15
 
-#define GPIO_TRIGGER_LEFT 8
-#define GPIO_TRIGGER_RIGHT 7
+#define GPIO_LEFT_TRIGGER 8
+#define GPIO_RIGHT_TRIGGER 7
 
 #endif  // KEYMAP_H

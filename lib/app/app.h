@@ -23,7 +23,7 @@ class App {
   virtual void onOpen() {}
 
   /** app specific implementation of update */
-  virtual void onUpdate(){};
+  virtual void onUpdate() {};
 
   /** app specific implementation of draw */
   virtual void onDraw(DisplayDevice *display) = 0;

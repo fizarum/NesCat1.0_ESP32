@@ -8,6 +8,8 @@
         "DARKGREEN",
         "DARKGREY",
         "DOUT",
+        "FELDGRAU",
+        "FRAMEBUFFER",
         "GFXFF",
         "GPIO",
         "GPIOA",
@@ -25,6 +27,7 @@
         "SKYBLUE",
         "SPITFT",
         "sram",
+        "SUNRAY",
         "VSPI"
     ],
     "cSpell.customDictionaries": {

@@ -1,142 +1,169 @@
 #include "demo_app.h"
 
+#include <Esp.h>
 #include <log.h>
 #include <scheduler.h>
+#include <sprite.h>
 
 #include "demo_app_settings.h"
+#include "resources.h"
+#include "scene_holder.h"
 
-uint16_t testPalette[] = {
-    COLOR_OLIVE, COLOR_LIGHTGREY, COLOR_MAROON, COLOR_GOLD,   COLOR_RED,
-    COLOR_BLUE,  COLOR_VIOLET,    COLOR_GREEN,  COLOR_PURPLE,
-};
-
-uint8_t testPaletteSize = sizeof(testPalette) / sizeof(uint16_t);
 DisplayDevice *_display = nullptr;
-// uint8_t backlight;
+TaskHandle_t loopTaskHandler;
+ObjectId playerId = 0;
+ObjectId addonSprite = 0;
 
-QueueHandle_t queue;
-TaskHandle_t videoTaskHandler;
-TaskHandle_t updateTaskHandler;
+SceneHolder *sceneHolder = nullptr;
+Palette *palette = nullptr;
 
-uint16_t frameBuffer[FRAME_BUFFER_SIZE];
+volatile bool _loopRunning = false;
+volatile bool _terminated = false;
 
-uint32_t renderDelay = toMillis(33);
-uint32_t updateDelay = toMillis(50);
-
-void renderTask(void *params);
-void writeFrameTask(void *params);
-void increaseDisplayBacklight(uint8_t step);
-void decreaseDisplayBacklight(uint8_t step);
-
-uint16_t randomColor();
+void _loopTask(void *params);
 void printDebugInfo();
+void setupSprites();
+void redrawPixel(uint8_t x, uint8_t y, Color color);
+void setupPalette();
 
 void DemoApp::onOpen() {
-  queue = xQueueCreate(FRAME_BUFFER_SIZE, sizeof(uint16_t));
-  if (queue != nullptr) {
-    createTaskOnCore0(&renderTask, "render_task", 10000, RENDER_TASK_PRIORITY,
-                      &videoTaskHandler);
-    createTaskOnCore0(&writeFrameTask, "update_task", 10000,
-                      WRITE_FRAME_TASK_PRIORITY, &updateTaskHandler);
-    printDebugInfo();
-  }
+  _display = nullptr;
+  _loopRunning = false;
+  _terminated = false;
+
+  setupPalette();
+  sceneHolder = new SceneHolder(palette, &redrawPixel);
+
+  setupSprites();
+
+  createTaskOnCore0(&_loopTask, "loop_task", 10000, RENDER_TASK_PRIORITY,
+                    &loopTaskHandler);
+  printDebugInfo();
 }
 
 void DemoApp::onDraw(DisplayDevice *display) {
   if (_display == nullptr) {
     _display = display;
+    display->fillScreen(COLOR_BLACK);
+    vTaskDelay(toMillis(100));
+    _loopRunning = true;
   }
 }
 
 bool DemoApp::onHandleInput(InputDevice *inputDevice) {
-  if (inputDevice->isUpPressed()) {
-    increaseDisplayBacklight(5);
-    return true;
-  }
-  if (inputDevice->isDownPressed()) {
-    decreaseDisplayBacklight(5);
-    return true;
+  if (inputDevice->isLeftKeyDown()) {
+    sceneHolder->moveGameObjectBy(playerId, -1, 0);
+  } else if (inputDevice->isRightKeyDown()) {
+    sceneHolder->moveGameObjectBy(playerId, 1, 0);
+  } else if (inputDevice->isUpKeyDown()) {
+    sceneHolder->moveGameObjectBy(playerId, 0, -1);
+  } else if (inputDevice->isDownKeyDown()) {
+    sceneHolder->moveGameObjectBy(playerId, 0, 1);
   }
   return true;
 }
 
 void DemoApp::onClose() {
-  vQueueDelete(queue);
-  _display = nullptr;
-  vTaskDelay(50);
-  vTaskDelete(updateTaskHandler);
-  vTaskDelete(videoTaskHandler);
-  vTaskDelay(50);
+  _terminated = true;
+  _loopRunning = false;
+
+  vTaskDelete(loopTaskHandler);
+  delete sceneHolder;
+  debug("demo app closing");
+
+  // temporary solution used to make sure that resources are cleaned up
+  ESP.restart();
 }
 
-void renderTask(void *params) {
-  uint16_t pixelIndex = 0;
-  for (;;) {
-    if (xQueueReceive(queue, &frameBuffer, portMAX_DELAY) == pdPASS) {
-      pixelIndex = 0;
-      for (uint16_t y = 0; y < DISPLAY_HEIGHT; y += PIXEL_SIZE) {
-        for (uint16_t x = 0; x < DISPLAY_WIDTH; x += PIXEL_SIZE) {
-          if (_display != nullptr) {
-            _display->fillRectangle(x, y, PIXEL_SIZE, PIXEL_SIZE,
-                                    frameBuffer[pixelIndex]);
-            ++pixelIndex;
-          }
-        }
+void redrawPixel(uint8_t x, uint8_t y, Color color) {
+  _display->fillRectangle(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE,
+                          PIXEL_SIZE, color);
+}
+
+uint8_t maxAnimationIterations = 60;
+uint8_t animationIteration = 0;
+const uint16_t delayBetweenUpdates = 20;
+
+void _loopTask(void *params) {
+  int64_t startedAt, finihedAt;
+  int64_t diffInMillis;
+
+  while (_terminated == false) {
+    if (_loopRunning == true) {
+      startedAt = esp_timer_get_time();
+      // cat animation
+      if (animationIteration < maxAnimationIterations) {
+        sceneHolder->moveSpriteBy(addonSprite, 1, 0);
+        animationIteration++;
+      }
+
+      sceneHolder->bakeCanvas();
+      sceneHolder->removeAllDurtyRegions();
+      finihedAt = esp_timer_get_time();
+
+      diffInMillis = finihedAt - startedAt;
+
+      if (diffInMillis < delayBetweenUpdates) {
+        diffInMillis = delayBetweenUpdates - diffInMillis;
+        vTaskDelay(toMillis(diffInMillis));
+      } else {
+        vTaskDelay(toMillis(delayBetweenUpdates));
       }
     }
-    // vPortYield();
-    vTaskDelay(renderDelay);
   }
-  vTaskDelete(videoTaskHandler);
 }
 
-void writeFrameTask(void *param) {
-  for (;;) {
-    for (uint16_t index = 0; index < FRAME_BUFFER_SIZE; ++index) {
-      frameBuffer[index] = randomColor();
-    }
-    xQueueSend(queue, &frameBuffer, 0);
-    vTaskDelay(updateDelay);
-    // vPortYield();
-  }
-  vTaskDelete(updateTaskHandler);
-}
+void setupSprites() {
+  // player
+  playerId = sceneHolder->createGameObject(8, 8, player, 64, true, true);
 
-uint16_t randomColor() {
-  uint8_t index = rand() % testPaletteSize;
-  return testPalette[index];
-};
+  // tree sprite, 8x8 pixels
+  ObjectId treeObject =
+      sceneHolder->createGameObject(8, 8, tree, 64, true, true);
+  sceneHolder->moveGameObjectTo(treeObject, 50, 10);
+
+  // bush, 8x8
+  sceneHolder->createBackgroundSprite(8, 8, bush, 64, 30, 20);
+
+  sceneHolder->createBackgroundSprite(16, 16, grass, 256, 0, 20);
+
+  // cat sprite 7x7 pixels
+  // warning! all sprites should have sizes dividable by 2! (2, 4, 6, 8, etc.)
+  // so this sprite is rendered incorrectly
+  ColorIndex pixels[] = {
+      128, 128, 8,   136, 136, 0, 8, 136, 128, 0, 128, 136, 136, 136,
+      8,   136, 136, 128, 128, 0, 8, 8,   0,   0, 128, 128, 0,   8,
+  };
+
+  addonSprite = sceneHolder->createSprite(7, 7, pixels, 56, 15, 5);
+}
 
 void printDebugInfo() {
   debug("----------------------");
-  uint stackSize = uxTaskGetStackHighWaterMark(videoTaskHandler);
+  uint stackSize = uxTaskGetStackHighWaterMark(loopTaskHandler);
   debug("render requires:%u bytes in stack", stackSize);
-  stackSize = uxTaskGetStackHighWaterMark(updateTaskHandler);
-  debug("updater requires:%u bytes in stack", stackSize);
-
-  debug("palette size: %u", testPaletteSize);
   debug("pixel size %u", PIXEL_SIZE);
   debug("resolution width: %u", WIDTH_IN_V_PIXELS);
   debug("resolution height: %u", HEIGHT_IN_V_PIXELS);
   debug("----------------------");
 }
 
-void increaseDisplayBacklight(uint8_t step) {
-  uint8_t value = _display->getBacklightValue();
-  if (value > BL_LEVEL_MAX - step) {
-    value = BL_LEVEL_MAX;
-  } else {
-    value += step;
-  }
-  _display->setBackLightValue(value);
-}
-
-void decreaseDisplayBacklight(uint8_t step) {
-  uint8_t value = _display->getBacklightValue();
-  if (value < BL_LEVEL_MIN + step) {
-    value = BL_LEVEL_MIN;
-  } else {
-    value -= step;
-  }
-  _display->setBackLightValue(value);
+void setupPalette() {
+  palette = new Palette();
+  palette->setColor(0, COLOR_BLACK);
+  palette->setColor(1, COLOR_PEARL);
+  palette->setColor(2, COLOR_WATERMELON_RED);
+  palette->setColor(3, COLOR_PEWTER_BLUE);
+  palette->setColor(4, COLOR_PURPLE_TAUPE);
+  palette->setColor(5, COLOR_FOREST_GREEN);
+  palette->setColor(6, COLOR_INDIGO);
+  palette->setColor(7, COLOR_SUNRAY);
+  palette->setColor(8, COLOR_LIGHT_TAUPE);
+  palette->setColor(9, COLOR_FELDGRAU);
+  palette->setColor(10, COLOR_CEDAR_CHEST);
+  palette->setColor(11, COLOR_DARK_CHARCOAL);
+  palette->setColor(12, COLOR_SONIC_SILVER);
+  palette->setColor(13, COLOR_ASPARAGUS);
+  palette->setColor(14, COLOR_SEA_SERPENT);
+  palette->setColor(15, COLOR_GRAY);
 }
