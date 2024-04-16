@@ -33,6 +33,7 @@
 
 // devices
 #include "devices/audio/audio_device.h"
+#include "devices/battery/battery_device.h"
 #include "devices/display/ili9341_display.h"
 #include "devices/joystick/joystick_device.h"
 #include "devices/storage/storage_device.h"
@@ -42,6 +43,7 @@ AppLauncher appLauncher;
 
 ILI9341Display *display = nullptr;
 JoystickDevice *joystick = nullptr;
+BatteryDevice *battery = nullptr;
 
 void onInputTriggered();
 
@@ -51,6 +53,9 @@ void setup() {
     // wait for serial completion init
   }
   deviceManager.init();
+
+  battery = new BatteryDevice();
+  deviceManager.add(DEVICE_BATTERY_ID, battery);
 
 #ifdef DISPLAY_ON
   display = new ILI9341Display();
