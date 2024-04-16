@@ -49,14 +49,6 @@ bool StorageDevice::onInit() {
   return SD.begin(HSPI_CS, hspi);
 }
 
-void StorageDevice::onUpdate() {
-  // do nothing
-}
-
-void StorageDevice::onEnabled(bool enabled) {
-  // do nothing as well
-}
-
 uint32_t StorageDevice::totalMBytes() {
   return (uint32_t)(SD.totalBytes() / BYTES_IN_MBYTE);
 }

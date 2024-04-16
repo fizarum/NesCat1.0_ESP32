@@ -3,7 +3,9 @@
 
 #include <app.h>
 
+#include "devices/battery/battery_device.h"
 #include "devices/storage/storage_device.h"
+
 class Settings : public App {
  private:
   uint8_t selectBrightness = 1;
@@ -14,6 +16,7 @@ class Settings : public App {
 
   StorageDevice *_storage = nullptr;
   DisplayDevice *_display = nullptr;
+  BatteryDevice *_battery = nullptr;
 
   void increaseDisplayBacklight(uint8_t step);
   void decreaseDisplayBacklight(uint8_t step);

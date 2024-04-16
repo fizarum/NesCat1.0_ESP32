@@ -9,8 +9,7 @@ class StorageDevice : public BaseDevice {
  public:
   const char* const getName();
   bool onInit();
-  void onUpdate();
-  void onEnabled(bool enabled);
+  void onUpdate() {}
 
   uint32_t totalMBytes();
   uint32_t usedMBytes();

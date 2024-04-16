@@ -7,7 +7,8 @@
 #define DEVICE_DISPLAY_ID 100
 #define DEVICE_AUDIO_ID 101
 #define DEVICE_JOYSTICK_ID 102
-#define DEVICE_STORAGE_ID 103
+#define DEVICE_BATTERY_ID 103
+#define DEVICE_STORAGE_ID 104
 
 // flags which device should be enabled
 #define DISPLAY_ON

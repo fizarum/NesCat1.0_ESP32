@@ -8,6 +8,7 @@
 uint8_t const firstOffset = 30;
 uint8_t const secondOffset = 160;
 uint8_t lineYPos = 50;
+const uint8_t itemHeight = 19;
 
 bool Settings::onHandleInput(InputDevice *inputDevice) {
   if (inputDevice->isUpKeyUp()) {
@@ -21,6 +22,7 @@ bool Settings::onHandleInput(InputDevice *inputDevice) {
 
 void Settings::onOpen() {
   this->_storage = (StorageDevice *)DeviceManager::get(DEVICE_STORAGE_ID);
+  this->_battery = (BatteryDevice *)DeviceManager::get(DEVICE_BATTERY_ID);
 }
 
 void Settings::drawBackground(DisplayDevice *display) {
@@ -40,17 +42,17 @@ void Settings::onDraw(DisplayDevice *display) {
 
   display->drawString(firstOffset, lineYPos, "Model: ");
   display->drawString(secondOffset, lineYPos, ESP.getChipModel());
-  lineYPos += 20;
+  lineYPos += itemHeight;
 
   display->drawString(firstOffset, lineYPos, "Revision: ");
   sprintf(this->buff, "%d", ESP.getChipRevision());
   display->drawString(secondOffset, lineYPos, this->buff);
-  lineYPos += 20;
+  lineYPos += itemHeight;
 
   display->drawString(firstOffset, lineYPos, "Cores: ");
   sprintf(this->buff, "%d", ESP.getChipCores());
   display->drawString(secondOffset, lineYPos, this->buff);
-  lineYPos += 20;
+  lineYPos += itemHeight;
 
   // Get current CPU clock configuration
   rtc_cpu_freq_config_t conf;
@@ -58,18 +60,18 @@ void Settings::onDraw(DisplayDevice *display) {
   display->drawString(firstOffset, lineYPos, "CPU Speed: ");
   sprintf(this->buff, "%d Mhz", conf.freq_mhz);
   display->drawString(secondOffset, lineYPos, this->buff);
-  lineYPos += 20;
+  lineYPos += itemHeight;
 
   display->drawString(firstOffset, lineYPos, "Flash size: ");
   sprintf(this->buff, "%d MB", ESP.getFlashChipSize() / (1024 * 1024));
   display->drawString(secondOffset, lineYPos, this->buff);
-  lineYPos += 20;
+  lineYPos += itemHeight;
 
   display->drawString(firstOffset, lineYPos, "RAM: ");
   sprintf(this->buff, "%d/%d Kb", ESP.getFreeHeap() / 1024,
           ESP.getHeapSize() / 1024);
   display->drawString(secondOffset, lineYPos, this->buff);
-  lineYPos += 20;
+  lineYPos += itemHeight;
 
   if (_storage != nullptr) {
     uint32_t total = _storage->totalMBytes();
@@ -79,12 +81,20 @@ void Settings::onDraw(DisplayDevice *display) {
     display->drawString(firstOffset, lineYPos, "SD size: ");
     sprintf(this->buff, "%u Mb", total);
     display->drawString(secondOffset, lineYPos, this->buff);
-    lineYPos += 20;
+    lineYPos += itemHeight;
 
     display->drawString(firstOffset, lineYPos, "SD used: ");
     sprintf(this->buff, "%2.2f %%", occupied);
     display->drawString(secondOffset, lineYPos, this->buff);
+    lineYPos += itemHeight;
   }
+
+  display->drawString(firstOffset, lineYPos, "Battery: ");
+  sprintf(this->buff, "%u mV", _battery->getBatteryVoltage());
+  display->drawString(secondOffset, lineYPos, this->buff);
+  lineYPos += itemHeight;
+  sprintf(this->buff, "%d %%", _battery->getBatteryLevel());
+  display->drawString(secondOffset, lineYPos, this->buff);
 }
 
 void Settings::increaseDisplayBacklight(uint8_t step) {
