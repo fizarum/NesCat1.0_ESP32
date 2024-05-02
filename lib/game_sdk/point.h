@@ -1,39 +1,27 @@
 #ifndef GAME_SDK_POINT_H
 #define GAME_SDK_POINT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdint.h>
+
 /**
- * @brief Class of point in 2D space.
+ * @brief Structure of point in 2D space.
  *
  */
-class Point {
- private:
+typedef struct {
   int16_t x;
   int16_t y;
+} Point_t;
 
- public:
-  Point() : x(0), y(0) {}
-  Point(int16_t x, int16_t y) : x(x), y(y) {}
+Point_t *PointCreate(int16_t x, int16_t y);
+void PointDestroy(Point_t *point);
+void PointSet(Point_t *point, int16_t x, int16_t y);
+void PointReset(Point_t *point);
 
-  int16_t getX() { return x; }
-  int16_t getY() { return y; }
-
-  void set(int16_t x, int16_t y) {
-    this->x = x;
-    this->y = y;
-  }
-
-  void setX(int16_t x) { this->x = x; }
-  void setY(int16_t y) { this->y = y; }
-
-  /**
-   * @brief reset point to start position (0,0)
-   *
-   */
-  void reset() {
-    this->x = 0;
-    this->y = 0;
-  }
-};
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // GAME_SDK_POINT_H

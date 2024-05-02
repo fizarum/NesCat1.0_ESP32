@@ -15,7 +15,7 @@
 
 /**
  * @brief Its initial idea and later can be modified.
- * Resolution of screen can vary from 160x120 .. 8x6 depending on pixel
+ * Resolution of screen can vary from 8x6 to 160x120 depending on pixel
  * size. For flexibility of current solution we have count that we always
  * working on the biggest available resolution: 160x120. Based on this info we
  * need some way to mark "durty" pixels for redraw in next draw call.

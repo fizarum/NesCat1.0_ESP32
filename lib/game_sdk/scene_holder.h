@@ -19,7 +19,7 @@ class SceneHolder {
   std::map<ObjectId, GameObject *> backgroundGameObjectsWithId = {};
   std::map<ObjectId, GameObject *> gameObjectsWithId = {};
 
-  Palette *palette;
+  Palette_t *palette;
   DurtyRegionTracker *tracker;
   ObjectId lastAssignedId = 0;
 
@@ -96,7 +96,7 @@ class SceneHolder {
   ObjectId getObstacle(GameObject *object);
 
  public:
-  SceneHolder(Palette *palette,
+  SceneHolder(Palette_t *palette,
               void (*onPixelUpdatedCallback)(uint8_t x, uint8_t y,
                                              Color color));
   ~SceneHolder();

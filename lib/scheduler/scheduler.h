@@ -7,10 +7,6 @@
 #include <freertos/task.h>
 #include <stdint.h>
 
-static inline TickType_t toMillis(uint16_t expectedMillis) {
-  return expectedMillis / portTICK_PERIOD_MS;
-}
-
 static inline bool createTaskOnCore0(TaskFunction_t task,
                                      const char* const taskName,
                                      uint32_t stackSize,

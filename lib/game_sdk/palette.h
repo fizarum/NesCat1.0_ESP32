@@ -1,43 +1,45 @@
 #ifndef GAME_SDK_PALETTE_H
 #define GAME_SDK_PALETTE_H
 
-#include <stdint.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#include <array>
+#include <stdbool.h>
 
 #include "../device/display_device/palette.h"
 #include "primitives.h"
 
 #define PALETTE_SIZE 16
 
-class Palette {
- private:
-  std::array<Color, PALETTE_SIZE> palette;
+typedef struct {
+  Color colors[PALETTE_SIZE];
 
   /**
    * @brief Index of color in palette which is used as background
    */
   ColorIndex background;
+} Palette_t;
 
- public:
-  Palette(ColorIndex background = 0) { this->background = background; }
+Palette_t *PaletteCreate(ColorIndex background);
+void PaletteDestroy(Palette_t *palette);
 
-  const inline Color getColor(ColorIndex index) { return palette[index]; }
-  const inline Color getBackgroundColor() { return palette[background]; }
-  const inline ColorIndex getBackgroundColorIndex() { return background; }
+const Color PaletteGetColor(Palette_t *palette, ColorIndex index);
+const Color PalettegetBackgroundColor(Palette_t *palette);
+void PaletteSetColor(Palette_t *palette, ColorIndex index, Color color);
 
-  /**
-   * @brief Helps to understand if color index should be drawn as an active
-   * color
-   *
-   * @param index
-   * @return true if color is visible - not background
-   * @return false otherwise
-   */
-  inline bool isVisible(ColorIndex index) { return index != background; }
-  inline void setColor(ColorIndex index, Color color) {
-    palette[index] = color;
-  }
-};
+/**
+ * @brief Helps to understand if color index should be drawn as an active
+ * color
+ *
+ * @param index
+ * @return true if color is visible - not background
+ * @return false otherwise
+ */
+const bool PaletteIsColorVisible(Palette_t *palette, ColorIndex index);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // GAME_SDK_PALETTE_H

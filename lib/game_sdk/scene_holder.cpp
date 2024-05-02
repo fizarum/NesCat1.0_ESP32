@@ -6,7 +6,7 @@ SceneHolder *__self = nullptr;
 void (*__callback)(uint8_t x, uint8_t y, Color color) = nullptr;
 void __onEachDurtyLine(Line *line, uint8_t lineNumber);
 
-SceneHolder::SceneHolder(Palette *palette,
+SceneHolder::SceneHolder(Palette_t *palette,
                          void (*onPixelUpdatedCallback)(uint8_t x, uint8_t y,
                                                         Color color)) {
   this->palette = palette;
@@ -41,7 +41,6 @@ SceneHolder::~SceneHolder() {
   backgroundGameObjectsWithId.clear();
 
   delete tracker;
-  delete palette;
 }
 
 Sprite *SceneHolder::createPlainSprite(uint8_t width, uint8_t height,
@@ -204,15 +203,15 @@ void SceneHolder::calculateNextPosition(GameObject *object, int8_t moveByX,
 }
 
 ObjectId SceneHolder::getObstacle(GameObject *object) {
-  Point *nextPositionForCorner1 = object->getNextPositionOfCorner1();
-  Point *nextPositionForCorner2 = object->getNextPositionOfCorner2();
+  Point_t *nextPositionForCorner1 = object->getNextPositionOfCorner1();
+  Point_t *nextPositionForCorner2 = object->getNextPositionOfCorner2();
   // check obstacle on corner 1
-  ObjectId obstacleId = findObjectOnScreen(nextPositionForCorner1->getX(),
-                                           nextPositionForCorner1->getY());
+  ObjectId obstacleId =
+      findObjectOnScreen(nextPositionForCorner1->x, nextPositionForCorner1->y);
   // if no obstacle found check another corner
   if (obstacleId == OBJECT_ID_UNDEF) {
-    obstacleId = findObjectOnScreen(nextPositionForCorner2->getX(),
-                                    nextPositionForCorner2->getY());
+    obstacleId = findObjectOnScreen(nextPositionForCorner2->x,
+                                    nextPositionForCorner2->y);
   }
   return obstacleId;
 }
@@ -261,7 +260,7 @@ ColorIndex SceneHolder::findPixelInGameObjects(uint8_t x, uint8_t y,
     Sprite *sprite = getSprite(it.second);
     if (sprite != nullptr) {
       ColorIndex ci = sprite->getPixel(x, y, defaultColorIndex);
-      if (this->palette->isVisible(ci) == true) {
+      if (PaletteIsColorVisible(palette, ci) == true) {
         return ci;
       }
     }
@@ -270,7 +269,7 @@ ColorIndex SceneHolder::findPixelInGameObjects(uint8_t x, uint8_t y,
     Sprite *sprite = getSprite(it.second);
     if (sprite != nullptr) {
       ColorIndex ci = sprite->getPixel(x, y, defaultColorIndex);
-      if (this->palette->isVisible(ci) == true) {
+      if (PaletteIsColorVisible(palette, ci) == true) {
         return ci;
       }
     }
@@ -285,7 +284,7 @@ ColorIndex SceneHolder::findPixelInSprites(uint8_t x, uint8_t y,
     ColorIndex ci = it.second->getPixel(x, y, defaultColorIndex);
     // second check allows to continue searching in siblin sprites
     // when current one has transparent pixel
-    if (this->palette->isVisible(ci) == true) {
+    if (PaletteIsColorVisible(palette, ci) == true) {
       return ci;
     }
   }
@@ -321,29 +320,29 @@ ObjectId SceneHolder::findObjectOnScreen(uint8_t x, uint8_t y) {
 }
 
 Color SceneHolder::calculatePixel(uint8_t x, uint8_t y) {
-  ColorIndex backgroundColorIndex = this->palette->getBackgroundColorIndex();
+  ColorIndex backgroundColorIndex = PalettegetBackgroundColor(palette);
 
   // check game object's sprites
   ColorIndex colorIndex = findPixelInGameObjects(x, y, backgroundColorIndex);
-  if (this->palette->isVisible(colorIndex) == true) {
-    return palette->getColor(colorIndex);
+  if (PaletteIsColorVisible(palette, colorIndex) == true) {
+    return PaletteGetColor(palette, colorIndex);
   }
 
   // else foreground sprites
   colorIndex = findPixelInSprites(x, y, backgroundColorIndex);
-  if (this->palette->isVisible(colorIndex) == true) {
-    return palette->getColor(colorIndex);
+  if (PaletteIsColorVisible(palette, colorIndex) == true) {
+    return PaletteGetColor(palette, colorIndex);
   }
 
   // nothing found? take background once
   colorIndex = findPixelInBackgroundSprites(x, y, backgroundColorIndex);
-  if (this->palette->isVisible(colorIndex) == true) {
+  if (PaletteIsColorVisible(palette, colorIndex) == true) {
     // if pixel not taken even by background sprite, take def value
-    return palette->getColor(colorIndex);
+    return PaletteGetColor(palette, colorIndex);
   }
 
   // if pixel not taken even by background sprite, take def value
-  return palette->getBackgroundColor();
+  return PalettegetBackgroundColor(palette);
 }
 
 void __onEachDurtyLine(Line *line, uint8_t lineNumber) {
