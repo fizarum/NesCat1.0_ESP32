@@ -1,5 +1,7 @@
 #include "nes_launcher.h"
-
+#ifndef PORT_SDK
+#include <Esp.h>
+#endif  // PORT_SDK
 #include <log.h>
 #include <string.h>
 #include <utils.h>
@@ -26,6 +28,10 @@ bool _started = false;
 NesLauncher *_launcher;
 
 void onFileLoafingListener(uint8_t percents, bool isLast);
+#ifndef PORT_SDK
+void getMemoryStatus();
+void getPsRamStatus(uint32_t psramSize);
+#endif  // PORT_SDK
 
 // void printFileNames(FileName *first, uint16_t count);
 // void drawFileNames(DisplayDevice *display, FileName *first, uint16_t offset,
@@ -211,3 +217,25 @@ void onFileLoafingListener(uint8_t percents, bool isFinished) {
 //   // }
 //   // printf("total %u files\n", count);
 // }
+#ifndef PORT_SDK
+void getMemoryStatus() {
+  debug("--------------------------------");
+  debug("TOTAL HEAP: %u", ESP.getHeapSize());
+  debug("FREE HEAP:: %u", ESP.getFreeHeap());
+  uint32_t heapCapsFreeSize = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+  debug("heap_caps_get_free_size: %u", heapCapsFreeSize);
+  debug("--------------------------------");
+}
+
+// uint32_t size = ESP.getPsramSize();
+void getPsRamStatus(uint32_t psramSize) {
+  debug("--------------------------------");
+  if (psramSize > 0) {
+    debug("Total PSRAM: %u", psramSize);
+    debug("Free PSRAM: %u", ESP.getFreePsram());
+  } else {
+    debug("NO PSRAM DETECTED.");
+  }
+  debug("--------------------------------");
+}
+#endif  // PORT_SDK

@@ -1,6 +1,7 @@
 #include "joystick_device.h"
 
 #include <MCP23017.h>
+#include <log.h>
 #include <utils.h>
 
 #include "keymap.h"
@@ -46,11 +47,12 @@ unsigned long keyRequestedAt = 0;
 uint16_t delayBetweenRequestsOfJoystick = 220;
 unsigned long lastRequestedTimeOfJoystick = 0;
 
+uint8_t findI2CDevice(const uint8_t startAddress);
 const char *const JoystickDevice::getName() { return "joystick"; }
 
 bool JoystickDevice::onInit() {
   Wire.begin();
-  uint8_t i2cAddress = findI2CDevice();
+  uint8_t i2cAddress = findI2CDevice(20);
   if (i2cAddress == 0) {
     return false;
   }
@@ -101,36 +103,34 @@ void JoystickDevice::setCallback(void (*onInputCallbackPtr)(void)) {
  * @param gpioButton any key declared in keymap.h (like: GPIO_BUTTON_LEFT)
  */
 static const inline bool isKeyReleased(uint8_t gpioButton) {
-  return bit::isBitSet(previousChangedKeymap, gpioButton) &&
-         bit::isBitSet(keymap, gpioButton) == false;
+  return isBitSet(previousChangedKeymap, gpioButton) &&
+         isBitSet(keymap, gpioButton) == false;
 }
 
 bool JoystickDevice::isLeftKeyDown() {
-  return bit::isBitSet(keymap, GPIO_BUTTON_LEFT);
+  return isBitSet(keymap, GPIO_BUTTON_LEFT);
 }
 
 bool JoystickDevice::isLeftKeyUp() { return isKeyReleased(GPIO_BUTTON_LEFT); }
 
 bool JoystickDevice::isRightKeyDown() {
-  return bit::isBitSet(keymap, GPIO_BUTTON_RIGHT);
+  return isBitSet(keymap, GPIO_BUTTON_RIGHT);
 }
 
 bool JoystickDevice::isRightKeyUp() { return isKeyReleased(GPIO_BUTTON_RIGHT); }
 
 bool JoystickDevice::isDownKeyDown() {
-  return bit::isBitSet(keymap, GPIO_BUTTON_DOWN);
+  return isBitSet(keymap, GPIO_BUTTON_DOWN);
 }
 
 bool JoystickDevice::isDownKeyUp() { return isKeyReleased(GPIO_BUTTON_DOWN); }
 
-bool JoystickDevice::isUpKeyDown() {
-  return bit::isBitSet(keymap, GPIO_BUTTON_UP);
-}
+bool JoystickDevice::isUpKeyDown() { return isBitSet(keymap, GPIO_BUTTON_UP); }
 
 bool JoystickDevice::isUpKeyUp() { return isKeyReleased(GPIO_BUTTON_UP); }
 
 bool JoystickDevice::isSelectKeyDown() {
-  return bit::isBitSet(keymap, GPIO_BUTTON_SELECT);
+  return isBitSet(keymap, GPIO_BUTTON_SELECT);
 }
 
 bool JoystickDevice::isSelectKeyUp() {
@@ -138,51 +138,58 @@ bool JoystickDevice::isSelectKeyUp() {
 }
 
 bool JoystickDevice::isStartKeyDown() {
-  return bit::isBitSet(keymap, GPIO_BUTTON_START);
+  return isBitSet(keymap, GPIO_BUTTON_START);
 }
 
 bool JoystickDevice::isStartKeyUp() { return isKeyReleased(GPIO_BUTTON_START); }
 
 bool JoystickDevice::isMenuKeyDown() {
-  return bit::isBitSet(keymap, GPIO_BUTTON_MENU);
+  return isBitSet(keymap, GPIO_BUTTON_MENU);
 }
 
 bool JoystickDevice::isMenuKeyUp() { return isKeyReleased(GPIO_BUTTON_MENU); }
 
-bool JoystickDevice::isAKeyDown() {
-  return bit::isBitSet(keymap, GPIO_BUTTON_A);
-}
+bool JoystickDevice::isAKeyDown() { return isBitSet(keymap, GPIO_BUTTON_A); }
 
 bool JoystickDevice::isAKeyUp() { return isKeyReleased(GPIO_BUTTON_A); }
 
-bool JoystickDevice::isBKeyDown() {
-  return bit::isBitSet(keymap, GPIO_BUTTON_B);
-}
+bool JoystickDevice::isBKeyDown() { return isBitSet(keymap, GPIO_BUTTON_B); }
 
 bool JoystickDevice::isBKeyUp() { return isKeyReleased(GPIO_BUTTON_B); }
 
-bool JoystickDevice::isXKeyDown() {
-  return bit::isBitSet(keymap, GPIO_BUTTON_X);
-}
+bool JoystickDevice::isXKeyDown() { return isBitSet(keymap, GPIO_BUTTON_X); }
 
 bool JoystickDevice::isXKeyUp() { return isKeyReleased(GPIO_BUTTON_X); }
 
-bool JoystickDevice::isYKeyDown() {
-  return bit::isBitSet(keymap, GPIO_BUTTON_Y);
-}
+bool JoystickDevice::isYKeyDown() { return isBitSet(keymap, GPIO_BUTTON_Y); }
 
 bool JoystickDevice::isYKeyUp() { return isKeyReleased(GPIO_BUTTON_Y); }
 
 bool JoystickDevice::isLTKeyDown() {
-  return bit::isBitSet(keymap, GPIO_LEFT_TRIGGER);
+  return isBitSet(keymap, GPIO_LEFT_TRIGGER);
 }
 
 bool JoystickDevice::isLTKeyUp() { return isKeyReleased(GPIO_LEFT_TRIGGER); }
 
 bool JoystickDevice::isRTKeyDown() {
-  return bit::isBitSet(keymap, GPIO_RIGHT_TRIGGER);
+  return isBitSet(keymap, GPIO_RIGHT_TRIGGER);
 }
 
 bool JoystickDevice::isRTKeyUp() { return isKeyReleased(GPIO_RIGHT_TRIGGER); }
 
 uint16_t JoystickDevice::keysState() { return keymap; }
+
+uint8_t findI2CDevice(const uint8_t startAddress) {
+  uint8_t address, response;
+  for (address = startAddress; address < 127; address++) {
+    Wire.beginTransmission(address);
+    response = Wire.endTransmission();
+
+    if (response == 0) {
+      debug("found device on port: %x", address);
+      return address;
+    }
+  }
+  debug("device not found in i2c port");
+  return 0;
+}

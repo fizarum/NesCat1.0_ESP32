@@ -4,7 +4,7 @@
 #include <map>
 #include <vector>
 
-#include "durty_region_tracker.h"
+#include "durty_region_tracker/tracker.h"
 #include "game_object.h"
 #include "rectangle.h"
 #include "sprite.h"

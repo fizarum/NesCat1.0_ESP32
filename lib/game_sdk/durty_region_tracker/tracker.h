@@ -8,9 +8,8 @@
 #include <string.h>
 #endif  // PORT_SDK
 
-#include <array>
-
 #include "../utils/utils.h"
+#include "line.h"
 #include "sdk_configurator.h"
 
 /**
@@ -33,108 +32,25 @@
  * array<uint32_t, 5> 5 numbers of uint32_t
  */
 
-// structure representing line of max 160 pixels (bytes of each Segment)
-class Line {
- private:
-  uint32_t first = 0;
-  uint32_t second = 0;
-  uint32_t third = 0;
-  uint32_t fourth = 0;
-  uint32_t fifth = 0;
-#ifdef PORT_SDK
-  uint8_t _buff_len = DISPLAY_WIDTH + 1;
-  char *_durty_region_tracker_buff;
-#endif  // PORT_SDK
-
- public:
-  Line() {
-#ifdef PORT_SDK
-    _durty_region_tracker_buff = new char[_buff_len];
-    memset(_durty_region_tracker_buff, 0, _buff_len);
-#endif  // PORT_SDK
-  }
-  ~Line() {
-#ifdef PORT_SDK
-    delete[] _durty_region_tracker_buff;
-#endif  // PORT_SDK
-  }
-
-  void setPixelOnLine(uint8_t pos) {
-    if (pos < 32) {
-      this->first = bit::setBit32(this->first, pos);
-      return;
-    }
-    if (pos < 64) {
-      this->second = bit::setBit32(this->second, pos);
-      return;
-    }
-    if (pos < 96) {
-      this->third = bit::setBit32(this->third, pos);
-      return;
-    }
-    if (pos < 128) {
-      this->fourth = bit::setBit32(this->fourth, pos);
-      return;
-    }
-
-    this->fifth = bit::setBit32(this->fifth, pos);
-  }
-
-  bool isPixelSetOnLine(uint8_t pos) {
-    if (pos < 32) return bit::isBitSet32(this->first, pos);
-    if (pos < 64) return bit::isBitSet32(this->second, pos);
-    if (pos < 96) return bit::isBitSet32(this->third, pos);
-    if (pos < 128) return bit::isBitSet32(this->fourth, pos);
-    return bit::isBitSet32(this->fifth, pos);
-  }
-
-  void resetLine() {
-    this->first = 0;
-    this->second = 0;
-    this->third = 0;
-    this->fourth = 0;
-    this->fifth = 0;
-  }
-
-  /**
-   * @brief Get information if line contains some pixels
-   *
-   * @return true if at least one pixel is set
-   * @return false if line is clear
-   */
-  bool hasAnyPixelSet() {
-    return this->first > 0 || this->second > 0 || this->third > 0 ||
-           this->fourth > 0 || this->fifth > 0;
-  }
-
-#ifdef PORT_SDK
-  void const inline printLine(char durtyPixel = 219) {
-    memset(_durty_region_tracker_buff, 0, _buff_len);
-    for (uint8_t pos = 0; pos <= _buff_len; ++pos) {
-      _durty_region_tracker_buff[pos] =
-          this->isPixelSetOnLine(pos) == true ? durtyPixel : ' ';
-    }
-    printf("%s\n", _durty_region_tracker_buff);
-  }
-#endif
-};
-
 class DurtyRegionTracker {
  private:
-  const Line emptyLine;
   bool isAtLeastOnePixelDurty = false;
-  std::array<Line, HEIGHT_IN_V_PIXELS> lines;
+  DRTLine_t *lines[HEIGHT_IN_V_PIXELS];
 
  public:
   DurtyRegionTracker() {
-    lines.fill(emptyLine);
+    for (uint8_t index = 0; index < HEIGHT_IN_V_PIXELS; ++index) {
+      lines[index] = DRTLineCreate();
+    }
+
     isAtLeastOnePixelDurty = false;
   }
 
   void resetDurtyRegions() {
-    for (auto &line : lines) {
-      if (line.hasAnyPixelSet() == true) {
-        line.resetLine();
+    for (uint8_t index = 0; index < HEIGHT_IN_V_PIXELS; ++index) {
+      DRTLine_t *line = lines[index];
+      if (DRTLineHasAnyPixelSet(line)) {
+        DRTLineReset(line);
       }
     }
     isAtLeastOnePixelDurty = false;
@@ -143,22 +59,20 @@ class DurtyRegionTracker {
   void setDurtyRegion(uint8_t left, uint8_t top, uint8_t right,
                       uint8_t bottom) {
     for (uint8_t y = top; y <= bottom; ++y) {
-      Line *line = &(lines[y]);
-
+      DRTLine_t *line = lines[y];
       for (uint8_t x = left; x <= right; ++x) {
-        line->setPixelOnLine(x);
+        DRTLineSetPixel(line, x);
       }
     }
     isAtLeastOnePixelDurty = true;
   }
 
-  void redrawDurtyPixels(void (*callback)(Line *line, uint8_t y)) {
+  void redrawDurtyPixels(void (*callback)(DRTLine_t *line, uint8_t y)) {
     if (isAtLeastOnePixelDurty == false) return;
 
     for (uint8_t y = 0; y < HEIGHT_IN_V_PIXELS; ++y) {
-      Line *line = &(lines[y]);
-
-      if (line->hasAnyPixelSet() == true) {
+      DRTLine_t *line = lines[y];
+      if (DRTLineHasAnyPixelSet(line)) {
         callback(line, y);
       }
     }

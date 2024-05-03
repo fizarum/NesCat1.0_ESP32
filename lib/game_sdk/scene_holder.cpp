@@ -4,7 +4,7 @@
 
 SceneHolder *__self = nullptr;
 void (*__callback)(uint8_t x, uint8_t y, Color color) = nullptr;
-void __onEachDurtyLine(Line *line, uint8_t lineNumber);
+void __onEachDurtyLine(DRTLine_t *line, uint8_t lineNumber);
 
 SceneHolder::SceneHolder(Palette_t *palette,
                          void (*onPixelUpdatedCallback)(uint8_t x, uint8_t y,
@@ -345,9 +345,9 @@ Color SceneHolder::calculatePixel(uint8_t x, uint8_t y) {
   return PalettegetBackgroundColor(palette);
 }
 
-void __onEachDurtyLine(Line *line, uint8_t lineNumber) {
+void __onEachDurtyLine(DRTLine_t *line, uint8_t lineNumber) {
   for (uint8_t x = 0; x < WIDTH_IN_V_PIXELS; ++x) {
-    if (line->isPixelSetOnLine(x) == true) {
+    if (DRTLineIsPixelSet(line, x)) {
       Color color = __self->calculatePixel(x, lineNumber);
       __callback(x, lineNumber, color);
     }
