@@ -7,7 +7,7 @@
 #include <sprite.h>
 
 #include "demo_app_settings.h"
-#include "pixel.h"
+#include "primitives/pixel.h"
 #include "resources.h"
 #include "scene_holder.h"
 
@@ -38,7 +38,7 @@ void DemoApp::onOpen() {
 
   setupSprites();
 
-  xQueue = xQueueCreate(300, sizeof(Pixel_t));
+  xQueue = xQueueCreate(FRAME_BUFFER_SIZE, sizeof(Pixel_t));
 
   printDebugInfo();
 }
@@ -47,6 +47,10 @@ void DemoApp::onDraw(DisplayDevice *display) {
   if (_display == nullptr) {
     _display = display;
     display->fillScreen(COLOR_BLACK);
+
+    sceneHolder->bakeCanvas();
+    sceneHolder->removeAllDurtyRegions();
+
     vTaskDelay(pdMS_TO_TICKS(100));
 
     xTaskCreate(_loopTask, "loop_task", 2048, NULL, RENDER_TASK_PRIORITY,
@@ -73,6 +77,7 @@ bool DemoApp::onHandleInput(InputDevice *inputDevice) {
 void DemoApp::onClose() {
   vTaskDelete(drawTaskHandler);
   vTaskDelete(loopTaskHandler);
+  vQueueDelete(xQueue);
 
   PaletteDestroy(palette);
   delete sceneHolder;
@@ -99,6 +104,8 @@ void redrawPixel(uint8_t x, uint8_t y, Color color) {
 
 uint8_t maxAnimationIterations = 60;
 uint8_t animationIteration = 0;
+// 33 millis means 30 fps for game
+// 20 millis means 50 fps for game
 const uint16_t delayBetweenUpdates = 20;
 
 void _loopTask(void *params) {

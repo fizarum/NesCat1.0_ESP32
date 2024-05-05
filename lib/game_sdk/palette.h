@@ -8,7 +8,7 @@ extern "C" {
 #include <stdbool.h>
 
 #include "../device/display_device/palette.h"
-#include "primitives.h"
+#include "primitives/primitives.h"
 
 #define PALETTE_SIZE 16
 

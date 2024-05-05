@@ -1,7 +1,7 @@
 #ifndef GAME_SDK_GAME_OBJECT_H
 #define GAME_SDK_GAME_OBJECT_H
 
-#include "point.h"
+#include "primitives/point.h"
 #include "sprite.h"
 
 class GameObject {

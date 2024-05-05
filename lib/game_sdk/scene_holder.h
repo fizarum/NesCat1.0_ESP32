@@ -2,7 +2,6 @@
 #define GAME_SDK_CONTROLLER_H
 
 #include <map>
-#include <vector>
 
 #include "durty_region_tracker/tracker.h"
 #include "game_object.h"
@@ -20,7 +19,8 @@ class SceneHolder {
   std::map<ObjectId, GameObject *> gameObjectsWithId = {};
 
   Palette_t *palette;
-  DurtyRegionTracker *tracker;
+  DRTracker_t *tracker;
+
   ObjectId lastAssignedId = 0;
 
   Sprite *createPlainSprite(uint8_t width, uint8_t height, ColorIndex pixels[],

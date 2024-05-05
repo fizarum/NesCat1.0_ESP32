@@ -1,5 +1,5 @@
-#ifndef GAME_SDK_SPRITE_H
-#define GAME_SDK_SPRITE_H
+#ifndef GAME_SDK_SPRITE2_H
+#define GAME_SDK_SPRITE2_H
 
 #include <stdint.h>
 
@@ -7,7 +7,7 @@
 
 #include "../utils/utils.h"
 #include "palette.h"
-#include "primitives.h"
+#include "primitives/primitives.h"
 #include "rectangle.h"
 
 class Sprite : public Rectangle {
@@ -58,4 +58,4 @@ class Sprite : public Rectangle {
   }
 };
 
-#endif  // GAME_SDK_SPRITE_H
+#endif  // GAME_SDK_SPRITE2_H

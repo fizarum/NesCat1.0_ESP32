@@ -10,7 +10,7 @@ SceneHolder::SceneHolder(Palette_t *palette,
                          void (*onPixelUpdatedCallback)(uint8_t x, uint8_t y,
                                                         Color color)) {
   this->palette = palette;
-  this->tracker = new DurtyRegionTracker();
+  this->tracker = DRTrackerCreate();
   this->lastAssignedId = 0;
 
   __callback = onPixelUpdatedCallback;
@@ -40,7 +40,7 @@ SceneHolder::~SceneHolder() {
   gameObjectsWithId.clear();
   backgroundGameObjectsWithId.clear();
 
-  delete tracker;
+  DRTrackerDestroy(tracker);
 }
 
 Sprite *SceneHolder::createPlainSprite(uint8_t width, uint8_t height,
@@ -357,12 +357,12 @@ void __onEachDurtyLine(DRTLine_t *line, uint8_t lineNumber) {
 void SceneHolder::bakeCanvas() {
   if (__callback == nullptr) return;
 
-  tracker->redrawDurtyPixels(&__onEachDurtyLine);
+  DRTrackerGetDurtyRegions(tracker, &__onEachDurtyLine);
 }
 
 void SceneHolder::setDurtyRegion(uint8_t left, uint8_t top, uint8_t right,
                                  uint8_t bottom) {
-  tracker->setDurtyRegion(left, top, right, bottom);
+  DRTrackerSetDurtyRegion(tracker, left, top, right, bottom);
 }
 
 void SceneHolder::setDurtyRegion(Rectangle *region, uint8_t extraSpace) {
@@ -372,10 +372,10 @@ void SceneHolder::setDurtyRegion(Rectangle *region, uint8_t extraSpace) {
   uint8_t right = region->getVisibleRight();
   uint8_t bottom = region->getVisibleBottom();
 
-  tracker->setDurtyRegion(left, top, right, bottom);
+  DRTrackerSetDurtyRegion(tracker, left, top, right, bottom);
 }
 
-void SceneHolder::removeAllDurtyRegions() { tracker->resetDurtyRegions(); }
+void SceneHolder::removeAllDurtyRegions() { DRTrackerClear(tracker); }
 
 void SceneHolder::drawDurtyRegion() {
   // tracker->printDebugInfo();
