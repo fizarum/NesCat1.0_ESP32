@@ -58,10 +58,6 @@ void SpriteMoveTo(Sprite_t* sprite, const uint8_t x, const uint8_t y) {
 
 void SpriteMoveBy(Sprite_t* sprite, const uint8_t x, const uint8_t y) {
   SpriteImpl_t* impl = (SpriteImpl_t*)sprite;
-  uint8_t files = 20;
 
-  char** file_names;
-
-  file_names = (char**)malloc(sizeof(char) * files * MAX_FILENAME_SIZE);
   RectangleMoveBy(impl->bounds, x, y);
 }
