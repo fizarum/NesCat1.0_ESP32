@@ -22,6 +22,11 @@ const int16_t RectangleGetRightPosition(const Rectangle_t* rectangle);
 const int16_t RectangleGetTopPosition(const Rectangle_t* rectangle);
 const int16_t RectangleGetBottomPosition(const Rectangle_t* rectangle);
 
+uint8_t RectangleGetVisibleLeftPosition(const Rectangle_t* rectangle);
+uint8_t RectangleGetVisibleTopPosition(const Rectangle_t* rectangle);
+uint8_t RectangleGetVisibleRightPosition(const Rectangle_t* rectangle);
+uint8_t RectangleGetVisibleBottomPosition(const Rectangle_t* rectangle);
+
 void RectangleReset(Rectangle_t* rectangle);
 void RectangleResize(Rectangle_t* rectangle, const uint8_t width,
                      const uint8_t height);

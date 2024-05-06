@@ -31,13 +31,7 @@ extern "C" {
  * @brief Structure representing durty region tracker (DRT) line of max 160
  * pixels (bytes of each Segment)
  */
-typedef struct {
-  uint32_t first;
-  uint32_t second;
-  uint32_t third;
-  uint32_t fourth;
-  uint32_t fifth;
-} DRTLine_t;
+typedef struct DRTLine_t DRTLine_t;
 
 DRTLine_t *DRTLineCreate();
 void DRTLineDestroy(DRTLine_t *line);

@@ -2,6 +2,15 @@
 
 #include <stdlib.h>
 
+typedef struct Palette_t {
+  Color colors[PALETTE_SIZE];
+
+  /**
+   * @brief Index of color in palette which is used as background
+   */
+  ColorIndex background;
+} Palette_t;
+
 Palette_t *PaletteCreate(ColorIndex background) {
   Palette_t *palette = (Palette_t *)malloc(sizeof(Palette_t));
   palette->background = background;

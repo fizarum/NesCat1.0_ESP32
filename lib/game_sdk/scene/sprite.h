@@ -4,6 +4,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "../primitives/primitives.h"
@@ -23,11 +25,19 @@ void SpriteDestroy(Sprite_t *sprite);
  * otained
  * @return ColorIndex
  */
-ColorIndex getPixel(const Sprite_t *sprite, const uint16_t screenX,
-                    const uint16_t screenY, const ColorIndex fallback);
+ColorIndex SpriteGetPixel(const Sprite_t *sprite, const uint16_t screenX,
+                          const uint16_t screenY, const ColorIndex fallback);
+
+bool SpriteContainsPoint(const Sprite_t *sprite, const uint8_t x,
+                         const uint8_t y);
 
 void SpriteMoveTo(Sprite_t *sprite, const uint8_t x, const uint8_t y);
 void SpriteMoveBy(Sprite_t *sprite, const uint8_t x, const uint8_t y);
+
+uint8_t SpriteGetVisibleLeftPosition(const Sprite_t *sprite);
+uint8_t SpriteGetVisibleTopPosition(const Sprite_t *sprite);
+uint8_t SpriteGetVisibleRightPosition(const Sprite_t *sprite);
+uint8_t SpriteGetVisibleBottomPosition(const Sprite_t *sprite);
 
 #ifdef __cplusplus
 }

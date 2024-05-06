@@ -9,6 +9,14 @@
 #define DRT_LINE_OFFSET_3 96
 #define DRT_LINE_OFFSET_4 128
 
+typedef struct DRTLine_t {
+  uint32_t first;
+  uint32_t second;
+  uint32_t third;
+  uint32_t fourth;
+  uint32_t fifth;
+} DRTLine_t;
+
 DRTLine_t *DRTLineCreate() {
   DRTLine_t *line = (DRTLine_t *)malloc(sizeof(DRTLine_t));
   DRTLineReset(line);

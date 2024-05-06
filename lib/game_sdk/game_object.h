@@ -2,7 +2,7 @@
 #define GAME_SDK_GAME_OBJECT_H
 
 #include "primitives/point.h"
-#include "sprite.h"
+#include "primitives/primitives.h"
 
 class GameObject {
  private:

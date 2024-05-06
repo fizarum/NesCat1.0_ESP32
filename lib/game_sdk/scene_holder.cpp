@@ -19,11 +19,11 @@ SceneHolder::SceneHolder(Palette_t *palette,
 
 SceneHolder::~SceneHolder() {
   for (auto &it : spritesWithId) {
-    delete it.second;
+    SpriteDestroy(it.second);
   }
 
   for (auto &it : backgroundSpritesWithId) {
-    delete it.second;
+    SpriteDestroy(it.second);
   }
 
   for (auto &it : gameObjectsWithId) {
@@ -43,13 +43,13 @@ SceneHolder::~SceneHolder() {
   DRTrackerDestroy(tracker);
 }
 
-Sprite *SceneHolder::createPlainSprite(uint8_t width, uint8_t height,
-                                       ColorIndex pixels[], size_t pixelsCount,
-                                       uint8_t positionX, uint8_t positionY) {
-  Sprite *sprite = new Sprite(width, height);
-  sprite->setPixels(pixels, pixelsCount);
+Sprite_t *SceneHolder::createPlainSprite(uint8_t width, uint8_t height,
+                                         ColorIndex pixels[],
+                                         size_t pixelsCount, uint8_t positionX,
+                                         uint8_t positionY) {
+  Sprite_t *sprite = SpriteCreate(width, height, pixels, pixelsCount);
   if (positionX != 0 || positionY != 0) {
-    sprite->moveTo(positionX, positionY);
+    SpriteMoveTo(sprite, positionX, positionY);
   }
   setDurtyRegion(sprite);
   return sprite;
@@ -105,20 +105,20 @@ ObjectId SceneHolder::createBackgroundGameObject(
 }
 
 void SceneHolder::moveSpriteBy(ObjectId spriteId, int8_t x, int8_t y) {
-  Sprite *sprite = this->getSprite(spriteId);
+  Sprite_t *sprite = this->getSprite(spriteId);
 
   // set old region as durty
   setDurtyRegion(sprite);
-  sprite->moveBy(x, y);
+  SpriteMoveBy(sprite, x, y);
   // as well as new
   setDurtyRegion(sprite);
 }
 
 void SceneHolder::moveSpriteTo(ObjectId spriteId, int8_t x, int8_t y) {
-  Sprite *sprite = this->getSprite(spriteId);
+  Sprite_t *sprite = this->getSprite(spriteId);
   // set old region as durty
   setDurtyRegion(sprite);
-  sprite->moveTo(x, y);
+  SpriteMoveTo(sprite, x, y);
   // as well as new
   setDurtyRegion(sprite);
 }
@@ -127,70 +127,70 @@ void SceneHolder::calculateNextPosition(GameObject *object, int8_t moveByX,
                                         int8_t moveByY) {
   uint8_t nextX, nextY = 0;
 
-  Sprite *sprite = getSprite(object);
+  Sprite_t *sprite = getSprite(object);
 
   Direction direction = getDirection(moveByX, moveByY);
   switch (direction) {
     case DIRECTION_LT:
-      nextX = sprite->getVisibleLeft() + moveByX;
-      nextY = sprite->getVisibleTop() + moveByY;
+      nextX = SpriteGetVisibleLeftPosition(sprite) + moveByX;
+      nextY = SpriteGetVisibleTopPosition(sprite) + moveByY;
       object->setNextPositionForCorner1(nextX, nextY);
       object->resetNextPositionOfCorner2();
       break;
 
     case DIRECTION_T:
-      nextX = sprite->getVisibleLeft();
-      nextY = sprite->getVisibleTop() + moveByY;
+      nextX = SpriteGetVisibleLeftPosition(sprite);
+      nextY = SpriteGetVisibleTopPosition(sprite) + moveByY;
       object->setNextPositionForCorner1(nextX, nextY);
 
-      nextX = sprite->getVisibleRight();
+      nextX = SpriteGetVisibleRightPosition(sprite);
       object->setNextPositionForCorner2(nextX, nextY);
       break;
 
     case DIRECTION_RT:
-      nextX = sprite->getVisibleRight() + moveByX;
-      nextY = sprite->getVisibleTop() + moveByY;
+      nextX = SpriteGetVisibleRightPosition(sprite) + moveByX;
+      nextY = SpriteGetVisibleTopPosition(sprite) + moveByY;
       object->setNextPositionForCorner1(nextX, nextY);
       object->resetNextPositionOfCorner2();
       break;
 
     case DIRECTION_L:
-      nextX = sprite->getVisibleLeft() + moveByX;
-      nextY = sprite->getVisibleTop();
+      nextX = SpriteGetVisibleLeftPosition(sprite) + moveByX;
+      nextY = SpriteGetVisibleTopPosition(sprite);
       object->setNextPositionForCorner1(nextX, nextY);
 
-      nextY = sprite->getVisibleBottom();
+      nextY = SpriteGetVisibleBottomPosition(sprite);
       object->setNextPositionForCorner2(nextX, nextY);
       break;
 
     case DIRECTION_R:
-      nextX = sprite->getVisibleRight() + moveByX;
-      nextY = sprite->getVisibleTop();
+      nextX = SpriteGetVisibleRightPosition(sprite) + moveByX;
+      nextY = SpriteGetVisibleTopPosition(sprite);
       object->setNextPositionForCorner1(nextX, nextY);
 
-      nextY = sprite->getVisibleBottom();
+      nextY = SpriteGetVisibleBottomPosition(sprite);
       object->setNextPositionForCorner2(nextX, nextY);
       break;
 
     case DIRECTION_LB:
-      nextX = sprite->getVisibleLeft() + moveByX;
-      nextY = sprite->getVisibleBottom() + moveByY;
+      nextX = SpriteGetVisibleLeftPosition(sprite) + moveByX;
+      nextY = SpriteGetVisibleBottomPosition(sprite) + moveByY;
       object->setNextPositionForCorner1(nextX, nextY);
       object->resetNextPositionOfCorner2();
       break;
 
     case DIRECTION_B:
-      nextX = sprite->getVisibleLeft();
-      nextY = sprite->getVisibleBottom() + moveByY;
+      nextX = SpriteGetVisibleLeftPosition(sprite);
+      nextY = SpriteGetVisibleBottomPosition(sprite) + moveByY;
       object->setNextPositionForCorner1(nextX, nextY);
 
-      nextX = sprite->getVisibleRight();
+      nextX = SpriteGetVisibleRightPosition(sprite);
       object->setNextPositionForCorner2(nextX, nextY);
       break;
 
     case DIRECTION_RB:
-      nextX = sprite->getVisibleRight() + moveByX;
-      nextY = sprite->getVisibleBottom() + moveByY;
+      nextX = SpriteGetVisibleRightPosition(sprite) + moveByX;
+      nextY = SpriteGetVisibleBottomPosition(sprite) + moveByY;
       object->setNextPositionForCorner1(nextX, nextY);
       object->resetNextPositionOfCorner2();
       break;
@@ -257,18 +257,18 @@ void SceneHolder::moveGameObjectTo(ObjectId id, int8_t x, int8_t y) {
 ColorIndex SceneHolder::findPixelInGameObjects(uint8_t x, uint8_t y,
                                                ColorIndex defaultColorIndex) {
   for (auto &it : gameObjectsWithId) {
-    Sprite *sprite = getSprite(it.second);
+    Sprite_t *sprite = getSprite(it.second);
     if (sprite != nullptr) {
-      ColorIndex ci = sprite->getPixel(x, y, defaultColorIndex);
+      ColorIndex ci = SpriteGetPixel(sprite, x, y, defaultColorIndex);
       if (PaletteIsColorVisible(palette, ci) == true) {
         return ci;
       }
     }
   }
   for (auto &it : backgroundGameObjectsWithId) {
-    Sprite *sprite = getSprite(it.second);
+    Sprite_t *sprite = getSprite(it.second);
     if (sprite != nullptr) {
-      ColorIndex ci = sprite->getPixel(x, y, defaultColorIndex);
+      ColorIndex ci = SpriteGetPixel(sprite, x, y, defaultColorIndex);
       if (PaletteIsColorVisible(palette, ci) == true) {
         return ci;
       }
@@ -281,7 +281,9 @@ ColorIndex SceneHolder::findPixelInGameObjects(uint8_t x, uint8_t y,
 ColorIndex SceneHolder::findPixelInSprites(uint8_t x, uint8_t y,
                                            ColorIndex defaultColorIndex) {
   for (auto &it : spritesWithId) {
-    ColorIndex ci = it.second->getPixel(x, y, defaultColorIndex);
+    Sprite_t *sprite = it.second;
+    ColorIndex ci = SpriteGetPixel(sprite, x, y, defaultColorIndex);
+
     // second check allows to continue searching in siblin sprites
     // when current one has transparent pixel
     if (PaletteIsColorVisible(palette, ci) == true) {
@@ -294,7 +296,8 @@ ColorIndex SceneHolder::findPixelInSprites(uint8_t x, uint8_t y,
 ColorIndex SceneHolder::findPixelInBackgroundSprites(
     uint8_t x, uint8_t y, ColorIndex defaultColorIndex) {
   for (auto &it : backgroundSpritesWithId) {
-    ColorIndex ci = it.second->getPixel(x, y, defaultColorIndex);
+    Sprite_t *sprite = it.second;
+    ColorIndex ci = SpriteGetPixel(sprite, x, y, defaultColorIndex);
     if (ci != defaultColorIndex) {
       return ci;
     }
@@ -304,15 +307,15 @@ ColorIndex SceneHolder::findPixelInBackgroundSprites(
 
 ObjectId SceneHolder::findObjectOnScreen(uint8_t x, uint8_t y) {
   for (auto &it : gameObjectsWithId) {
-    Sprite *sprite = getSprite(it.second);
-    if (sprite != nullptr && sprite->contains(x, y)) {
+    Sprite_t *sprite = getSprite(it.second);
+    if (sprite != nullptr && SpriteContainsPoint(sprite, x, y)) {
       return it.first;
     }
   }
 
   for (auto &it : backgroundGameObjectsWithId) {
-    Sprite *sprite = getSprite(it.second);
-    if (sprite != nullptr && sprite->contains(x, y)) {
+    Sprite_t *sprite = getSprite(it.second);
+    if (sprite != nullptr && SpriteContainsPoint(sprite, x, y)) {
       return it.first;
     }
   }
@@ -365,18 +368,19 @@ void SceneHolder::setDurtyRegion(uint8_t left, uint8_t top, uint8_t right,
   DRTrackerSetDurtyRegion(tracker, left, top, right, bottom);
 }
 
-void SceneHolder::setDurtyRegion(Rectangle *region, uint8_t extraSpace) {
+void SceneHolder::setDurtyRegion(Sprite_t *sprite) {
   // TODO: complete bouds checkings
-  uint8_t left = region->getVisibleLeft();
-  uint8_t top = region->getVisibleTop();
-  uint8_t right = region->getVisibleRight();
-  uint8_t bottom = region->getVisibleBottom();
-
+  uint8_t left = SpriteGetVisibleLeftPosition(sprite);
+  uint8_t top = SpriteGetVisibleTopPosition(sprite);
+  uint8_t right = SpriteGetVisibleRightPosition(sprite);
+  uint8_t bottom = SpriteGetVisibleBottomPosition(sprite);
   DRTrackerSetDurtyRegion(tracker, left, top, right, bottom);
 }
 
 void SceneHolder::removeAllDurtyRegions() { DRTrackerClear(tracker); }
 
 void SceneHolder::drawDurtyRegion() {
-  // tracker->printDebugInfo();
+#ifdef PORT_SDK
+  DRTrackerPrintDebugInfo(tracker);
+#endif
 }

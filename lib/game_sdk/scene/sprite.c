@@ -4,30 +4,28 @@
 
 #include "../primitives/rectangle.h"
 
-typedef struct {
+typedef struct Sprite_t {
   ColorIndex* pixels;
   Rectangle_t* bounds;
-} SpriteImpl_t;
+} Sprite_t;
 
 Sprite_t* SpriteCreate(const uint8_t width, const uint8_t height,
                        ColorIndex* const pixels, const uint16_t pixelsCount) {
-  SpriteImpl_t* impl = malloc(sizeof(SpriteImpl_t));
-  impl->pixels = pixels;
-  impl->bounds = RectangleCreateWithSize(width, height, 0, 0);
-  return (Sprite_t*)impl;
+  Sprite_t* sprite = (Sprite_t*)malloc(sizeof(Sprite_t));
+  sprite->pixels = pixels;
+  sprite->bounds = RectangleCreateWithSize(width, height, 0, 0);
+  return sprite;
 }
 
 void SpriteDestroy(Sprite_t* sprite) {
-  SpriteImpl_t* impl = (SpriteImpl_t*)sprite;
-  free(impl->pixels);
-  RectangleDestroy(impl->bounds);
-  free(impl);
+  free(sprite->pixels);
+  RectangleDestroy(sprite->bounds);
+  free(sprite);
 }
 
-ColorIndex getPixel(const Sprite_t* sprite, const uint16_t screenX,
-                    const uint16_t screenY, const ColorIndex fallback) {
-  SpriteImpl_t* impl = (SpriteImpl_t*)sprite;
-  const Rectangle_t* bounds = impl->bounds;
+ColorIndex SpriteGetPixel(const Sprite_t* sprite, const uint16_t screenX,
+                          const uint16_t screenY, const ColorIndex fallback) {
+  const Rectangle_t* bounds = sprite->bounds;
 
   if (RectangleContainsPoint(bounds, screenX, screenY) == false)
     return fallback;
@@ -41,23 +39,40 @@ ColorIndex getPixel(const Sprite_t* sprite, const uint16_t screenX,
   uint16_t index = RectangleIndexOf(bounds, x, y) / 2;
   bool isOdd = x & 1 == 1;
 
-  ColorIndexes indexes = impl->pixels[index];
+  ColorIndexes indexes = sprite->pixels[index];
   if (isOdd) {
     return getSecondIndex(indexes);
   }
   return getFirstIndex(indexes);
 }
 
-void SpriteMoveTo(Sprite_t* sprite, const uint8_t x, const uint8_t y) {
-  SpriteImpl_t* impl = (SpriteImpl_t*)sprite;
+bool SpriteContainsPoint(const Sprite_t* sprite, const uint8_t x,
+                         const uint8_t y) {
+  return RectangleContainsPoint(sprite->bounds, x, y);
+}
 
-  RectangleMoveTo(impl->bounds, x, y);
+void SpriteMoveTo(Sprite_t* sprite, const uint8_t x, const uint8_t y) {
+  RectangleMoveTo(sprite->bounds, x, y);
 }
 
 #define MAX_FILENAME_SIZE 10
 
 void SpriteMoveBy(Sprite_t* sprite, const uint8_t x, const uint8_t y) {
-  SpriteImpl_t* impl = (SpriteImpl_t*)sprite;
+  RectangleMoveBy(sprite->bounds, x, y);
+}
 
-  RectangleMoveBy(impl->bounds, x, y);
+uint8_t SpriteGetVisibleLeftPosition(const Sprite_t* sprite) {
+  return RectangleGetVisibleLeftPosition(sprite->bounds);
+}
+
+uint8_t SpriteGetVisibleTopPosition(const Sprite_t* sprite) {
+  return RectangleGetVisibleTopPosition(sprite->bounds);
+}
+
+uint8_t SpriteGetVisibleRightPosition(const Sprite_t* sprite) {
+  return RectangleGetVisibleRightPosition(sprite->bounds);
+}
+
+uint8_t SpriteGetVisibleBottomPosition(const Sprite_t* sprite) {
+  return RectangleGetVisibleBottomPosition(sprite->bounds);
 }

@@ -2,24 +2,26 @@
 
 #include <stdlib.h>
 
-typedef struct {
+#include "sdk_configurator.h"
+
+typedef struct Rectangle_t {
   int16_t left;
   int16_t top;
   int16_t right;
   int16_t bottom;
   uint8_t width;
   uint8_t height;
-} RectangleImpl_t;
+} Rectangle_t;
 
 Rectangle_t* RectangleCreate() {
-  RectangleImpl_t* rectangle = malloc(sizeof(RectangleImpl_t));
-  RectangleReset((Rectangle_t*)rectangle);
-  return (Rectangle_t*)rectangle;
+  Rectangle_t* rectangle = (Rectangle_t*)malloc(sizeof(Rectangle_t));
+  RectangleReset(rectangle);
+  return rectangle;
 }
 
 Rectangle_t* RectangleCreateWithSize(const uint8_t width, const uint8_t height,
                                      const uint8_t left, const uint8_t top) {
-  RectangleImpl_t* rectangle = malloc(sizeof(RectangleImpl_t));
+  Rectangle_t* rectangle = (Rectangle_t*)malloc(sizeof(Rectangle_t));
   rectangle->width = width;
   rectangle->height = height;
 
@@ -28,86 +30,96 @@ Rectangle_t* RectangleCreateWithSize(const uint8_t width, const uint8_t height,
   rectangle->right = left + width - 1;
   rectangle->bottom = top + height - 1;
 
-  return (Rectangle_t*)rectangle;
+  return rectangle;
 }
 
 void RectangleDestroy(Rectangle_t* rectangle) { free(rectangle); }
 
 uint8_t RectangleGetWith(const Rectangle_t* rectangle) {
-  RectangleImpl_t* impl = (RectangleImpl_t*)rectangle;
-  return impl->width;
+  return rectangle->width;
 }
 
 uint8_t RectangleGetHeight(const Rectangle_t* rectangle) {
-  RectangleImpl_t* impl = (RectangleImpl_t*)rectangle;
-  return impl->height;
+  return rectangle->height;
 }
 
 const int16_t RectangleGetLeftPosition(const Rectangle_t* rectangle) {
-  RectangleImpl_t* impl = (RectangleImpl_t*)rectangle;
-  return impl->left;
+  return rectangle->left;
 }
 const int16_t RectangleGetRightPosition(const Rectangle_t* rectangle) {
-  RectangleImpl_t* impl = (RectangleImpl_t*)rectangle;
-  return impl->right;
+  return rectangle->right;
 }
 
 const int16_t RectangleGetTopPosition(const Rectangle_t* rectangle) {
-  RectangleImpl_t* impl = (RectangleImpl_t*)rectangle;
-  return impl->top;
+  return rectangle->top;
 }
 
 const int16_t RectangleGetBottomPosition(const Rectangle_t* rectangle) {
-  RectangleImpl_t* impl = (RectangleImpl_t*)rectangle;
-  return impl->bottom;
+  return rectangle->bottom;
+}
+
+uint8_t RectangleGetVisibleLeftPosition(const Rectangle_t* rectangle) {
+  return rectangle->left < 0 ? 0 : rectangle->left;
+}
+
+uint8_t RectangleGetVisibleTopPosition(const Rectangle_t* rectangle) {
+  return rectangle->top < 0 ? 0 : rectangle->top;
+}
+
+uint8_t RectangleGetVisibleRightPosition(const Rectangle_t* rectangle) {
+  uint8_t rightPos = rectangle->right;
+
+  // if object is out of screen
+  if (rightPos < 0) return 0;
+  return rightPos >= WIDTH_IN_V_PIXELS ? WIDTH_IN_V_PIXELS - 1 : rightPos;
+}
+
+uint8_t RectangleGetVisibleBottomPosition(const Rectangle_t* rectangle) {
+  uint8_t bottomPos = rectangle->bottom;
+
+  // if object is out of screen
+  if (bottomPos < 0) return 0;
+  return bottomPos >= HEIGHT_IN_V_PIXELS ? HEIGHT_IN_V_PIXELS - 1 : bottomPos;
 }
 
 void RectangleReset(Rectangle_t* rectangle) {
-  RectangleImpl_t* impl = (RectangleImpl_t*)rectangle;
-  impl->width = 0;
-  impl->height = 0;
-  impl->left = 0;
-  impl->top = 0;
-  impl->right = 0;
-  impl->bottom = 0;
+  rectangle->width = 0;
+  rectangle->height = 0;
+  rectangle->left = 0;
+  rectangle->top = 0;
+  rectangle->right = 0;
+  rectangle->bottom = 0;
 }
 
 void RectangleResize(Rectangle_t* rectangle, const uint8_t width,
                      const uint8_t height) {
-  RectangleImpl_t* impl = (RectangleImpl_t*)rectangle;
-  impl->right = impl->left + width - 1;
-  impl->bottom = impl->top + height - 1;
-  impl->width = width;
-  impl->height = height;
+  rectangle->right = rectangle->left + width - 1;
+  rectangle->bottom = rectangle->top + height - 1;
+  rectangle->width = width;
+  rectangle->height = height;
 }
 
 void RectangleMoveBy(Rectangle_t* rectangle, const int8_t x, const int8_t y) {
-  RectangleImpl_t* impl = (RectangleImpl_t*)rectangle;
-  impl->left += x;
-  impl->right += x;
-  impl->top += y;
-  impl->bottom += y;
+  rectangle->left += x;
+  rectangle->right += x;
+  rectangle->top += y;
+  rectangle->bottom += y;
 }
 
 void RectangleMoveTo(Rectangle_t* rectangle, const uint8_t x, const uint8_t y) {
-  RectangleImpl_t* impl = (RectangleImpl_t*)rectangle;
-
-  impl->left = x;
-  impl->top = y;
-  impl->right = impl->left + impl->width - 1;
-  impl->bottom = impl->top + impl->height - 1;
+  rectangle->left = x;
+  rectangle->top = y;
+  rectangle->right = rectangle->left + rectangle->width - 1;
+  rectangle->bottom = rectangle->top + rectangle->height - 1;
 }
 
 bool RectangleContainsPoint(const Rectangle_t* rectangle, const uint8_t x,
                             const uint8_t y) {
-  RectangleImpl_t* impl = (RectangleImpl_t*)rectangle;
-  return (x >= impl->left && x <= impl->right) &&
-         (y >= impl->top && y <= impl->bottom);
+  return (x >= rectangle->left && x <= rectangle->right) &&
+         (y >= rectangle->top && y <= rectangle->bottom);
 }
 
 uint32_t RectangleIndexOf(const Rectangle_t* rectangle, const uint8_t x,
                           const uint8_t y) {
-  RectangleImpl_t* impl = (RectangleImpl_t*)rectangle;
-
-  return y * impl->width + x;
+  return y * rectangle->width + x;
 }

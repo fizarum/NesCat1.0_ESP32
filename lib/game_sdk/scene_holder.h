@@ -5,16 +5,16 @@
 
 #include "durty_region_tracker/tracker.h"
 #include "game_object.h"
-#include "rectangle.h"
-#include "sprite.h"
+#include "palette.h"
+#include "scene/sprite.h"
 
-typedef std::map<ObjectId, Sprite *>::iterator SpriteIterator;
+typedef std::map<ObjectId, Sprite_t *>::iterator SpriteIterator;
 typedef std::map<ObjectId, GameObject *>::iterator GameObjectIterator;
 
 class SceneHolder {
  private:
-  std::map<ObjectId, Sprite *> spritesWithId = {};
-  std::map<ObjectId, Sprite *> backgroundSpritesWithId = {};
+  std::map<ObjectId, Sprite_t *> spritesWithId = {};
+  std::map<ObjectId, Sprite_t *> backgroundSpritesWithId = {};
   std::map<ObjectId, GameObject *> backgroundGameObjectsWithId = {};
   std::map<ObjectId, GameObject *> gameObjectsWithId = {};
 
@@ -23,9 +23,9 @@ class SceneHolder {
 
   ObjectId lastAssignedId = 0;
 
-  Sprite *createPlainSprite(uint8_t width, uint8_t height, ColorIndex pixels[],
-                            size_t pixelsCount, uint8_t positionX,
-                            uint8_t positionY);
+  Sprite_t *createPlainSprite(uint8_t width, uint8_t height,
+                              ColorIndex pixels[], size_t pixelsCount,
+                              uint8_t positionX, uint8_t positionY);
 
   ColorIndex findPixelInGameObjects(uint8_t x, uint8_t y,
                                     ColorIndex defaultColorIndex);
@@ -34,7 +34,7 @@ class SceneHolder {
   ColorIndex findPixelInBackgroundSprites(uint8_t x, uint8_t y,
                                           ColorIndex defaultColorIndex);
 
-  inline Sprite *getSprite(ObjectId id) {
+  inline Sprite_t *getSprite(ObjectId id) {
     SpriteIterator it = spritesWithId.find(id);
     if (it != spritesWithId.end()) {
       return it->second;
@@ -48,7 +48,7 @@ class SceneHolder {
     return nullptr;
   }
 
-  inline Sprite *getSprite(GameObject *object) {
+  inline Sprite_t *getSprite(GameObject *object) {
     if (object == nullptr) return nullptr;
 
     return this->getSprite(object->getSpriteId());
@@ -150,12 +150,13 @@ class SceneHolder {
   Color calculatePixel(uint8_t x, uint8_t y);
 
   void setDurtyRegion(uint8_t left, uint8_t top, uint8_t right, uint8_t bottom);
+
   /**
    * @brief Set the Durty Region which will be redrawn in next draw call
    *
    * @param region which should be redrawn
    */
-  void setDurtyRegion(Rectangle *region, uint8_t extraSpace = 0);
+  void setDurtyRegion(Sprite_t *sprite);
   void removeAllDurtyRegions();
 
   void drawDurtyRegion();

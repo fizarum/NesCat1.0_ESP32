@@ -4,7 +4,6 @@
 #include <freertos/queue.h>
 #include <log.h>
 #include <scheduler.h>
-#include <sprite.h>
 
 #include "demo_app_settings.h"
 #include "primitives/pixel.h"
@@ -164,15 +163,7 @@ void setupSprites() {
 
   sceneHolder->createBackgroundSprite(16, 16, grass, 256, 0, 20);
 
-  // cat sprite 7x7 pixels
-  // warning! all sprites should have sizes dividable by 2! (2, 4, 6, 8, etc.)
-  // so this sprite is rendered incorrectly
-  ColorIndex pixels[] = {
-      128, 128, 8,   136, 136, 0, 8, 136, 128, 0, 128, 136, 136, 136,
-      8,   136, 136, 128, 128, 0, 8, 8,   0,   0, 128, 128, 0,   8,
-  };
-
-  addonSprite = sceneHolder->createSprite(7, 7, pixels, 56, 15, 5);
+  addonSprite = sceneHolder->createSprite(16, 16, cat, 256, 15, 5);
 }
 
 void printDebugInfo() {

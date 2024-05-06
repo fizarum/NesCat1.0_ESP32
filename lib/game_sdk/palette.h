@@ -12,14 +12,7 @@ extern "C" {
 
 #define PALETTE_SIZE 16
 
-typedef struct {
-  Color colors[PALETTE_SIZE];
-
-  /**
-   * @brief Index of color in palette which is used as background
-   */
-  ColorIndex background;
-} Palette_t;
+typedef struct Palette_t Palette_t;
 
 Palette_t *PaletteCreate(ColorIndex background);
 void PaletteDestroy(Palette_t *palette);
