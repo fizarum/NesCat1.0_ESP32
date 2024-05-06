@@ -101,7 +101,6 @@ void DRTrackerPrintDebugInfo(DRTracker_t *tracker) {
   for (uint8_t lineNum = 0; lineNum < _print_lines; ++lineNum) {
     DRTLine_t *line = tracker->lines[lineNum];
     printLine(line);
-    // line->printLine();
   }
 
   printf("%s%c%s%c%s%c%s%c%s\n", seg31, separator, seg31, separator, seg31,
