@@ -8,8 +8,8 @@
  * but smaller resolution
  */
 
-// #define PIXEL_SIZE 2  // 160x120
-#define PIXEL_SIZE 3  // 106x80
+#define PIXEL_SIZE 2  // 160x120
+// #define PIXEL_SIZE 3  // 106x80
 // #define PIXEL_SIZE 4  // 80x60
 // #define PIXEL_SIZE 5  // 64x48
 // the best performance/pixel size value

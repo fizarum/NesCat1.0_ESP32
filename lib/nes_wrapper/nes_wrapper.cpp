@@ -31,6 +31,7 @@ void prepareFlash(size_t sizeToPrepare);
 bool storeRomDataOnFlash(uint8_t *block, uint16_t blockSize,
                          uint16_t blockIndex);
 void resetLoadingStats();
+void getPsRamStatus(uint32_t psramSize);
 
 nes_t *createNes() {
   if (instance == nullptr) {
@@ -139,4 +140,15 @@ void preparePsRam() {
   if (psRAMSize > 0) {
     PSRAM = (uint8_t *)ps_malloc(2097152);  // PSRAM malloc 2MB
   }
+}
+
+void getPsRamStatus(uint32_t psramSize) {
+  debug("--------------------------------");
+  if (psramSize > 0) {
+    debug("Total PSRAM: %u", psramSize);
+    debug("Free PSRAM: %u", ESP.getFreePsram());
+  } else {
+    debug("NO PSRAM DETECTED.");
+  }
+  debug("--------------------------------");
 }

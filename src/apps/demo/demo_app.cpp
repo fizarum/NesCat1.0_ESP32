@@ -1,26 +1,29 @@
 #include "demo_app.h"
 
 #include <Esp.h>
+#include <freertos/queue.h>
 #include <log.h>
 #include <scheduler.h>
-#include <sprite.h>
 
 #include "demo_app_settings.h"
+#include "primitives/pixel.h"
 #include "resources.h"
 #include "scene_holder.h"
 
 DisplayDevice *_display = nullptr;
+
+QueueHandle_t xQueue;
 TaskHandle_t loopTaskHandler;
+TaskHandle_t drawTaskHandler;
 ObjectId playerId = 0;
 ObjectId addonSprite = 0;
 
 SceneHolder *sceneHolder = nullptr;
-Palette *palette = nullptr;
-
-volatile bool _loopRunning = false;
-volatile bool _terminated = false;
+Palette_t *palette = NULL;
 
 void _loopTask(void *params);
+void _drawTask(void *pvParameters);
+
 void printDebugInfo();
 void setupSprites();
 void redrawPixel(uint8_t x, uint8_t y, Color color);
@@ -28,16 +31,14 @@ void setupPalette();
 
 void DemoApp::onOpen() {
   _display = nullptr;
-  _loopRunning = false;
-  _terminated = false;
 
   setupPalette();
   sceneHolder = new SceneHolder(palette, &redrawPixel);
 
   setupSprites();
 
-  createTaskOnCore0(&_loopTask, "loop_task", 10000, RENDER_TASK_PRIORITY,
-                    &loopTaskHandler);
+  xQueue = xQueueCreate(FRAME_BUFFER_SIZE, sizeof(Pixel_t));
+
   printDebugInfo();
 }
 
@@ -45,8 +46,17 @@ void DemoApp::onDraw(DisplayDevice *display) {
   if (_display == nullptr) {
     _display = display;
     display->fillScreen(COLOR_BLACK);
-    vTaskDelay(toMillis(100));
-    _loopRunning = true;
+
+    sceneHolder->bakeCanvas();
+    sceneHolder->removeAllDurtyRegions();
+
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    xTaskCreate(_loopTask, "loop_task", 2048, NULL, RENDER_TASK_PRIORITY,
+                &loopTaskHandler);
+
+    xTaskCreate(_drawTask, "draw_task", 2048, NULL, RENDER_TASK_PRIORITY,
+                &drawTaskHandler);
   }
 }
 
@@ -64,10 +74,11 @@ bool DemoApp::onHandleInput(InputDevice *inputDevice) {
 }
 
 void DemoApp::onClose() {
-  _terminated = true;
-  _loopRunning = false;
-
+  vTaskDelete(drawTaskHandler);
   vTaskDelete(loopTaskHandler);
+  vQueueDelete(xQueue);
+
+  PaletteDestroy(palette);
   delete sceneHolder;
   debug("demo app closing");
 
@@ -75,40 +86,65 @@ void DemoApp::onClose() {
   ESP.restart();
 }
 
+Pixel_t pixel;
+
 void redrawPixel(uint8_t x, uint8_t y, Color color) {
-  _display->fillRectangle(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE,
-                          PIXEL_SIZE, color);
+  BaseType_t xStatus;
+  pixel.x = x;
+  pixel.y = y;
+  pixel.color = color;
+
+  xStatus = xQueueSend(xQueue, (void *)(&pixel), 0);
+
+  if (xStatus != pdPASS) {
+    debug("can not add pixel to queue!\n");
+  }
 }
 
 uint8_t maxAnimationIterations = 60;
 uint8_t animationIteration = 0;
+// 33 millis means 30 fps for game
+// 20 millis means 50 fps for game
 const uint16_t delayBetweenUpdates = 20;
 
 void _loopTask(void *params) {
   int64_t startedAt, finihedAt;
   int64_t diffInMillis;
 
-  while (_terminated == false) {
-    if (_loopRunning == true) {
-      startedAt = esp_timer_get_time();
-      // cat animation
-      if (animationIteration < maxAnimationIterations) {
-        sceneHolder->moveSpriteBy(addonSprite, 1, 0);
-        animationIteration++;
-      }
+  while (1) {
+    startedAt = esp_timer_get_time();
+    // cat animation
+    if (animationIteration < maxAnimationIterations) {
+      sceneHolder->moveSpriteBy(addonSprite, 1, 0);
+      animationIteration++;
+    }
 
-      sceneHolder->bakeCanvas();
-      sceneHolder->removeAllDurtyRegions();
-      finihedAt = esp_timer_get_time();
+    sceneHolder->bakeCanvas();
+    sceneHolder->removeAllDurtyRegions();
+    finihedAt = esp_timer_get_time();
 
-      diffInMillis = finihedAt - startedAt;
+    diffInMillis = finihedAt - startedAt;
 
-      if (diffInMillis < delayBetweenUpdates) {
-        diffInMillis = delayBetweenUpdates - diffInMillis;
-        vTaskDelay(toMillis(diffInMillis));
-      } else {
-        vTaskDelay(toMillis(delayBetweenUpdates));
-      }
+    if (diffInMillis < delayBetweenUpdates) {
+      diffInMillis = delayBetweenUpdates - diffInMillis;
+      vTaskDelay(pdMS_TO_TICKS(diffInMillis));
+    } else {
+      vTaskDelay(pdMS_TO_TICKS(delayBetweenUpdates));
+    }
+  }
+}
+
+void _drawTask(void *pvParameters) {
+  Pixel_t pixelToDraw;
+  BaseType_t xStatus;
+
+  while (1) {
+    xStatus = xQueueReceive(xQueue, &pixelToDraw, portMAX_DELAY);
+
+    if (xStatus == pdPASS) {
+      _display->fillRectangle(pixelToDraw.x * PIXEL_SIZE,
+                              pixelToDraw.y * PIXEL_SIZE, PIXEL_SIZE,
+                              PIXEL_SIZE, pixelToDraw.color);
     }
   }
 }
@@ -127,15 +163,7 @@ void setupSprites() {
 
   sceneHolder->createBackgroundSprite(16, 16, grass, 256, 0, 20);
 
-  // cat sprite 7x7 pixels
-  // warning! all sprites should have sizes dividable by 2! (2, 4, 6, 8, etc.)
-  // so this sprite is rendered incorrectly
-  ColorIndex pixels[] = {
-      128, 128, 8,   136, 136, 0, 8, 136, 128, 0, 128, 136, 136, 136,
-      8,   136, 136, 128, 128, 0, 8, 8,   0,   0, 128, 128, 0,   8,
-  };
-
-  addonSprite = sceneHolder->createSprite(7, 7, pixels, 56, 15, 5);
+  addonSprite = sceneHolder->createSprite(16, 16, cat, 256, 15, 5);
 }
 
 void printDebugInfo() {
@@ -149,21 +177,22 @@ void printDebugInfo() {
 }
 
 void setupPalette() {
-  palette = new Palette();
-  palette->setColor(0, COLOR_BLACK);
-  palette->setColor(1, COLOR_PEARL);
-  palette->setColor(2, COLOR_WATERMELON_RED);
-  palette->setColor(3, COLOR_PEWTER_BLUE);
-  palette->setColor(4, COLOR_PURPLE_TAUPE);
-  palette->setColor(5, COLOR_FOREST_GREEN);
-  palette->setColor(6, COLOR_INDIGO);
-  palette->setColor(7, COLOR_SUNRAY);
-  palette->setColor(8, COLOR_LIGHT_TAUPE);
-  palette->setColor(9, COLOR_FELDGRAU);
-  palette->setColor(10, COLOR_CEDAR_CHEST);
-  palette->setColor(11, COLOR_DARK_CHARCOAL);
-  palette->setColor(12, COLOR_SONIC_SILVER);
-  palette->setColor(13, COLOR_ASPARAGUS);
-  palette->setColor(14, COLOR_SEA_SERPENT);
-  palette->setColor(15, COLOR_GRAY);
+  palette = PaletteCreate(0);
+
+  PaletteSetColor(palette, 0, COLOR_BLACK);
+  PaletteSetColor(palette, 1, COLOR_PEARL);
+  PaletteSetColor(palette, 2, COLOR_WATERMELON_RED);
+  PaletteSetColor(palette, 3, COLOR_PEWTER_BLUE);
+  PaletteSetColor(palette, 4, COLOR_PURPLE_TAUPE);
+  PaletteSetColor(palette, 5, COLOR_FOREST_GREEN);
+  PaletteSetColor(palette, 6, COLOR_INDIGO);
+  PaletteSetColor(palette, 7, COLOR_SUNRAY);
+  PaletteSetColor(palette, 8, COLOR_LIGHT_TAUPE);
+  PaletteSetColor(palette, 9, COLOR_FELDGRAU);
+  PaletteSetColor(palette, 10, COLOR_CEDAR_CHEST);
+  PaletteSetColor(palette, 11, COLOR_DARK_CHARCOAL);
+  PaletteSetColor(palette, 12, COLOR_SONIC_SILVER);
+  PaletteSetColor(palette, 13, COLOR_ASPARAGUS);
+  PaletteSetColor(palette, 14, COLOR_SEA_SERPENT);
+  PaletteSetColor(palette, 15, COLOR_GRAY);
 }
