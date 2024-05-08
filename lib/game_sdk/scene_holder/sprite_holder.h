@@ -9,7 +9,7 @@ extern "C" {
 #define MAX_FOREGROUND_SPRITES_COUNT 32
 
 typedef struct SpritesHolder_t SpritesHolder_t;
-
+// todo: complete
 SpritesHolder_t *SpriteHolderCreate();
 void SpriteHolderDestroy(SpritesHolder_t *holder);
 

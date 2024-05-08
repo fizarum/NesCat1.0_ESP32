@@ -8,6 +8,8 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "point.h"
+
 typedef struct Rectangle_t Rectangle_t;
 
 Rectangle_t* RectangleCreate();
@@ -35,6 +37,18 @@ void RectangleMoveTo(Rectangle_t* rectangle, const uint8_t x, const uint8_t y);
 
 bool RectangleContainsPoint(const Rectangle_t* rectangle, const uint8_t x,
                             const uint8_t y);
+
+/**
+ * @brief Translates screen (global) coordinates to local, dependent on rectagle
+ * data. If global point isn't in rectagle
+ * @param
+ *
+ * @return true if global point in rectagle, false otherwise
+ */
+bool RectangleConvertScreenCoordsToLocal(const Rectangle_t* rectangle,
+                                         const uint16_t screenX,
+                                         const uint16_t screenY,
+                                         Point_t* localPoint);
 
 /**
  * @brief get index in 1 dimention array for specified x,y in rectangle

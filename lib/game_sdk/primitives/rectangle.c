@@ -119,6 +119,23 @@ bool RectangleContainsPoint(const Rectangle_t* rectangle, const uint8_t x,
          (y >= rectangle->top && y <= rectangle->bottom);
 }
 
+bool RectangleConvertScreenCoordsToLocal(const Rectangle_t* rectangle,
+                                         const uint16_t screenX,
+                                         const uint16_t screenY,
+                                         Point_t* localPoint) {
+  bool rectangleHasAPoint = RectangleContainsPoint(rectangle, screenX, screenY);
+  if (rectangleHasAPoint == true) {
+    // translate from absolute to sprite relative coords
+    uint8_t x = screenX - RectangleGetLeftPosition(rectangle);
+    uint8_t y = screenY - RectangleGetTopPosition(rectangle);
+
+    // and save results to localPoint
+    localPoint->x = x;
+    localPoint->y = y;
+  }
+  return rectangleHasAPoint;
+}
+
 uint32_t RectangleIndexOf(const Rectangle_t* rectangle, const uint8_t x,
                           const uint8_t y) {
   return y * rectangle->width + x;

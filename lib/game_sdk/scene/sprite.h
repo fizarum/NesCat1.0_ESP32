@@ -9,6 +9,7 @@ extern "C" {
 #include <stdint.h>
 
 #include "../primitives/primitives.h"
+#include "../primitives/rectangle.h"
 
 typedef struct Sprite_t Sprite_t;
 Sprite_t *SpriteCreate(const uint8_t width, const uint8_t height,
@@ -27,6 +28,8 @@ void SpriteDestroy(Sprite_t *sprite);
  */
 ColorIndex SpriteGetPixel(const Sprite_t *sprite, const uint16_t screenX,
                           const uint16_t screenY, const ColorIndex fallback);
+
+Rectangle_t *SpriteGetBounds(const Sprite_t *sprite);
 
 bool SpriteContainsPoint(const Sprite_t *sprite, const uint8_t x,
                          const uint8_t y);

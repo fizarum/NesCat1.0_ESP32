@@ -153,6 +153,9 @@ void setupSprites() {
   // player
   playerId = sceneHolder->createGameObject(8, 8, player, 64, true, true);
 
+  // player's statue - animated (wip)
+  sceneHolder->createSprite(16, 16, player16, 256, 50, 50);
+
   // tree sprite, 8x8 pixels
   ObjectId treeObject =
       sceneHolder->createGameObject(8, 8, tree, 64, true, true);

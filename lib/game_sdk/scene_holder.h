@@ -4,19 +4,22 @@
 #include <map>
 
 #include "durty_region_tracker/tracker.h"
-#include "game_object.h"
 #include "palette.h"
+#include "scene/animated_sprite.h"
+#include "scene/game_object.h"
 #include "scene/sprite.h"
 
 typedef std::map<ObjectId, Sprite_t *>::iterator SpriteIterator;
-typedef std::map<ObjectId, GameObject *>::iterator GameObjectIterator;
+typedef std::map<ObjectId, AnimatedSprite_t *>::iterator AnimatedSpriteIterator;
+typedef std::map<ObjectId, GameObject_t *>::iterator GameObjectIterator;
 
 class SceneHolder {
  private:
   std::map<ObjectId, Sprite_t *> spritesWithId = {};
   std::map<ObjectId, Sprite_t *> backgroundSpritesWithId = {};
-  std::map<ObjectId, GameObject *> backgroundGameObjectsWithId = {};
-  std::map<ObjectId, GameObject *> gameObjectsWithId = {};
+  std::map<ObjectId, AnimatedSprite_t *> animatedSprites = {};
+  std::map<ObjectId, GameObject_t *> backgroundGameObjectsWithId = {};
+  std::map<ObjectId, GameObject_t *> gameObjectsWithId = {};
 
   Palette_t *palette;
   DRTracker_t *tracker;
@@ -31,6 +34,8 @@ class SceneHolder {
                                     ColorIndex defaultColorIndex);
   ColorIndex findPixelInSprites(uint8_t x, uint8_t y,
                                 ColorIndex defaultColorIndex);
+  ColorIndex findPixelInAnimatedSprites(uint8_t x, uint8_t y,
+                                        ColorIndex defaultColorIndex);
   ColorIndex findPixelInBackgroundSprites(uint8_t x, uint8_t y,
                                           ColorIndex defaultColorIndex);
 
@@ -48,13 +53,14 @@ class SceneHolder {
     return nullptr;
   }
 
-  inline Sprite_t *getSprite(GameObject *object) {
+  inline Sprite_t *getSprite(GameObject_t *object) {
     if (object == nullptr) return nullptr;
 
-    return this->getSprite(object->getSpriteId());
+    ObjectId id = GameObjectGetSpriteId(object);
+    return this->getSprite(id);
   }
 
-  inline GameObject *getGameObject(ObjectId id) {
+  inline GameObject_t *getGameObject(ObjectId id) {
     GameObjectIterator it = gameObjectsWithId.find(id);
     if (it != gameObjectsWithId.end()) {
       return it->second;
@@ -84,7 +90,7 @@ class SceneHolder {
    * @param moveByX - value on which original object moves by horizontal
    * @param moveByY - value on which original object moves by vertical
    */
-  void calculateNextPosition(GameObject *object, int8_t moveByX,
+  void calculateNextPosition(GameObject_t *object, int8_t moveByX,
                              int8_t moveByY);
 
   /**
@@ -93,7 +99,7 @@ class SceneHolder {
    * @param object - gameObject which performs movement
    * @return ObjectId for any obstacle if present or OBJECT_ID_UNDEF otherwise
    */
-  ObjectId getObstacle(GameObject *object);
+  ObjectId getObstacle(GameObject_t *object);
 
  public:
   SceneHolder(Palette_t *palette,
@@ -105,8 +111,13 @@ class SceneHolder {
                         size_t pixelsCount, uint8_t positionX = 0,
                         uint8_t positionY = 0);
 
+  ObjectId createAnimatedSprite(uint8_t width, uint8_t height,
+                                ColorIndex *const pixels, size_t pixelsCount,
+                                const AnimationSpeed_t animationSpeed,
+                                const uint8_t x, const uint8_t y);
+
   ObjectId createBackgroundSprite(uint8_t width, uint8_t height,
-                                  ColorIndex pixels[], size_t pixelsCount,
+                                  ColorIndex *const pixels, size_t pixelsCount,
                                   uint8_t positionX = 0, uint8_t positionY = 0);
 
   /**
@@ -157,6 +168,9 @@ class SceneHolder {
    * @param region which should be redrawn
    */
   void setDurtyRegion(Sprite_t *sprite);
+
+  void setDurtyRegion(Rectangle_t *region);
+
   void removeAllDurtyRegions();
 
   void drawDurtyRegion();

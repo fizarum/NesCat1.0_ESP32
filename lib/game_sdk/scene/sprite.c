@@ -23,21 +23,22 @@ void SpriteDestroy(Sprite_t* sprite) {
   free(sprite);
 }
 
+Point_t localPointForSprite;
+
 ColorIndex SpriteGetPixel(const Sprite_t* sprite, const uint16_t screenX,
                           const uint16_t screenY, const ColorIndex fallback) {
   const Rectangle_t* bounds = sprite->bounds;
 
-  if (RectangleContainsPoint(bounds, screenX, screenY) == false)
+  if (RectangleConvertScreenCoordsToLocal(bounds, screenX, screenY,
+                                          &localPointForSprite) == false)
     return fallback;
-
-  // translate from absolute to sprite relative coords
-  uint8_t x = screenX - RectangleGetLeftPosition(bounds);
-  uint8_t y = screenY - RectangleGetTopPosition(bounds);
 
   // we have 2 real pixels per item in "pixels" array we have to divide the
   // result of RectangleIndexOf() by 2
-  uint16_t index = RectangleIndexOf(bounds, x, y) / 2;
-  bool isOdd = x & 1 == 1;
+  uint16_t index =
+      RectangleIndexOf(bounds, localPointForSprite.x, localPointForSprite.y) /
+      2;
+  bool isOdd = localPointForSprite.x & 1 == 1;
 
   ColorIndexes indexes = sprite->pixels[index];
   if (isOdd) {
@@ -45,6 +46,8 @@ ColorIndex SpriteGetPixel(const Sprite_t* sprite, const uint16_t screenX,
   }
   return getFirstIndex(indexes);
 }
+
+Rectangle_t* SpriteGetBounds(const Sprite_t* sprite) { return sprite->bounds; }
 
 bool SpriteContainsPoint(const Sprite_t* sprite, const uint8_t x,
                          const uint8_t y) {
