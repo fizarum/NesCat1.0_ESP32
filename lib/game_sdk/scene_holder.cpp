@@ -409,6 +409,19 @@ void SceneHolder::bakeCanvas() {
   DRTrackerGetDurtyRegions(tracker, &__onEachDurtyLine);
 }
 
+void SceneHolder::updateAnimationState() {
+  for (auto &it : animatedSprites) {
+    AnimatedSprite_t *sprite = it.second;
+
+    AnimatedSpriteUpdateState(sprite);
+    bool isNewFrame = AnimatedSpriteIsFrameChanged(sprite);
+    if (isNewFrame == true) {
+      Rectangle_t *bounds = AnimatedSpriteGetBounds(sprite);
+      setDurtyRegion(bounds);
+    }
+  }
+}
+
 void SceneHolder::setDurtyRegion(uint8_t left, uint8_t top, uint8_t right,
                                  uint8_t bottom) {
   DRTrackerSetDurtyRegion(tracker, left, top, right, bottom);

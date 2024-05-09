@@ -13,6 +13,8 @@ typedef struct AnimatedSprite_t {
   uint16_t pixelsPerFrame;
 
   AnimationSpeed_t animationSpeed;
+  int8_t updatesBeforeAnimation;
+  bool isFrameChanged;
 } AnimatedSprite_t;
 
 AnimatedSprite_t* AnimatedSpriteCreate(const uint8_t width,
@@ -31,6 +33,13 @@ AnimatedSprite_t* AnimatedSpriteCreate(const uint8_t width,
   sprite->currentFrame = 0;
 
   sprite->animationSpeed = animationSpeed;
+
+  // animation speed already contains count of updates required before switching
+  // on next frame
+  sprite->updatesBeforeAnimation = animationSpeed;
+
+  // first draw
+  sprite->isFrameChanged = true;
 
   return sprite;
 }
@@ -58,8 +67,11 @@ ColorIndex AnimatedSpriteGetPixel(const AnimatedSprite_t* sprite,
 
   // we have 2 real pixels per item in "pixels" array we have to divide the
   // result of RectangleIndexOf() by 2
-  uint16_t index = RectangleIndexOf(bounds, x, y) / 2;
+  uint16_t indexInOneFrame = RectangleIndexOf(bounds, x, y) / 2;
   bool isOdd = x & 1 == 1;
+
+  uint16_t index =
+      indexInOneFrame + sprite->currentFrame * (sprite->pixelsPerFrame / 2);
 
   ColorIndexes indexes = sprite->pixels[index];
   if (isOdd) {
@@ -70,14 +82,24 @@ ColorIndex AnimatedSpriteGetPixel(const AnimatedSprite_t* sprite,
   return 0;
 }
 
-void AnimatedSpriteShowNextFrame(AnimatedSprite_t* sprite) {
-  sprite->currentFrame++;
+Rectangle_t* AnimatedSpriteGetBounds(const AnimatedSprite_t* sprite) {
+  return sprite->bounds;
+}
 
-  if (sprite->currentFrame > sprite->frames) {
-    sprite->currentFrame = 0;
+void AnimatedSpriteUpdateState(AnimatedSprite_t* sprite) {
+  sprite->updatesBeforeAnimation--;
+  sprite->isFrameChanged = false;
+
+  if (sprite->updatesBeforeAnimation < 0) {
+    sprite->updatesBeforeAnimation = sprite->animationSpeed;
+    sprite->isFrameChanged = true;
+    sprite->currentFrame++;
+    if (sprite->currentFrame > sprite->frames) {
+      sprite->currentFrame = 0;
+    }
   }
 }
 
-Rectangle_t* AnimatedSpriteGetBounds(const AnimatedSprite_t* sprite) {
-  return sprite->bounds;
+bool AnimatedSpriteIsFrameChanged(AnimatedSprite_t* sprite) {
+  return sprite->isFrameChanged;
 }

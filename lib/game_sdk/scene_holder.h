@@ -158,6 +158,9 @@ class SceneHolder {
   void moveGameObjectTo(ObjectId id, int8_t x, int8_t y);
 
   void bakeCanvas();
+
+  void updateAnimationState();
+
   Color calculatePixel(uint8_t x, uint8_t y);
 
   void setDurtyRegion(uint8_t left, uint8_t top, uint8_t right, uint8_t bottom);

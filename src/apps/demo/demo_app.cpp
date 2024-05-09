@@ -119,6 +119,8 @@ void _loopTask(void *params) {
       animationIteration++;
     }
 
+    sceneHolder->updateAnimationState();
+
     sceneHolder->bakeCanvas();
     sceneHolder->removeAllDurtyRegions();
     finihedAt = esp_timer_get_time();
@@ -153,9 +155,6 @@ void setupSprites() {
   // player
   playerId = sceneHolder->createGameObject(8, 8, player, 64, true, true);
 
-  // player's statue - animated (wip)
-  sceneHolder->createSprite(16, 16, player16, 256, 50, 50);
-
   // tree sprite, 8x8 pixels
   ObjectId treeObject =
       sceneHolder->createGameObject(8, 8, tree, 64, true, true);
@@ -167,6 +166,10 @@ void setupSprites() {
   sceneHolder->createBackgroundSprite(16, 16, grass, 256, 0, 20);
 
   addonSprite = sceneHolder->createSprite(16, 16, cat, 256, 15, 5);
+
+  // player's statue - animated (wip)
+  sceneHolder->createAnimatedSprite(16, 16, player16, 256,
+                                    ANIMATION_SPEED_NORMAL, 30, 30);
 }
 
 void printDebugInfo() {
