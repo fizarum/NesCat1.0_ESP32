@@ -1,10 +1,12 @@
 #ifndef GAME_SDK_PRIMITIVES_H
 #define GAME_SDK_PRIMITIVES_H
 
-#include <stdint.h>
+#include "../types/simpler_types.h"
 
-typedef uint16_t ObjectId;
+typedef _ptr ObjectId;
+
 #define OBJECT_ID_UNDEF UINT16_MAX
+#define OBJECT_ID_NA 0
 
 /**
  * @brief color in RGB565 format

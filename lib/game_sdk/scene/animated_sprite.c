@@ -19,13 +19,13 @@ typedef struct AnimatedSprite_t {
 
 AnimatedSprite_t* AnimatedSpriteCreate(const uint8_t width,
                                        const uint8_t height,
-                                       ColorIndex* const pixels,
+                                       const ColorIndex* const pixels,
                                        const uint16_t pixelsCount,
                                        const AnimationSpeed_t animationSpeed) {
   AnimatedSprite_t* sprite =
       (AnimatedSprite_t*)malloc(sizeof(AnimatedSprite_t));
 
-  sprite->pixels = pixels;
+  sprite->pixels = (ColorIndex* const)pixels;
   sprite->bounds = RectangleCreateWithSize(width, height, 0, 0);
 
   sprite->pixelsPerFrame = width * height;

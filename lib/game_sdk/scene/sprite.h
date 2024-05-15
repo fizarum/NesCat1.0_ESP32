@@ -13,7 +13,8 @@ extern "C" {
 
 typedef struct Sprite_t Sprite_t;
 Sprite_t *SpriteCreate(const uint8_t width, const uint8_t height,
-                       ColorIndex *const pixels, const uint16_t pixelsCount);
+                       const ColorIndex *const pixels,
+                       const uint16_t pixelsCount);
 
 void SpriteDestroy(Sprite_t *sprite);
 
@@ -33,7 +34,7 @@ Rectangle_t *SpriteGetBounds(const Sprite_t *sprite);
 
 bool SpriteContainsPoint(const Sprite_t *sprite, const uint8_t x,
                          const uint8_t y);
-
+// TODO: remove, should be done through Rectangle API
 void SpriteMoveTo(Sprite_t *sprite, const uint8_t x, const uint8_t y);
 void SpriteMoveBy(Sprite_t *sprite, const uint8_t x, const uint8_t y);
 

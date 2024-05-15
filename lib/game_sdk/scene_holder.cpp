@@ -11,31 +11,22 @@ SceneHolder::SceneHolder(Palette_t *palette,
                                                         Color color)) {
   this->palette = palette;
   this->tracker = DRTrackerCreate();
-  this->lastAssignedId = 0;
+  this->holder = SpritesHolderCreate();
 
   __callback = onPixelUpdatedCallback;
   __self = this;
 }
 
 SceneHolder::~SceneHolder() {
-  for (auto &it : spritesWithId) {
-    SpriteDestroy(it.second);
-  }
-
-  for (auto &it : backgroundSpritesWithId) {
-    SpriteDestroy(it.second);
-  }
+  SpritesHolderDestroy(this->holder);
 
   for (auto &it : gameObjectsWithId) {
-    delete it.second;
+    GameObjectDestroy(it.second);
   }
 
   for (auto &it : backgroundGameObjectsWithId) {
-    delete it.second;
+    GameObjectDestroy(it.second);
   }
-
-  spritesWithId.clear();
-  backgroundSpritesWithId.clear();
 
   gameObjectsWithId.clear();
   backgroundGameObjectsWithId.clear();
@@ -43,53 +34,43 @@ SceneHolder::~SceneHolder() {
   DRTrackerDestroy(tracker);
 }
 
-Sprite_t *SceneHolder::createPlainSprite(uint8_t width, uint8_t height,
-                                         ColorIndex pixels[],
-                                         size_t pixelsCount, uint8_t positionX,
-                                         uint8_t positionY) {
-  Sprite_t *sprite = SpriteCreate(width, height, pixels, pixelsCount);
-  if (positionX != 0 || positionY != 0) {
-    SpriteMoveTo(sprite, positionX, positionY);
-  }
+ObjectId SceneHolder::createSprite(_u8 width, _u8 height, ColorIndex pixels[],
+                                   size_t pixelsCount, _u8 x, _u8 y) {
+  SpriteType_t spriteType = SPRITE_TYPE_FOREGROUND;
+
+  ObjectId id = SpritesHolderAddSprite(this->holder, width, height, pixels,
+                                       pixelsCount, spriteType, x, y);
+  Sprite_t *sprite = (Sprite_t *)id;
   Rectangle_t *bounds = SpriteGetBounds(sprite);
   setDurtyRegion(bounds);
-  return sprite;
-}
-
-ObjectId SceneHolder::createSprite(uint8_t width, uint8_t height,
-                                   ColorIndex pixels[], size_t pixelsCount,
-                                   uint8_t positionX, uint8_t positionY) {
-  lastAssignedId++;
-  spritesWithId[lastAssignedId] = createPlainSprite(
-      width, height, pixels, pixelsCount, positionX, positionY);
-
-  return lastAssignedId;
+  return id;
 }
 
 ObjectId SceneHolder::createAnimatedSprite(
     uint8_t width, uint8_t height, ColorIndex *const pixels, size_t pixelsCount,
     const AnimationSpeed_t animationSpeed, const uint8_t x, const uint8_t y) {
-  lastAssignedId++;
-  AnimatedSprite_t *sprite =
-      AnimatedSpriteCreate(width, height, pixels, pixelsCount, animationSpeed);
-  animatedSprites[lastAssignedId] = sprite;
+  SpriteType_t spriteType = SPRITE_TYPE_FOREGROUND;
 
+  ObjectId id = SpritesHolderAddAnimatedSprite(this->holder, width, height,
+                                               pixels, pixelsCount, spriteType,
+                                               animationSpeed, x, y);
+  AnimatedSprite_t *sprite = (AnimatedSprite_t *)id;
   Rectangle_t *bounds = AnimatedSpriteGetBounds(sprite);
-  RectangleMoveTo(bounds, x, y);
   setDurtyRegion(bounds);
-  return lastAssignedId;
+  return id;
 }
 
-ObjectId SceneHolder::createBackgroundSprite(uint8_t width, uint8_t height,
+ObjectId SceneHolder::createBackgroundSprite(_u8 width, _u8 height,
                                              ColorIndex pixels[],
-                                             size_t pixelsCount,
-                                             uint8_t positionX,
-                                             uint8_t positionY) {
-  lastAssignedId++;
-  backgroundSpritesWithId[lastAssignedId] = createPlainSprite(
-      width, height, pixels, pixelsCount, positionX, positionY);
+                                             size_t pixelsCount, _u8 x, _u8 y) {
+  SpriteType_t spriteType = SPRITE_TYPE_BACKGROUND;
 
-  return lastAssignedId;
+  ObjectId id = SpritesHolderAddSprite(this->holder, width, height, pixels,
+                                       pixelsCount, spriteType, x, y);
+  Sprite_t *sprite = (Sprite_t *)id;
+  Rectangle_t *bounds = SpriteGetBounds(sprite);
+  setDurtyRegion(bounds);
+  return id;
 }
 
 ObjectId SceneHolder::createGameObject(uint8_t width, uint8_t height,
@@ -98,13 +79,12 @@ ObjectId SceneHolder::createGameObject(uint8_t width, uint8_t height,
                                        bool isGravitable) {
   ObjectId id = this->createSprite(width, height, pixels, pixelsCount, 0, 0);
 
-  lastAssignedId++;
-
   GameObject_t *object =
       GameObjectCreate(id, isCollidable, isObstacle, isGravitable);
-  gameObjectsWithId[lastAssignedId] = object;
-
-  return lastAssignedId;
+  ObjectId oid = (ObjectId)object;
+  gameObjectsWithId[oid] = object;
+  // todo rework this
+  return oid;
 }
 
 ObjectId SceneHolder::createBackgroundGameObject(
@@ -113,32 +93,31 @@ ObjectId SceneHolder::createBackgroundGameObject(
   ObjectId id =
       this->createBackgroundSprite(width, height, pixels, pixelsCount, 0, 0);
 
-  lastAssignedId++;
-
   GameObject_t *object =
       GameObjectCreate(id, isCollidable, isObstacle, isGravitable);
-  backgroundGameObjectsWithId[lastAssignedId] = object;
 
-  return lastAssignedId;
+  backgroundGameObjectsWithId[id] = object;
+
+  return (ObjectId)object;
 }
 
 void SceneHolder::moveSpriteBy(ObjectId spriteId, int8_t x, int8_t y) {
-  Sprite_t *sprite = this->getSprite(spriteId);
+  Sprite_t *sprite = (Sprite_t *)spriteId;
 
   // set old region as durty
-  setDurtyRegion(sprite);
+  setDurtyRegion(SpriteGetBounds(sprite));
   SpriteMoveBy(sprite, x, y);
   // as well as new
-  setDurtyRegion(sprite);
+  setDurtyRegion(SpriteGetBounds(sprite));
 }
 
 void SceneHolder::moveSpriteTo(ObjectId spriteId, int8_t x, int8_t y) {
-  Sprite_t *sprite = this->getSprite(spriteId);
+  Sprite_t *sprite = (Sprite_t *)spriteId;
   // set old region as durty
-  setDurtyRegion(sprite);
+  setDurtyRegion(SpriteGetBounds(sprite));
   SpriteMoveTo(sprite, x, y);
   // as well as new
-  setDurtyRegion(sprite);
+  setDurtyRegion(SpriteGetBounds(sprite));
 }
 
 void SceneHolder::calculateNextPosition(GameObject_t *object, int8_t moveByX,
@@ -244,7 +223,6 @@ void SceneHolder::moveGameObjectBy(ObjectId id, int8_t x, int8_t y) {
   // if object to move isn't collidable, just move it
   if (GameObjectIsCollidable(objectToMove) == false) {
     ObjectId spriteId = GameObjectGetSpriteId(objectToMove);
-
     this->moveSpriteBy(spriteId, x, y);
     return;
   }
@@ -305,14 +283,14 @@ ColorIndex SceneHolder::findPixelInGameObjects(uint8_t x, uint8_t y,
   return defaultColorIndex;
 }
 
-ColorIndex SceneHolder::findPixelInSprites(uint8_t x, uint8_t y,
+ColorIndex SceneHolder::findPixelInSprites(_u8 x, _u8 y,
                                            ColorIndex defaultColorIndex) {
-  for (auto &it : spritesWithId) {
-    Sprite_t *sprite = it.second;
-    ColorIndex ci = SpriteGetPixel(sprite, x, y, defaultColorIndex);
+  SpriteType_t type = SPRITE_TYPE_FOREGROUND;
+  ObjectId id = SpritesHolderGetSprite(holder, type, false, x, y);
 
-    // second check allows to continue searching in siblin sprites
-    // when current one has transparent pixel
+  if (id != OBJECT_ID_NA) {
+    Sprite_t *sprite = (Sprite_t *)id;
+    ColorIndex ci = SpriteGetPixel(sprite, x, y, defaultColorIndex);
     if (PaletteIsColorVisible(palette, ci) == true) {
       return ci;
     }
@@ -321,12 +299,14 @@ ColorIndex SceneHolder::findPixelInSprites(uint8_t x, uint8_t y,
 }
 
 ColorIndex SceneHolder::findPixelInAnimatedSprites(
-    uint8_t x, uint8_t y, ColorIndex defaultColorIndex) {
-  for (auto &it : animatedSprites) {
-    AnimatedSprite_t *sprite = it.second;
-    ColorIndex ci = AnimatedSpriteGetPixel(sprite, x, y, defaultColorIndex);
+    _u8 x, _u8 y, ColorIndex defaultColorIndex) {
+  SpriteType_t type = SPRITE_TYPE_FOREGROUND;
+  ObjectId id = SpritesHolderGetSprite(holder, type, true, x, y);
 
-    if (PaletteIsColorVisible(palette, ci) == true) {
+  if (id != OBJECT_ID_NA) {
+    AnimatedSprite_t *sprite = (AnimatedSprite_t *)id;
+    ColorIndex ci = AnimatedSpriteGetPixel(sprite, x, y, defaultColorIndex);
+    if (ci != defaultColorIndex) {
       return ci;
     }
   }
@@ -335,8 +315,11 @@ ColorIndex SceneHolder::findPixelInAnimatedSprites(
 
 ColorIndex SceneHolder::findPixelInBackgroundSprites(
     uint8_t x, uint8_t y, ColorIndex defaultColorIndex) {
-  for (auto &it : backgroundSpritesWithId) {
-    Sprite_t *sprite = it.second;
+  SpriteType_t type = SPRITE_TYPE_BACKGROUND;
+
+  ObjectId id = SpritesHolderGetSprite(holder, type, false, x, y);
+  if (id != OBJECT_ID_NA) {
+    Sprite_t *sprite = (Sprite_t *)id;
     ColorIndex ci = SpriteGetPixel(sprite, x, y, defaultColorIndex);
     if (ci != defaultColorIndex) {
       return ci;
@@ -407,44 +390,36 @@ void SceneHolder::bakeCanvas() {
   if (__callback == nullptr) return;
 
   DRTrackerGetDurtyRegions(tracker, &__onEachDurtyLine);
+  DRTrackerClear(tracker);
 }
 
-void SceneHolder::updateAnimationState() {
-  for (auto &it : animatedSprites) {
-    AnimatedSprite_t *sprite = it.second;
-
-    AnimatedSpriteUpdateState(sprite);
-    bool isNewFrame = AnimatedSpriteIsFrameChanged(sprite);
-    if (isNewFrame == true) {
-      Rectangle_t *bounds = AnimatedSpriteGetBounds(sprite);
-      setDurtyRegion(bounds);
-    }
+void __updateAnimationStateCallback(AnimatedSprite_t *sprite) {
+  AnimatedSpriteUpdateState(sprite);
+  bool isNewFrame = AnimatedSpriteIsFrameChanged(sprite);
+  if (isNewFrame == true) {
+    Rectangle_t *bounds = AnimatedSpriteGetBounds(sprite);
+    __self->setDurtyRegion(bounds);
   }
 }
 
-void SceneHolder::setDurtyRegion(uint8_t left, uint8_t top, uint8_t right,
-                                 uint8_t bottom) {
-  DRTrackerSetDurtyRegion(tracker, left, top, right, bottom);
+void SceneHolder::updateAnimationState() {
+  SpritesHolderForeachAnimatedSprite(holder, SPRITE_TYPE_BACKGROUND,
+                                     __updateAnimationStateCallback);
+
+  SpritesHolderForeachAnimatedSprite(holder, SPRITE_TYPE_FOREGROUND,
+                                     __updateAnimationStateCallback);
+
+  SpritesHolderForeachAnimatedSprite(holder, SPRITE_TYPE_HUD,
+                                     __updateAnimationStateCallback);
 }
 
-void SceneHolder::setDurtyRegion(Sprite_t *sprite) {
-  // TODO: complete bouds checkings
-  uint8_t left = SpriteGetVisibleLeftPosition(sprite);
-  uint8_t top = SpriteGetVisibleTopPosition(sprite);
-  uint8_t right = SpriteGetVisibleRightPosition(sprite);
-  uint8_t bottom = SpriteGetVisibleBottomPosition(sprite);
-  DRTrackerSetDurtyRegion(tracker, left, top, right, bottom);
-}
-
-void SceneHolder::setDurtyRegion(Rectangle_t *region) {
+void SceneHolder::setDurtyRegion(const Rectangle_t *region) {
   uint8_t left = RectangleGetVisibleLeftPosition(region);
   uint8_t top = RectangleGetVisibleTopPosition(region);
   uint8_t right = RectangleGetVisibleRightPosition(region);
   uint8_t bottom = RectangleGetVisibleBottomPosition(region);
   DRTrackerSetDurtyRegion(tracker, left, top, right, bottom);
 }
-
-void SceneHolder::removeAllDurtyRegions() { DRTrackerClear(tracker); }
 
 void SceneHolder::drawDurtyRegion() {
 #ifdef PORT_SDK
