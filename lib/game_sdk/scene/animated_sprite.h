@@ -31,12 +31,21 @@ typedef struct AnimatedSprite_t AnimatedSprite_t;
 
 AnimatedSprite_t *AnimatedSpriteCreate(const uint8_t width,
                                        const uint8_t height,
-                                       ColorIndex *const pixels,
+                                       const ColorIndex *const pixels,
                                        const uint16_t pixelsCount,
                                        const AnimationSpeed_t animationSpeed);
 
 void AnimatedSpriteDestroy(AnimatedSprite_t *sprite);
 
+/**
+ * @brief Get color index in animated sprite
+ *
+ * @param screenX - x coord on screen
+ * @param screenY - y coord on screen
+ * @param fallback - function will return this value if color index can not be
+ * otained
+ * @return ColorIndex
+ */
 ColorIndex AnimatedSpriteGetPixel(const AnimatedSprite_t *sprite,
                                   const uint16_t screenX,
                                   const uint16_t screenY,

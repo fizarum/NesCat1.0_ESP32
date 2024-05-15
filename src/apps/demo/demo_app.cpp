@@ -16,7 +16,7 @@ QueueHandle_t xQueue;
 TaskHandle_t loopTaskHandler;
 TaskHandle_t drawTaskHandler;
 ObjectId playerId = 0;
-ObjectId addonSprite = 0;
+ObjectId catId = 0;
 
 SceneHolder *sceneHolder = nullptr;
 Palette_t *palette = NULL;
@@ -48,7 +48,6 @@ void DemoApp::onDraw(DisplayDevice *display) {
     display->fillScreen(COLOR_BLACK);
 
     sceneHolder->bakeCanvas();
-    sceneHolder->removeAllDurtyRegions();
 
     vTaskDelay(pdMS_TO_TICKS(100));
 
@@ -113,16 +112,15 @@ void _loopTask(void *params) {
 
   while (1) {
     startedAt = esp_timer_get_time();
-    // cat animation
+    // cat move animation
     if (animationIteration < maxAnimationIterations) {
-      sceneHolder->moveSpriteBy(addonSprite, 1, 0);
+      sceneHolder->moveSpriteBy(catId, 1, 0);
       animationIteration++;
     }
 
     sceneHolder->updateAnimationState();
 
     sceneHolder->bakeCanvas();
-    sceneHolder->removeAllDurtyRegions();
     finihedAt = esp_timer_get_time();
 
     diffInMillis = finihedAt - startedAt;
@@ -165,7 +163,7 @@ void setupSprites() {
 
   sceneHolder->createBackgroundSprite(16, 16, grass, 256, 0, 20);
 
-  addonSprite = sceneHolder->createSprite(16, 16, cat, 256, 15, 5);
+  catId = sceneHolder->createSprite(16, 16, cat, 256, 15, 5);
 
   // player's statue - animated (wip)
   sceneHolder->createAnimatedSprite(16, 16, player16, 256,

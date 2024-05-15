@@ -10,9 +10,10 @@ typedef struct Sprite_t {
 } Sprite_t;
 
 Sprite_t* SpriteCreate(const uint8_t width, const uint8_t height,
-                       ColorIndex* const pixels, const uint16_t pixelsCount) {
+                       const ColorIndex* const pixels,
+                       const uint16_t pixelsCount) {
   Sprite_t* sprite = (Sprite_t*)malloc(sizeof(Sprite_t));
-  sprite->pixels = pixels;
+  sprite->pixels = (ColorIndex* const)pixels;
   sprite->bounds = RectangleCreateWithSize(width, height, 0, 0);
   return sprite;
 }
