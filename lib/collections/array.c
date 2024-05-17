@@ -31,8 +31,8 @@ void ArrayClear(Array_t *array) {
   array->size = 0;
 }
 
-_u16 ArraySize(Array_t *array) { return array->size; }
-_u16 ArrayCapacity(Array_t *array) { return array->capacity; }
+_u16 ArraySize(const Array_t *array) { return array->size; }
+_u16 ArrayCapacity(const Array_t *array) { return array->capacity; }
 
 bool ArrayAdd(Array_t *array, void *value) {
   if (ArrayIsFull(array) == true) return false;
@@ -52,15 +52,15 @@ bool ArrayRemove(Array_t *array, void *value) {
   return true;
 }
 
-void *ArrayValueOf(Array_t *array, _u16 index) {
+void *ArrayValueAt(const Array_t *array, const _u16 index) {
   if (index != ARRAY_INDEX_NONE) {
     return (void *)array->values[index];
   }
   return NULL;
 }
 
-_u16 ArrayIndexOf(Array_t *array, void *value) {
-  for (_u16 index = 0; index < array->capacity; index++) {
+_u16 ArrayIndexOf(const Array_t *array, void *value) {
+  for (_u16 index = 0; index < array->size; index++) {
     if (array->values[index] == (_ptr)value) {
       return index;
     }
@@ -68,4 +68,13 @@ _u16 ArrayIndexOf(Array_t *array, void *value) {
   return ARRAY_INDEX_NONE;
 }
 
-bool ArrayIsFull(Array_t *array) { return array->size == array->capacity; }
+bool ArrayIsFull(const Array_t *array) {
+  return array->size == array->capacity;
+}
+
+void ArrayForeach(const Array_t *array, void(callback)(void *value)) {
+  for (_u16 index = 0; index < array->size; index++) {
+    void *value = (void *)(array->values[index]);
+    callback(value);
+  }
+}

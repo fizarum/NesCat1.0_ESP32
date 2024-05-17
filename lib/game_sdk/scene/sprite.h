@@ -12,9 +12,8 @@ extern "C" {
 #include "../primitives/rectangle.h"
 
 typedef struct Sprite_t Sprite_t;
-Sprite_t *SpriteCreate(const uint8_t width, const uint8_t height,
-                       const ColorIndex *const pixels,
-                       const uint16_t pixelsCount);
+Sprite_t *SpriteCreate(const _u8 width, const _u8 height,
+                       const _ci *const pixels, const _u16 pixelsCount);
 
 void SpriteDestroy(Sprite_t *sprite);
 
@@ -27,21 +26,17 @@ void SpriteDestroy(Sprite_t *sprite);
  * otained
  * @return ColorIndex
  */
-ColorIndex SpriteGetPixel(const Sprite_t *sprite, const uint16_t screenX,
-                          const uint16_t screenY, const ColorIndex fallback);
+_ci SpriteGetPixel(const Sprite_t *sprite, const _u16 screenX,
+                          const _u16 screenY, const _ci fallback);
 
 Rectangle_t *SpriteGetBounds(const Sprite_t *sprite);
 
-bool SpriteContainsPoint(const Sprite_t *sprite, const uint8_t x,
-                         const uint8_t y);
-// TODO: remove, should be done through Rectangle API
-void SpriteMoveTo(Sprite_t *sprite, const uint8_t x, const uint8_t y);
-void SpriteMoveBy(Sprite_t *sprite, const uint8_t x, const uint8_t y);
+bool SpriteContainsPoint(const Sprite_t *sprite, const _u8 x, const _u8 y);
 
-uint8_t SpriteGetVisibleLeftPosition(const Sprite_t *sprite);
-uint8_t SpriteGetVisibleTopPosition(const Sprite_t *sprite);
-uint8_t SpriteGetVisibleRightPosition(const Sprite_t *sprite);
-uint8_t SpriteGetVisibleBottomPosition(const Sprite_t *sprite);
+_u8 SpriteGetVisibleLeftPosition(const Sprite_t *sprite);
+_u8 SpriteGetVisibleTopPosition(const Sprite_t *sprite);
+_u8 SpriteGetVisibleRightPosition(const Sprite_t *sprite);
+_u8 SpriteGetVisibleBottomPosition(const Sprite_t *sprite);
 
 #ifdef __cplusplus
 }
