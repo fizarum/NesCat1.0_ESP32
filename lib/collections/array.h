@@ -17,16 +17,18 @@ Array_t *ArrayCreate(_u16 capcity);
 void ArrayDestroy(Array_t *array);
 void ArrayClear(Array_t *array);
 
-_u16 ArraySize(Array_t *array);
-_u16 ArrayCapacity(Array_t *array);
+_u16 ArraySize(const Array_t *array);
+_u16 ArrayCapacity(const Array_t *array);
 
 bool ArrayAdd(Array_t *array, void *value);
 bool ArrayRemove(Array_t *array, void *value);
 
-void *ArrayValueOf(Array_t *array, _u16 index);
-_u16 ArrayIndexOf(Array_t *array, void *value);
+void *ArrayValueAt(const Array_t *array, const _u16 index);
+_u16 ArrayIndexOf(const Array_t *array, void *value);
 
-bool ArrayIsFull(Array_t *array);
+bool ArrayIsFull(const Array_t *array);
+
+void ArrayForeach(const Array_t *array, void(callback)(void *value));
 
 #ifdef __cplusplus
 }

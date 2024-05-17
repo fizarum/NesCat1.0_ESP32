@@ -5,7 +5,6 @@
 
 typedef _ptr ObjectId;
 
-#define OBJECT_ID_UNDEF UINT16_MAX
 #define OBJECT_ID_NA 0
 
 /**
@@ -17,6 +16,7 @@ typedef uint16_t Color;
  * @brief index of color in pallette, can have values in range: 0..15
  */
 typedef uint8_t ColorIndex;
+typedef ColorIndex _ci;
 
 /**
  * @brief pair of ColorIndex values first 4 bits represents value of first

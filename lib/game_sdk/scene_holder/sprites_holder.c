@@ -18,6 +18,9 @@ typedef struct SpritesHolder_t {
   Array_t *hudAnimatedSprites;
 } SpritesHolder_t;
 
+inline void destroySprite(void *sprite);
+inline void destroyAnimatedSprite(void *sprite);
+
 Array_t *selectSpritesContainer(const SpritesHolder_t *holder,
                                 const SpriteType_t containerType,
                                 const bool isAnimated);
@@ -51,6 +54,14 @@ SpritesHolder_t *SpritesHolderCreate() {
 
 void SpritesHolderDestroy(SpritesHolder_t *holder) {
   if (holder == NULL) return;
+
+  ArrayForeach(holder->backgroundSprites, destroySprite);
+  ArrayForeach(holder->foregroundSprites, destroySprite);
+  ArrayForeach(holder->hudSprites, destroySprite);
+
+  ArrayForeach(holder->backgroundAnimatedSprites, destroyAnimatedSprite);
+  ArrayForeach(holder->foregroundAnimatedSprites, destroyAnimatedSprite);
+  ArrayForeach(holder->hudAnimatedSprites, destroyAnimatedSprite);
 
   ArrayDestroy(holder->backgroundSprites);
   ArrayDestroy(holder->foregroundSprites);
@@ -112,7 +123,7 @@ ObjectId SpritesHolderGetSprite(const SpritesHolder_t *holder,
   Rectangle_t *bounds = NULL;
 
   for (_u16 index = 0; index < size; index++) {
-    sprite = ArrayValueOf(sprites, index);
+    sprite = ArrayValueAt(sprites, index);
     if (isAnimated) {
       bounds = AnimatedSpriteGetBounds(sprite);
     } else {
@@ -132,7 +143,7 @@ void SpritesHolderForeachAnimatedSprite(
   _u16 size = ArraySize(array);
 
   for (_u16 index = 0; index < size; index++) {
-    AnimatedSprite_t *sprite = ArrayValueOf(array, index);
+    AnimatedSprite_t *sprite = ArrayValueAt(array, index);
     foreach (sprite);
   }
 }
@@ -159,7 +170,8 @@ Sprite_t *createSprite(SpritesHolder_t *holder, const _u8 width,
                        const size_t pixelsCount, const _u8 x, const _u8 y) {
   Sprite_t *sprite = SpriteCreate(width, height, pixels, pixelsCount);
   if (x != 0 || y != 0) {
-    SpriteMoveTo(sprite, x, y);
+    Rectangle_t *bounds = SpriteGetBounds(sprite);
+    RectangleMoveTo(bounds, x, y);
   }
 
   return sprite;
@@ -179,4 +191,10 @@ AnimatedSprite_t *createAnimatedSprite(SpritesHolder_t *holder, const _u8 width,
   }
 
   return sprite;
+}
+
+void destroySprite(void *sprite) { SpriteDestroy((Sprite_t *)sprite); }
+
+void destroyAnimatedSprite(void *sprite) {
+  AnimatedSpriteDestroy((AnimatedSprite_t *)sprite);
 }
