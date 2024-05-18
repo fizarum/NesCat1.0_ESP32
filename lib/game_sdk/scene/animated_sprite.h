@@ -9,6 +9,7 @@ extern "C" {
 
 #include "../primitives/primitives.h"
 #include "../primitives/rectangle.h"
+#include "../primitives/sprite_data.h"
 
 /**
  * @brief Animation speed calculated from formula 1000 millis / 20 updates.
@@ -29,10 +30,7 @@ typedef enum {
 
 typedef struct AnimatedSprite_t AnimatedSprite_t;
 
-AnimatedSprite_t *AnimatedSpriteCreate(const uint8_t width,
-                                       const uint8_t height,
-                                       const ColorIndex *const pixels,
-                                       const uint16_t pixelsCount,
+AnimatedSprite_t *AnimatedSpriteCreate(const SpriteData_t *data,
                                        const AnimationSpeed_t animationSpeed);
 
 void AnimatedSpriteDestroy(AnimatedSprite_t *sprite);

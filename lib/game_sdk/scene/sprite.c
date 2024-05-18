@@ -9,16 +9,14 @@ typedef struct Sprite_t {
   Rectangle_t* bounds;
 } Sprite_t;
 
-Sprite_t* SpriteCreate(const _u8 width, const _u8 height,
-                       const _ci* const pixels, const _u16 pixelsCount) {
+Sprite_t* SpriteCreate(const SpriteData_t* data) {
   Sprite_t* sprite = (Sprite_t*)malloc(sizeof(Sprite_t));
-  sprite->pixels = (_ci* const)pixels;
-  sprite->bounds = RectangleCreateWithSize(width, height, 0, 0);
+  sprite->pixels = data->indices;
+  sprite->bounds = RectangleCreateWithSize(data->width, data->height, 0, 0);
   return sprite;
 }
 
 void SpriteDestroy(Sprite_t* sprite) {
-  free(sprite->pixels);
   RectangleDestroy(sprite->bounds);
   free(sprite);
 }
@@ -36,9 +34,10 @@ _ci SpriteGetPixel(const Sprite_t* sprite, const _u16 screenX,
   // we have 2 real pixels per item in "pixels" array we have to divide the
   // result of RectangleIndexOf() by 2
   _u16 index = RectangleIndexOf(bounds, __localPoint.x, __localPoint.y) / 2;
-  bool isOdd = __localPoint.x & 1 == 1;
 
   ColorIndexes indexes = sprite->pixels[index];
+
+  bool isOdd = __localPoint.x & 1 == 1;
   if (isOdd) {
     return getSecondIndex(indexes);
   }

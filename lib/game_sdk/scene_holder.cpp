@@ -24,11 +24,9 @@ SceneHolder::~SceneHolder() {
   DRTrackerDestroy(tracker);
 }
 
-ObjectId SceneHolder::createSprite(_u8 width, _u8 height, _ci pixels[],
-                                   size_t pixelsCount, _u8 x, _u8 y) {
-  ObjectId id =
-      SpritesHolderAddSprite(this->spritesHolder, width, height, pixels,
-                             pixelsCount, SPRITE_TYPE_FOREGROUND, x, y);
+ObjectId SceneHolder::createSprite(const SpriteData_t *data, _u8 x, _u8 y) {
+  ObjectId id = SpritesHolderAddSprite(this->spritesHolder, data,
+                                       SPRITE_TYPE_FOREGROUND, x, y);
   Sprite_t *sprite = (Sprite_t *)id;
   Rectangle_t *bounds = SpriteGetBounds(sprite);
   setDurtyRegion(bounds);
@@ -36,43 +34,40 @@ ObjectId SceneHolder::createSprite(_u8 width, _u8 height, _ci pixels[],
 }
 
 ObjectId SceneHolder::createAnimatedSprite(
-    _u8 width, _u8 height, _ci *const pixels, size_t pixelsCount,
-    const AnimationSpeed_t animationSpeed, const _u8 x, const _u8 y) {
+    const SpriteData_t *data, const AnimationSpeed_t animationSpeed,
+    const _u8 x, const _u8 y) {
   ObjectId id = SpritesHolderAddAnimatedSprite(
-      this->spritesHolder, width, height, pixels, pixelsCount,
-      SPRITE_TYPE_FOREGROUND, animationSpeed, x, y);
+      this->spritesHolder, data, SPRITE_TYPE_FOREGROUND, animationSpeed, x, y);
   AnimatedSprite_t *sprite = (AnimatedSprite_t *)id;
   Rectangle_t *bounds = AnimatedSpriteGetBounds(sprite);
   setDurtyRegion(bounds);
   return id;
 }
 
-ObjectId SceneHolder::createBackgroundSprite(_u8 width, _u8 height,
-                                             _ci pixels[], size_t pixelsCount,
-                                             _u8 x, _u8 y) {
-  ObjectId id =
-      SpritesHolderAddSprite(this->spritesHolder, width, height, pixels,
-                             pixelsCount, SPRITE_TYPE_BACKGROUND, x, y);
+ObjectId SceneHolder::createBackgroundSprite(const SpriteData_t *data, _u8 x,
+                                             _u8 y) {
+  ObjectId id = SpritesHolderAddSprite(this->spritesHolder, data,
+                                       SPRITE_TYPE_BACKGROUND, x, y);
   Sprite_t *sprite = (Sprite_t *)id;
   Rectangle_t *bounds = SpriteGetBounds(sprite);
   setDurtyRegion(bounds);
   return id;
 }
 
-ObjectId SceneHolder::createGameObject(_u8 width, _u8 height, _ci pixels[],
-                                       size_t pixelsCount, bool isCollidable,
-                                       bool isObstacle, bool isGravitable) {
-  ObjectId sid = this->createSprite(width, height, pixels, pixelsCount, 0, 0);
+ObjectId SceneHolder::createGameObject(const SpriteData_t *data,
+                                       bool isCollidable, bool isObstacle,
+                                       bool isGravitable) {
+  ObjectId sid = this->createSprite(data, 0, 0);
 
   return ObjectsHolderAdd(this->objectsHolder, sid, true, isCollidable,
                           isObstacle, isGravitable);
 }
 
-ObjectId SceneHolder::createBackgroundGameObject(
-    _u8 width, _u8 height, _ci pixels[], size_t pixelsCount, bool isCollidable,
-    bool isObstacle, bool isGravitable) {
-  ObjectId sid =
-      this->createBackgroundSprite(width, height, pixels, pixelsCount, 0, 0);
+ObjectId SceneHolder::createBackgroundGameObject(const SpriteData_t *data,
+                                                 bool isCollidable,
+                                                 bool isObstacle,
+                                                 bool isGravitable) {
+  ObjectId sid = this->createBackgroundSprite(data, 0, 0);
 
   return ObjectsHolderAdd(objectsHolder, sid, false, isCollidable, isObstacle,
                           isGravitable);

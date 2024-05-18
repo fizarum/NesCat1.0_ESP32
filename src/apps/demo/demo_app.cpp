@@ -7,6 +7,7 @@
 
 #include "demo_app_settings.h"
 #include "primitives/pixel.h"
+#include "primitives/sprite_data.h"
 #include "resources.h"
 #include "scene_holder.h"
 
@@ -150,24 +151,23 @@ void _drawTask(void *pvParameters) {
 }
 
 void setupSprites() {
+  prepareSprites();
   // player
-  playerId = sceneHolder->createGameObject(8, 8, player, 64, true, true);
+  playerId = sceneHolder->createGameObject(&player, true, true);
 
   // tree sprite, 8x8 pixels
-  ObjectId treeObject =
-      sceneHolder->createGameObject(8, 8, tree, 64, true, true);
+  ObjectId treeObject = sceneHolder->createGameObject(&tree, true, true);
   sceneHolder->moveGameObjectTo(treeObject, 50, 10);
 
   // bush, 8x8
-  sceneHolder->createBackgroundSprite(8, 8, bush, 64, 30, 20);
+  sceneHolder->createBackgroundSprite(&bush, 30, 20);
 
-  sceneHolder->createBackgroundSprite(16, 16, grass, 256, 0, 20);
+  sceneHolder->createBackgroundSprite(&grass, 0, 20);
 
-  catId = sceneHolder->createSprite(16, 16, cat, 256, 15, 5);
+  catId = sceneHolder->createSprite(&cat, 15, 5);
 
   // player's statue - animated (wip)
-  sceneHolder->createAnimatedSprite(16, 16, player16, 256,
-                                    ANIMATION_SPEED_NORMAL, 30, 30);
+  sceneHolder->createAnimatedSprite(&player16, ANIMATION_SPEED_NORMAL, 30, 30);
 }
 
 void printDebugInfo() {

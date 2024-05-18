@@ -48,10 +48,12 @@ BatteryDevice *battery = nullptr;
 void onInputTriggered();
 
 void setup() {
+#ifdef DEBUG_ON
   Serial.begin(115200);
   while (!Serial) {
     // wait for serial completion init
   }
+#endif
   deviceManager.init();
 
   battery = new BatteryDevice();
