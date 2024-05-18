@@ -10,10 +10,10 @@ extern "C" {
 
 #include "../primitives/primitives.h"
 #include "../primitives/rectangle.h"
+#include "../primitives/sprite_data.h"
 
 typedef struct Sprite_t Sprite_t;
-Sprite_t *SpriteCreate(const _u8 width, const _u8 height,
-                       const _ci *const pixels, const _u16 pixelsCount);
+Sprite_t *SpriteCreate(const SpriteData_t *data);
 
 void SpriteDestroy(Sprite_t *sprite);
 
@@ -27,7 +27,7 @@ void SpriteDestroy(Sprite_t *sprite);
  * @return ColorIndex
  */
 _ci SpriteGetPixel(const Sprite_t *sprite, const _u16 screenX,
-                          const _u16 screenY, const _ci fallback);
+                   const _u16 screenY, const _ci fallback);
 
 Rectangle_t *SpriteGetBounds(const Sprite_t *sprite);
 

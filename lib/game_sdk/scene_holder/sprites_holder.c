@@ -25,15 +25,12 @@ Array_t *selectSpritesContainer(const SpritesHolder_t *holder,
                                 const SpriteType_t containerType,
                                 const bool isAnimated);
 // Create standard sprite
-Sprite_t *createSprite(SpritesHolder_t *holder, const _u8 width,
-                       const _u8 height, const ColorIndexes *const pixels,
-                       const size_t pixelsCount, const _u8 x, const _u8 y);
+Sprite_t *createSprite(SpritesHolder_t *holder, const SpriteData_t *data,
+                       const _u8 x, const _u8 y);
 
 // Create animated sprite
-AnimatedSprite_t *createAnimatedSprite(SpritesHolder_t *holder, const _u8 width,
-                                       const _u8 height,
-                                       const ColorIndex *const pixels,
-                                       size_t pixelsCount,
+AnimatedSprite_t *createAnimatedSprite(SpritesHolder_t *holder,
+                                       const SpriteData_t *data,
                                        const AnimationSpeed_t animationSpeed,
                                        const _u8 x, const _u8 y);
 
@@ -74,14 +71,11 @@ void SpritesHolderDestroy(SpritesHolder_t *holder) {
   free(holder);
 }
 
-ObjectId SpritesHolderAddSprite(SpritesHolder_t *holder, const _u8 width,
-                                const _u8 height,
-                                const ColorIndexes *const pixels,
-                                const size_t pixelsCount,
+ObjectId SpritesHolderAddSprite(SpritesHolder_t *holder,
+                                const SpriteData_t *data,
                                 const SpriteType_t type, const _u8 x,
                                 const _u8 y) {
-  Sprite_t *sprite =
-      createSprite(holder, width, height, pixels, pixelsCount, x, y);
+  Sprite_t *sprite = createSprite(holder, data, x, y);
 
   Array_t *spritesContainer = selectSpritesContainer(holder, type, false);
   bool isSpriteAdded = ArrayAdd(spritesContainer, sprite);
@@ -93,15 +87,13 @@ ObjectId SpritesHolderAddSprite(SpritesHolder_t *holder, const _u8 width,
   return OBJECT_ID_NA;
 }
 
-ObjectId SpritesHolderAddAnimatedSprite(SpritesHolder_t *holder, _u8 width,
-                                        const _u8 height,
-                                        const ColorIndexes *const pixels,
-                                        const size_t pixelsCount,
+ObjectId SpritesHolderAddAnimatedSprite(SpritesHolder_t *holder,
+                                        const SpriteData_t *data,
                                         const SpriteType_t type,
                                         const AnimationSpeed_t animationSpeed,
                                         const _u8 x, const _u8 y) {
-  AnimatedSprite_t *sprite = createAnimatedSprite(
-      holder, width, height, pixels, pixelsCount, animationSpeed, x, y);
+  AnimatedSprite_t *sprite =
+      createAnimatedSprite(holder, data, animationSpeed, x, y);
 
   Array_t *spritesContainer = selectSpritesContainer(holder, type, true);
   bool isSpriteAdded = ArrayAdd(spritesContainer, sprite);
@@ -165,10 +157,9 @@ Array_t *selectSpritesContainer(const SpritesHolder_t *holder,
   }
 }
 
-Sprite_t *createSprite(SpritesHolder_t *holder, const _u8 width,
-                       const _u8 height, const ColorIndexes *const pixels,
-                       const size_t pixelsCount, const _u8 x, const _u8 y) {
-  Sprite_t *sprite = SpriteCreate(width, height, pixels, pixelsCount);
+Sprite_t *createSprite(SpritesHolder_t *holder, const SpriteData_t *data,
+                       const _u8 x, const _u8 y) {
+  Sprite_t *sprite = SpriteCreate(data);
   if (x != 0 || y != 0) {
     Rectangle_t *bounds = SpriteGetBounds(sprite);
     RectangleMoveTo(bounds, x, y);
@@ -177,14 +168,11 @@ Sprite_t *createSprite(SpritesHolder_t *holder, const _u8 width,
   return sprite;
 }
 
-AnimatedSprite_t *createAnimatedSprite(SpritesHolder_t *holder, const _u8 width,
-                                       const _u8 height,
-                                       const ColorIndex *const pixels,
-                                       size_t pixelsCount,
+AnimatedSprite_t *createAnimatedSprite(SpritesHolder_t *holder,
+                                       const SpriteData_t *data,
                                        const AnimationSpeed_t animationSpeed,
                                        const _u8 x, const _u8 y) {
-  AnimatedSprite_t *sprite =
-      AnimatedSpriteCreate(width, height, pixels, pixelsCount, animationSpeed);
+  AnimatedSprite_t *sprite = AnimatedSpriteCreate(data, animationSpeed);
   if (x != 0 || y != 0) {
     Rectangle_t *bounds = AnimatedSpriteGetBounds(sprite);
     RectangleMoveTo(bounds, x, y);

@@ -6,30 +6,30 @@ typedef struct AnimatedSprite_t {
   ColorIndex* pixels;
   Rectangle_t* bounds;
 
-  /** @brief Number of actual images which is animated */
-  uint8_t frames;
-  uint8_t currentFrame;
+  /** @brief Number of frames which is animated, this number should be > 1 to
+   * animate sprite */
+  _u8 frames;
+  _u8 currentFrame;
 
-  uint16_t pixelsPerFrame;
+  _u16 indexesPerFrame;
 
   AnimationSpeed_t animationSpeed;
-  int8_t updatesBeforeAnimation;
+  _i8 updatesBeforeAnimation;
   bool isFrameChanged;
 } AnimatedSprite_t;
 
-AnimatedSprite_t* AnimatedSpriteCreate(const uint8_t width,
-                                       const uint8_t height,
-                                       const ColorIndex* const pixels,
-                                       const uint16_t pixelsCount,
+AnimatedSprite_t* AnimatedSpriteCreate(const SpriteData_t* data,
                                        const AnimationSpeed_t animationSpeed) {
   AnimatedSprite_t* sprite =
       (AnimatedSprite_t*)malloc(sizeof(AnimatedSprite_t));
 
-  sprite->pixels = (ColorIndex* const)pixels;
-  sprite->bounds = RectangleCreateWithSize(width, height, 0, 0);
+  sprite->pixels = data->indices;
+  sprite->bounds = RectangleCreateWithSize(data->width, data->height, 0, 0);
 
-  sprite->pixelsPerFrame = width * height;
-  sprite->frames = pixelsCount / (sprite->pixelsPerFrame);
+  // we haave packed data as 2 indexes per byte, so we have always add div by 2
+  sprite->indexesPerFrame = ((data->width) * (data->height)) / 2;
+  sprite->frames = data->indicesCount / (sprite->indexesPerFrame);
+
   sprite->currentFrame = 0;
 
   sprite->animationSpeed = animationSpeed;
@@ -45,7 +45,6 @@ AnimatedSprite_t* AnimatedSpriteCreate(const uint8_t width,
 }
 
 void AnimatedSpriteDestroy(AnimatedSprite_t* sprite) {
-  free(sprite->pixels);
   RectangleDestroy(sprite->bounds);
   free(sprite);
 }
@@ -57,23 +56,23 @@ ColorIndex AnimatedSpriteGetPixel(const AnimatedSprite_t* sprite,
                                   const uint16_t screenY,
                                   const ColorIndex fallback) {
   const Rectangle_t* bounds = sprite->bounds;
-
   if (RectangleConvertScreenCoordsToLocal(
           bounds, screenX, screenY, &localPointForAnimatedSprite) == false)
     return fallback;
 
-  uint8_t x = localPointForAnimatedSprite.x;
-  uint8_t y = localPointForAnimatedSprite.y;
+  _u8 x = localPointForAnimatedSprite.x;
+  _u8 y = localPointForAnimatedSprite.y;
 
   // we have 2 real pixels per item in "pixels" array we have to divide the
   // result of RectangleIndexOf() by 2
-  uint16_t indexInOneFrame = RectangleIndexOf(bounds, x, y) / 2;
-  bool isOdd = x & 1 == 1;
+  _u16 indexInSprite = RectangleIndexOf(bounds, x, y) / 2;
+  _u16 offset = (sprite->currentFrame * (sprite->indexesPerFrame));
 
-  uint16_t index =
-      indexInOneFrame + sprite->currentFrame * (sprite->pixelsPerFrame / 2);
+  _u16 index = indexInSprite + offset;
 
   ColorIndexes indexes = sprite->pixels[index];
+
+  bool isOdd = x & 1 == 1;
   if (isOdd) {
     return getSecondIndex(indexes);
   }
@@ -94,7 +93,7 @@ void AnimatedSpriteUpdateState(AnimatedSprite_t* sprite) {
     sprite->updatesBeforeAnimation = sprite->animationSpeed;
     sprite->isFrameChanged = true;
     sprite->currentFrame++;
-    if (sprite->currentFrame > sprite->frames) {
+    if (sprite->currentFrame >= sprite->frames) {
       sprite->currentFrame = 0;
     }
   }

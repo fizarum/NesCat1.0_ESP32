@@ -53,16 +53,14 @@ class SceneHolder {
               void (*onPixelUpdatedCallback)(_u8 x, _u8 y, Color color));
   ~SceneHolder();
 
-  ObjectId createSprite(_u8 width, _u8 height, _ci pixels[], size_t pixelsCount,
-                        _u8 x = 0, _u8 y = 0);
+  ObjectId createSprite(const SpriteData_t *data, _u8 x = 0, _u8 y = 0);
 
-  ObjectId createAnimatedSprite(_u8 width, _u8 height, _ci *const pixels,
-                                size_t pixelsCount,
+  ObjectId createAnimatedSprite(const SpriteData_t *data,
                                 const AnimationSpeed_t animationSpeed,
                                 const _u8 x, const _u8 y);
 
-  ObjectId createBackgroundSprite(_u8 width, _u8 height, _ci *const pixels,
-                                  size_t pixelsCount, _u8 x = 0, _u8 y = 0);
+  ObjectId createBackgroundSprite(const SpriteData_t *data, _u8 x = 0,
+                                  _u8 y = 0);
 
   /**
    * @brief Create a Game Object for foreground plane
@@ -75,8 +73,7 @@ class SceneHolder {
    * @param isGravitable
    * @return ObjectId
    */
-  ObjectId createGameObject(_u8 width, _u8 height, _ci pixels[],
-                            size_t pixelsCount, bool isCollidable = false,
+  ObjectId createGameObject(const SpriteData_t *data, bool isCollidable = false,
                             bool isObstacle = false, bool isGravitable = false);
 
   /**
@@ -90,8 +87,7 @@ class SceneHolder {
    * @param isGravitable
    * @return ObjectId
    */
-  ObjectId createBackgroundGameObject(_u8 width, _u8 height, _ci pixels[],
-                                      size_t pixelsCount,
+  ObjectId createBackgroundGameObject(const SpriteData_t *data,
                                       bool isCollidable = false,
                                       bool isObstacle = false,
                                       bool isGravitable = false);

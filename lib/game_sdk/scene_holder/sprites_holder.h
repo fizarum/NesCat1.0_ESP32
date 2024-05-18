@@ -29,18 +29,14 @@ void SpritesHolderDestroy(SpritesHolder_t *holder);
  * @brief Creates Sprite_t instance and add to internal container
  *
  * @param holder
- * @param width
- * @param height
- * @param pixels
- * @param pixelsCount
+ * @param data
+ * @param type
  * @param x
  * @param y
  * @return ObjectId unique id of sprite if it is added or OBJECT_ID_NA otherwise
  */
-ObjectId SpritesHolderAddSprite(SpritesHolder_t *holder, const _u8 width,
-                                const _u8 height,
-                                const ColorIndexes *const pixels,
-                                const size_t pixelsCount,
+ObjectId SpritesHolderAddSprite(SpritesHolder_t *holder,
+                                const SpriteData_t *data,
                                 const SpriteType_t type, const _u8 x,
                                 const _u8 y);
 
@@ -48,18 +44,14 @@ ObjectId SpritesHolderAddSprite(SpritesHolder_t *holder, const _u8 width,
  * @brief Creates AimatedSprite_t instance and add to internal container
  *
  * @param holder
- * @param width
- * @param height
- * @param pixels
- * @param pixelsCount
+ * @param data
+ * @param type
  * @param x
  * @param y
  * @return ObjectId unique id of sprite if it is added or OBJECT_ID_NA otherwise
  */
-ObjectId SpritesHolderAddAnimatedSprite(SpritesHolder_t *holder, _u8 width,
-                                        const _u8 height,
-                                        const ColorIndexes *const pixels,
-                                        const size_t pixelsCount,
+ObjectId SpritesHolderAddAnimatedSprite(SpritesHolder_t *holder,
+                                        const SpriteData_t *data,
                                         const SpriteType_t type,
                                         const AnimationSpeed_t animationSpeed,
                                         const _u8 x, const _u8 y);
